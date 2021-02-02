@@ -5,9 +5,10 @@
 
 ```
 docker run -d \
---name IYUUAutoReseed \
+--name IYUUPlus \
 -e cron='0 9 * * 0' \
--v /root/config.php:/config.php \
+-v /volume1/IYUU/db:/IYUU/db \
+-p 8787:8787 \
 --restart=always \
 iyuucn/iyuuautoreseed:arm64v8
 ```
@@ -15,11 +16,12 @@ iyuucn/iyuuautoreseed:arm64v8
 
 ```
 docker run  -d \
---name IYUUAutoReseed \
+--name IYUUPlus \
 -e cron='0 8 * * 0' \
--v /root/config.php:/config.php \
+-v /volume1/IYUU/db:/IYUU/db \
 -v /var/lib/transmission/torrents:/torrents \
 -v /var/lib/qbittorrent/.local/share/data/qBittorrent/BT_backup:/BT_backup \
+-p 8787:8787 \
 --restart always \
 iyuucn/iyuuautoreseed:arm64v8
 ```
@@ -28,9 +30,10 @@ iyuucn/iyuuautoreseed:arm64v8
 
 ```
 docker run -d \
---name IYUUAutoReseed \
+--name IYUUPlus \
 -e cron='0 9 * * 0' \
--v /root/config.php:/config.php \
+-v /volume1/IYUU/db:/IYUU/db \
+-p 8787:8787 \
 --restart=always \
 iyuucn/iyuuautoreseed:latest
 ```
@@ -41,34 +44,41 @@ iyuucn/iyuuautoreseed:latest
 | 参数        | 解释                                                         |
 | ----------- | ------------------------------------------------------------ |
 | `--name`    | 容器名字                                                     |
-| `-e`        | 环境变量，定时任务执行时间                                   |
-| `-v`        | 本地目录或文件:容器目录文件，资源挂载到容器。<br />请把你的配置文件放在/root/config.php，会把你的配置映射进容器内。 |
+| `-e`        | 环境变量，定时更新执行时间                                   |
+| `-v`        | 本地目录或文件:容器目录文件，资源挂载到容器。<br />请新建一个配置文件目录，然后映射进容器内`/IYUU/db`，容器内的数据都会保存到这个目录。 |
 | `--restart` | 启动模式                                                     |
 
+
+### docker容器运行成功后，打开浏览器访问：http://127.0.0.1:8787
+把`127.0.01`替换为局域网地址，或者公网DDNS域名；
+
+
+
 ------
+
 
 
 ### 2.停止
 
 ```
-docker stop IYUUAutoReseed
+docker stop IYUUPlus
 ```
 
 
 ### 3.运行
 
 ```
-docker start IYUUAutoReseed
+docker start IYUUPlus
 ```
 
 ### 4.删除容器
 ```
-docker rm IYUUAutoReseed
+docker rm IYUUPlus
 ```
 
 ### 5.删除镜像
 ```
-docker rmi iyuucn/iyuuautoreseed:arm64v8
+docker rmi iyuucn/IYUUPlus:arm64v8
 ```
 
 
@@ -114,8 +124,8 @@ IYUU自动辅种工具（英文名：IYUUAutoReseed），是一款PHP语言编�
 
 #### 源码仓库
 
- - github仓库：https://github.com/ledccn/IYUUAutoReseed
- - 码云仓库：https://gitee.com/ledc/IYUUAutoReseed
+ - github仓库：https://github.com/ledccn/IYUUPlus
+ - 码云仓库：https://gitee.com/ledc/iyuuplus
 
 
 #### 使用方法
@@ -134,4 +144,4 @@ IYUU自动辅种工具（英文名：IYUUAutoReseed），是一款PHP语言编�
  - QQ群：859882209[2000人.入门群]，931954050[1000人.进阶群]
  - 问答社区：http://wenda.iyuu.cn
  - 博客：https://www.iyuu.cn/
- - issues： https://gitee.com/ledc/IYUUAutoReseed/issues 
+ - issues： https://github.com/ledccn/IYUUPlus/issues 
