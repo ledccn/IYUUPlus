@@ -15,6 +15,8 @@ Docker命令行安装教程：https://github.com/ledccn/IYUUPlus/tree/master/doc
 
 群晖docker安装教程：https://www.iyuu.cn/archives/426/
 
+ARM平台docker命令行安装教程：https://www.iyuu.cn/archives/427/
+
 
 
 
