@@ -3,6 +3,7 @@
 /.vscode
 /composer
 /db
+/php
 /composer.lock
 *.bat
 *.log

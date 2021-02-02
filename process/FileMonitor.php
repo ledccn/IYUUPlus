@@ -41,7 +41,9 @@ class FileMonitor
      */
     public function __construct($monitor_dir, $monitor_extenstions)
     {
-        \file_put_contents(runtime_path() . \DIRECTORY_SEPARATOR . self::pidFile, \posix_getpid());
+        if (function_exists('posix_getpid')) {
+            \file_put_contents(runtime_path() . \DIRECTORY_SEPARATOR . self::pidFile, \posix_getpid());
+        }
         if (Worker::$daemonize) {
             #return;
         }

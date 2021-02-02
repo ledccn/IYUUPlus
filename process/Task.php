@@ -38,7 +38,9 @@ class Task
     public function __construct()
     {
         // 保存当前进程pid
-        \file_put_contents(runtime_path() . \DIRECTORY_SEPARATOR . self::pidFile, \posix_getpid());
+        if (function_exists('posix_getpid')) {
+            \file_put_contents(runtime_path() . \DIRECTORY_SEPARATOR . self::pidFile, \posix_getpid());
+        }
         // 初始化cron
         domainCron::onWorkerStart();
         // 初始化计划任务的绝对路径
