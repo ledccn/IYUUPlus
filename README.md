@@ -6,13 +6,16 @@ IYUU自动辅种工具，目前能对国内大部分的PT站点自动辅种，�
 
 
 
-# 技术栈
 
-| 类型     | 感谢                                      | 简介                                                         |
-| -------- | ----------------------------------------- | ------------------------------------------------------------ |
-| 常驻服务 | webman                                    | php语言编写，基于[workerman](https://www.workerman.net/)开发的高性能HTTP服务框架 |
-| 前端界面 | layui2.5.7、font-awesome-4.7.0、layuimini | layui（谐音：类UI) 是一款采用自身模块规范编写的前端 UI 框架  |
-| 开发语言 | PHP、HTML5、CSS3、JavaScript、Shell       |                                                              |
+
+
+# 安装教程：
+
+Docker命令行安装教程：https://github.com/ledccn/IYUUPlus/tree/master/docker
+
+群晖docker安装教程：https://www.iyuu.cn/archives/426/
+
+
 
 
 
@@ -23,9 +26,26 @@ IYUU自动辅种工具，目前能对国内大部分的PT站点自动辅种，�
 
 
 
+
+
 # 支持自动辅种的站点
 
 学校、杜比、家园、天空、朋友、馒头、萌猫、我堡、猫站、铂金家、烧包、北洋、TCCF、南洋、TTG、映客、城市、52pt、brobits、备胎、SSD、CHD、ptmsg、leaguehd、聆音、瓷器、hdarea、eastgame(TLF)、1ptba、hdtime、hd4fans、opencd、hdbug、hdstreet、joyhd、u2、upxin(HDU)、oshen、discfan(GZT)、cnscg圣城(已删除)、北邮、CCFBits、dicmusic、天雪、葡萄、HDRoute、伊甸园hdbd、海胆haidan、HDfans、龙之家、百川PT。
+
+
+
+
+
+
+# 技术栈
+
+| 类型     | 感谢                                      | 简介                                                         |
+| -------- | ----------------------------------------- | ------------------------------------------------------------ |
+| 常驻服务 | webman                                    | php语言编写，基于[workerman](https://www.workerman.net/)开发的高性能HTTP服务框架 |
+| 前端界面 | layui2.5.7、font-awesome-4.7.0、layuimini | layui（谐音：类UI) 是一款采用自身模块规范编写的前端 UI 框架  |
+| 开发语言 | PHP、HTML5、CSS3、JavaScript、Shell       |                                                              |
+
+
 
 
 
