@@ -10,7 +10,7 @@ docker run -d \
 -v /volume1/IYUU/db:/IYUU/db \
 -p 8787:8787 \
 --restart=always \
-iyuucn/iyuuautoreseed:arm64v8
+iyuucn/iyuuplus:arm64v8
 ```
 #### 小钢炮方法：
 
@@ -23,7 +23,7 @@ docker run  -d \
 -v /var/lib/qbittorrent/.local/share/data/qBittorrent/BT_backup:/BT_backup \
 -p 8787:8787 \
 --restart always \
-iyuucn/iyuuautoreseed:arm64v8
+iyuucn/iyuuplus:arm64v8
 ```
 
 #### AMD64平台（MAC OS、台式、服务器、NAS等）
@@ -35,7 +35,7 @@ docker run -d \
 -v /volume1/IYUU/db:/IYUU/db \
 -p 8787:8787 \
 --restart=always \
-iyuucn/iyuuautoreseed:latest
+iyuucn/iyuuplus:latest
 ```
 
 
