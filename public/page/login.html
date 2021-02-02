@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>IYUU登陆</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="stylesheet" href="../lib/layui-v2.5.7/css/layui.css" media="all">
+  <!--[if lt IE 9]>
+  <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+  <![endif]-->
+  <style>
+    html, body {width: 100%;height: 100%;overflow: hidden}
+    body {background: #1E9FFF;}
+    body:after {content:'';background-repeat:no-repeat;background-size:cover;-webkit-filter:blur(3px);-moz-filter:blur(3px);-o-filter:blur(3px);-ms-filter:blur(3px);filter:blur(3px);position:absolute;top:0;left:0;right:0;bottom:0;z-index:-1;}
+    .layui-container {width: 100%;height: 100%;overflow: hidden}
+    .admin-login-background {width:360px;height:300px;position:absolute;left:50%;top:40%;margin-left:-180px;margin-top:-100px;}
+    .logo-title {text-align:center;letter-spacing:2px;padding:14px 0;}
+    .logo-title h1 {color:#1E9FFF;font-size:25px;font-weight:bold;}
+    .login-form {background-color:#fff;border:1px solid #fff;border-radius:3px;padding:14px 20px;box-shadow:0 0 8px #eeeeee;}
+    .login-form .layui-form-item {position:relative;}
+    .login-form .layui-form-item label {position:absolute;left:1px;top:1px;width:38px;line-height:36px;text-align:center;color:#d2d2d2;}
+    .login-form .layui-form-item input {padding-left:36px;}
+  </style>
+</head>
+<body>
+<div class="layui-container">
+  <div class="admin-login-background">
+    <div class="layui-form login-form">
+      <form class="layui-form" action="" id="formID" lay-filter="fromFilter">
+        <div class="layui-form-item logo-title">
+          <h1>IYUU登陆</h1>
+        </div>
+        <div class="layui-form-item">
+          <label class="layui-icon layui-icon-username" for="token"></label>
+          <input type="text" name="token" lay-verify="required" placeholder="请填写爱语飞飞Token" autocomplete="off" class="layui-input" id="token">
+        </div>
+        <div class="layui-form-item">
+          <input type="checkbox" name="rememberMe" value="true" lay-skin="primary" title="记住" id="rememberMe">
+        </div>
+        <div class="layui-form-item">
+          <button class="layui-btn layui-btn layui-btn-normal layui-btn-fluid" lay-submit="" lay-filter="login">登 入</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <fieldset class="layui-elem-field layui-hide" id="verify">
+    <legend>用户验证</legend>
+    <div class="layui-field-box">
+      <form class="layui-form" lay-filter="form" id="form">
+        <div class="layui-form-item">
+          <label class="layui-form-label">站名(<span id="sites_total"></span>个)</label>
+          <div class="layui-input-inline">
+            <select name="site" lay-filter="sites_sel" id="sites_sel" lay-verify="required" lay-reqtext="站点名字不能为空">
+            </select>
+          </div>
+        </div>
+        <div class="layuimini-form" id="site_field_view"></div>
+  
+        <div class="layui-form-item">
+          <div class="layui-input-block">
+            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">验证</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </fieldset>
+</div>
+<!-- 模板：站点选择 -->
+<script id="sites_sel_tpl" type="text/html">
+  <option value="">请选择站点</option>
+  {{#  layui.each(d, function(index, item){ }}
+  <option value="{{item.site}}" data-bind="{{ item.bind_check }}" data-id="{{ item.id }}">{{index + 1}}. {{ item.site }}</option>
+  {{#  }); }}
+</script>
+<!-- 模板：站点配置字段 -->
+<script id="site_field_tpl" type="text/html">
+  {{# if (d.passkey.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.passkey.required ? 'required' : '' }}">Passkey</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.passkey.name}}" {{ d.passkey.verify ? 'lay-verify="'+d.passkey.verify+'"' : '' }} lay-reqtext="{{d.passkey.name}}不能为空" placeholder="请输入{{d.passkey.name}}" class="layui-input">
+    </div>
+  </div>
+  {{# } }}
+  {{# if (d.id === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">用户UID</label>
+    <div class="layui-input-block">
+      <input type="number" name="id" lay-verify="required" lay-reqtext="用户id不能为空" placeholder="请输入用户id" class="layui-input">
+    </div>
+  </div>
+  {{# } }}
+</script>
+<script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<script src="../lib/layui-v2.5.7/layui.js" charset="utf-8"></script>
+<script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+<script src="/js/function.js?v=2.0.0" charset="utf-8"></script>
+<script>
+  layui.use(['form','laytpl'], function () {
+    let form = layui.form,
+        layer = layui.layer,
+        laytpl = layui.laytpl;
+
+    const API = {
+      fromFilter: 'fromFilter'
+      ,submitFilter: 'login'
+      ,checkLogin: '/Api/checkLogin'
+      ,Login: '/Api/Login'
+      ,BindToken: '/Api/BindToken'
+      ,sites_sel: 'sites_sel'
+      ,sites_total: 'sites_total'
+      ,site_field_view: 'site_field_view'
+      ,site_field_rule: {
+        passkey: {name: 'passkey', visible: true, required: true, desc: '', verify: 'required', reqtext: ''}
+        ,id: true
+      }
+    };
+
+    //Storage
+    let token = localStorage.getItem('token');
+    if (token) {
+      form.val(API.fromFilter, {
+        "token": token
+        ,"rememberMe": true
+      });
+    }
+    // 登录过期的时候，跳出ifram框架
+    if (top.location != self.location) top.location = self.location;
+
+    // 粒子线条背景
+    $(document).ready(function(){
+      $('.layui-container').particleground({
+        dotColor:'#7ec7fd',
+        lineColor:'#7ec7fd'
+      });
+      //检查是否登录
+      $.getJSON(API.checkLogin, function (data) {
+        if (data && data.ret === 200) {
+          if (data.data.is_login === true) {
+            layer.msg('您已登录，正在为您进入IYUU平台……', function () {
+              window.location = '/index.html';
+            });
+          }
+        } else {
+          layer.msg('系统错误，请联系开发者。' + data.msg);
+        }
+      });
+    });
+
+    // 登录事件
+    form.on('submit('+ API.submitFilter +')', function (d) {
+      console.log(d.field);
+      data = d.field;
+      //Token
+      if (data.token === '') {
+        layer.msg('爱语飞飞token不能为空！');
+        return false;
+      }
+      //记住
+      sessionStorage.setItem('token', data.token);
+      if (data.rememberMe) {
+        localStorage.setItem('token', data.token);
+      } else {
+        localStorage.removeItem('token');
+      }
+      //Ajax
+      $.getJSON(API.Login, {token: data.token}, function (data) {
+        if (data && data.ret === 200) {
+          localStorage.setItem('sites', JSON.stringify(data.data.sites));
+          layer.msg('登录成功，正在跳转……', function () {
+            window.location = '/index.html';
+          });
+        } else {
+          if (data && data.ret === 403) {
+            localStorage.setItem('recommend', JSON.stringify(data.data.recommend));
+            user_verify_action(data.data.recommend);
+          } else {
+            layer.msg(data.msg ? data.msg : '未知错误！请联系开发者');
+          }
+        }
+      });
+      return false;
+    });
+
+    /**
+     * 用户验证弹窗
+     */ 
+    user_verify_action = function(recommend) {
+      getById('verify').classList.remove('layui-hide');
+      layer.open({
+        type: 1
+        ,title: false
+        ,area: ['380px','400px']
+        //,offset: '100px'
+        ,shade: 0.8
+        ,id: 'login'
+        ,moveType: 1 //拖拽模式，0或者1
+        ,content: $('#verify')
+        ,success: function(layero, index){
+          sites_show(recommend, recommend.length);
+        }
+        ,end: function(){
+          getById('verify').classList.add('layui-hide');
+        }
+      });
+    }
+
+    /**
+     * 显示站点选择框
+     */
+    sites_show = function(recommend = null, total = 0) {
+      let getTpl = sites_sel_tpl.innerHTML
+        ,view = document.getElementById(API.sites_sel);
+      document.getElementById(API.sites_total).innerHTML = total;
+      laytpl(getTpl).render(recommend, function(html){
+        view.innerHTML = html;
+      });
+      form.render('select');
+    }
+
+    /**
+     * 站点选择框动作
+     */
+    sites_sel_action = function(site = '') {
+      let rule = JSON.parse(JSON.stringify(API.site_field_rule))
+        ,getTpl = site_field_tpl.innerHTML
+        ,view = document.getElementById(API.site_field_view);
+      view.innerHTML = '';
+      if (site === '') {
+        return ;
+      }
+      //switch
+      laytpl(getTpl).render(rule, function(html) {
+        view.innerHTML = html;
+      });
+      form.render();
+    }
+
+    /**
+     * 监听选择框：站点
+     */ 
+    form.on('select('+ API.sites_sel +')', function(data){
+      sites_sel_action(data.value);
+    });
+
+    /*
+    * 监听用户验证提交
+    */
+    form.on('submit(saveBtn)', function (data) {
+      data.field['token'] = getById('token').value;
+      console.log(data.field);
+      $.ajax({
+        url: API.BindToken,
+        type:'post',
+        data: data.field,
+        success:function(d){
+          console.log(d);
+          if (d.ret !== 200) {
+            layer.msg(d.msg);
+            return;
+          }
+          layer.msg('用户验证成功，正在为您登录……', function () {
+            window.location = '/index.html';
+          });
+        },
+        complete: function () {
+        },
+        error : function(request) {
+          layer.alert('未知错误，请截图当前界面，然后求助于QQ群：859882209、931954050、924099912！', {icon: 2, title: '出错提示'});
+        }
+      });
+      return false;
+    });
+  });
+</script>
+</body>
+</html>

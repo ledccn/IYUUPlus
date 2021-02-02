@@ -1,0 +1,69 @@
+<style>
+.layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+    <form class="layui-form layuimini-form" lay-filter="form">
+      <input type="hidden" name="config_filename" value="default">
+      <div class="layui-form-item">
+        <label class="layui-form-label required">浏览器UA</label>
+        <div class="layui-input-block">
+          <input type="text" name="ua" lay-verify="required" lay-reqtext="浏览器UA不能为空" placeholder="请输入浏览器UA"  value="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.1303.189 Safari/537.36" class="layui-input">
+          <tip>浏览器UserAgent作用：在使用cookie时，模拟您的浏览器行为。</tip>
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">Curl超时设置</label>
+        <div class="layui-inline">
+          <div class="layui-input-inline" style="width: 100px;">
+            <input type="number" name="CONNECTTIMEOUT" placeholder="等待连接" autocomplete="off" value="60" class="layui-input">
+          </div>
+          <div class="layui-form-mid">-</div>
+          <div class="layui-input-inline" style="width: 150px;">
+            <input type="number" name="TIMEOUT" placeholder="主动断开连接" autocomplete="off" value="600" class="layui-input">
+          </div>
+        </div>
+      </div>
+
+      <div class="layui-form-item">
+        <div class="layui-input-block">
+          <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">保存</button>
+          <button class="layui-btn layui-btn-primary" data-refresh="刷新">重置</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  layui.use(['form','miniPage'], function () {
+    let $ = layui.$,
+      layer = layui.layer,
+      form = layui.form,
+      miniPage = layui.miniPage;
+
+    const API = {
+      tableList: '/Api/Config?config_filename=default&action=get'
+      ,create: '/Api/Config'
+    };
+
+    /**
+     * 初始化赋值
+     */ 
+    $.getJSON(API.tableList, function (data) {
+      if (data.ret === 200) {
+        form.val("form", data.data);
+      }
+    });
+
+    /**
+     * 初始化表单，要加上，不然刷新部分组件可能会不加载
+     */
+    form.render();
+
+    //监听提交
+    form.on('submit(saveBtn)', function (data) {
+      ajax(API.create, data.field, '保存成功', true);
+      return false;
+    });
+  });
+</script>

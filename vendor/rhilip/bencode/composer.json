@@ -1,0 +1,27 @@
+{
+    "name": "rhilip/bencode",
+    "description": "A pure and simple PHP library for encoding and decoding Bencode data",
+    "keywords": ["bittorrent", "torrent", "bencode"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rhilip",
+            "email": "rhilipruan@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^5.6|^7.0|^8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rhilip\\Bencode\\": "src"
+        }
+    },
+    "suggest": {
+        "php-64bit": "Running 64 bit is recommended to prevent integer overflow"
+    }
+}

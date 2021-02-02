@@ -1,0 +1,34 @@
+<style>
+    .layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+    <div class="layui-tab layui-tab-brief">
+      <ul class="layui-tab-title">
+        <li class="layui-this">框架日志</li>
+        <li>应用日志</li>
+      </ul>
+      <div class="layui-tab-content">
+        <div class="layui-tab-item layui-show"><pre class="layui-code" lay-title="框架日志" lay-height="700px" lay-skin="notepad" id="log_file"></pre></div>
+        <div class="layui-tab-item"><pre class="layui-code" lay-title="应用日志" lay-height="700px" lay-skin="notepad" id="stdout_file"></pre></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  layui.use(['code'], function () {
+    let $ = layui.$,
+      layer = layui.layer;
+
+    layui.code();
+    $.getJSON('/Status/syslog', function (data) {
+      console.log(data.data);
+      if (data && data.ret === 200) {
+        getById('log_file').innerHTML = data.data.log_file;
+        getById('stdout_file').innerHTML = data.data.stdout_file;
+      } else {
+        layer.msg('系统错误，请联系开发者。' + data.msg);
+      }
+    });
+  });
+</script>

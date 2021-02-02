@@ -1,0 +1,347 @@
+<style>
+  .layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+    <table id="tableId" lay-filter="tableFilter"></table>
+    <fieldset class="layui-elem-field">
+      <legend>新增/编辑过滤器</legend>
+      <div class="layui-field-box">
+        <form class="layui-form layuimini-form" lay-filter="form">
+          <input type="hidden" name="config_filename" value="filter">
+          <div class="layui-form-item">
+            <label class="layui-form-label">过滤器类型</label>
+            <div class="layui-input-inline">
+            <select name="type" lay-filter="type" lay-verify="required" lay-reqtext="下载器类型不能为空">
+              <option value="">请选择过滤器类型</option>
+              <option value="default">全局默认下载过滤器</option>
+              <option value="site">普通下载过滤器</option>
+            </select>
+            </div>
+          </div>
+          <!-- 过滤器类型占位 -->
+          <div class="layuimini-form" id="filter_type_view"></div>
+    
+          <div class="layui-form-item">
+            <div class="layui-input-block">
+              <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确认保存</button>
+              <button class="layui-btn layui-btn-primary" data-refresh="刷新">重置</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </fieldset>
+  </div>
+</div>
+<!-- 模板：过滤器配置字段 -->
+<script id="filter_type_tpl" type="text/html">
+  <input type="hidden" name="action" value="{{ d.action || 'add'}}">
+  {{# if (d.action === 'edit') { }}
+  <input type="hidden" name="uuid" value="">
+  {{# } }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">过滤器名字</label>
+    <div class="layui-input-block">
+      <input type="text" name="name" lay-verify="required" lay-reqtext="过滤器名字不能为空" placeholder="请输入过滤器名字" class="layui-input">
+      <tip>给这个过滤器起个名字，方便你找到它。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">大小筛选</label>
+    <div class="layui-inline">
+      <div class="layui-input-inline" style="width: 100px;">
+        <input type="text" name="size[min]" placeholder="最小值" autocomplete="off" class="layui-input">
+      </div>
+      <div class="layui-form-mid">-</div>
+      <div class="layui-input-inline" style="width: 100px;">
+        <input type="text" name="size[max]" placeholder="最大值" autocomplete="off" class="layui-input">
+      </div>
+      <div class="layui-form-mid">容量支持单位：KB、MB、GB、TB、PB</div>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">做种数筛选</label>
+    <div class="layui-inline">
+      <div class="layui-input-inline" style="width: 100px;">
+        <input type="number" name="seeders[min]" placeholder="最少人数" autocomplete="off" value="1" class="layui-input">
+      </div>
+      <div class="layui-form-mid">-</div>
+      <div class="layui-input-inline" style="width: 100px;">
+        <input type="number" name="seeders[max]" placeholder="最大人数" autocomplete="off" value="3" class="layui-input">
+      </div>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">下载数筛选</label>
+    <div class="layui-inline">
+      <div class="layui-input-inline" style="width: 100px;">
+        <input type="number" name="leechers[min]" placeholder="最少人数" autocomplete="off" value="0" class="layui-input">
+      </div>
+      <div class="layui-form-mid">-</div>
+      <div class="layui-input-inline" style="width: 100px;">
+        <input type="number" name="leechers[max]" placeholder="最大人数" autocomplete="off" value="" class="layui-input">
+      </div>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">完成数筛选</label>
+    <div class="layui-inline">
+      <div class="layui-input-inline" style="width: 100px;">
+        <input type="number" name="completed[min]" placeholder="最少人数" autocomplete="off" value="0" class="layui-input">
+      </div>
+      <div class="layui-form-mid">-</div>
+      <div class="layui-input-inline" style="width: 100px;">
+        <input type="number" name="completed[max]" placeholder="最大人数" autocomplete="off" value="" class="layui-input">
+      </div>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">正则表达式</label>
+    <div class="layui-input-block">
+      <input type="text" name="regex" lay-reqtext="正则表达式不能为空" placeholder="请输入正则表达式" class="layui-input">
+      <tip id="tips">填写正则表达式，对标题和副标题进行筛选。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">关键字匹配</label>
+    <div class="layui-inline">
+      <div class="layui-input-inline" style="width: 300px;">
+        <input type="text" name="keyword" lay-reqtext="关键字不能为空" placeholder="请输入关键字" class="layui-input">
+      </div>
+    </div>
+    <div class="layui-inline">
+      <label class="layui-form-label">匹配模式</label>
+      <div class="layui-input-inline">
+        <input type="checkbox" name="keyword_mode" lay-skin="switch" lay-text="AND与|OR或" lay-filter="default">
+      </div>
+    </div>
+    <div class="layui-input-block">
+      <tip>多个关键字，可以用英文逗号,分隔。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">下载目录</label>
+    <div class="layui-input-block">
+      <input type="text" name="downloadDir" lay-verify="required" placeholder="请输入下载目录" class="layui-input">
+      <tip>如果匹配上此过滤器，将会把资源下载到此目录中。下载目录优先级：站点下载器目录 &gt; 过滤器下载目录 &gt; 全局下载器目录</tip>
+    </div>
+  </div>
+</script>
+<script>
+  layui.use(['table','form','miniPage','laytpl'], function () {
+    let $ = layui.$,
+      layer = layui.layer,
+      table = layui.table,
+      form = layui.form,
+      miniPage = layui.miniPage,
+      laytpl = layui.laytpl;
+
+    const API = {
+      tableList: '/Api/Config?config_filename=filter&action=list'
+      ,create: '/Api/Config'
+      ,delete: '/Api/Config?config_filename=filter&action=del'
+      ,filter_field_rule:{
+        action: ''
+        ,downloadDir: true
+      }
+    };
+    sessionStorage.setItem('filter_field_rule',JSON.stringify(API.filter_field_rule));
+
+    /**
+     * 过滤器类型选择框
+     */
+    filter_sel_action = function(type, action = '') {
+      let rule = JSON.parse(sessionStorage.getItem('filter_field_rule')),
+        getTpl = filter_type_tpl.innerHTML,
+        view = document.getElementById('filter_type_view');
+
+      view.innerHTML = '';
+      if (type === '') {
+        return ;
+      }
+      rule.action = action;
+      switch (type) {
+        case 'default':
+          break;
+        case 'site':
+          break;
+        default:
+          break;
+      }
+      laytpl(getTpl).render(rule, function(html) {
+        view.innerHTML = html;
+      });
+      form.render();
+    }
+
+    /**
+     * 初始化表格
+     */
+    table.render({
+      elem: '#tableId'
+      ,url: API.tableList
+      ,parseData: function(res){
+        (res.ret === 200) && localStorage.setItem('user_filter',JSON.stringify(res));
+        return {
+          "code": res.ret === 200 ? 0 : res.ret,
+          "msg": res.msg,
+          "count": res.data.total,
+          "data": res.data.items
+        };
+      }
+      ,cols: [[
+        {field: 'name', title: '名称', width:150, align: "center", sort: true, fixed: 'left'}
+        ,{field: 'uuid', title: 'UUID', width:80, align: "center", hide: true}
+        ,{field: 'size', title: '大小筛选', width:120, align: "center", sort: true
+          ,templet: function(d){
+            if (d.size) {
+              return Object.values(d.size).join(' - ');
+            }
+            return '';
+          }
+        }
+        ,{field: 'seeders', title: '做种数筛选', width:120, align: "center", sort: true
+          ,templet: function(d){
+            if (d.seeders) {
+              return Object.values(d.seeders).join(' - ');
+            }
+            return '';
+          }
+        }
+        ,{field: 'leechers', title: '下载数筛选', width:120, align: "center", sort: true
+          ,templet: function(d){
+            if (d.leechers) {
+              return Object.values(d.leechers).join(' - ');
+            }
+            return '';
+          }
+        }
+        ,{field: 'completed', title: '完成数筛选', width: 120, align: "center", sort: true
+          ,templet: function(d){
+            if (d.completed) {
+              return Object.values(d.completed).join(' - ');
+            }
+            return '';
+          }
+        }
+        ,{field: 'regex', title: '正则表达式', width: 180, align: "center", sort: true
+          ,templet: function(d){
+            return d.regex || '';
+          }
+        }
+        ,{field: 'keyword', title: '关键字', width: 180, sort: true
+          ,templet: function(d){
+            let keyword = d.keyword || '';
+            let mode = d.keyword_mode ? 'AND' : 'OR';
+            return keyword + ' <span class="layui-badge layui-bg-green">' + mode + '</span>';
+          }
+        }
+        ,{field: 'downloadDir', title: '下载目录', minWidth: 180, sort: true
+          ,templet: function(d){
+            return d.downloadDir || '';
+          }
+        }
+        ,{title: '操作', width: 120, templet: '#tableRowToolbar', fixed: "right", align: "center"}
+      ]]
+      ,done: function(res, curr, count){
+        //如果是异步请求数据方式，res即为你接口返回的信息。
+        //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+        //console.log(res);
+        //console.log(curr);  //得到当前页码
+        //console.log(count); //得到数据总量
+      }
+      //,size: 'sm'
+      ,page: false
+      ,limit:500
+    });
+
+    /**
+     * 监听：行工具条
+     */ 
+     table.on('tool(tableFilter)', function(obj){
+      let layEvent = obj.event;
+      let tr = obj.tr;
+      console.log(obj.data);
+      switch (layEvent) {
+        case 'edit':
+          filter_sel_action(obj.data.type, 'edit');
+          format_input('size', obj.data);
+          format_input('seeders', obj.data);
+          format_input('leechers', obj.data);
+          format_input('completed', obj.data);
+          form.val("form", obj.data);
+          break;
+        case 'delete':
+          layer.confirm('真的删除 '+obj.data.name +'吗？', function(index){
+            $.ajax({
+              url: API.delete,
+              type:'get',
+              data: {uuid: obj.data.uuid},
+              success:function(data){
+                if (data.ret !== 200) {
+                  layer.msg(data.msg);
+                  return;
+                }
+                layer.msg('删除成功', function () {
+                });
+                obj.del();
+                layer.close(index);
+              },
+              complete: function () {
+              }
+            });
+          });
+          break;
+        default:
+          break;
+      }
+    });
+
+    //监听行单击事件
+    table.on('row(tableFilter)', function(obj){
+      //同下
+    });
+    //监听行双击事件
+    table.on('rowDouble(tableFilter)', function(obj){
+      //console.log(obj.tr) //得到当前行元素对象
+      console.log(obj.data) //得到当前行数据
+      //obj.del(); //删除当前行
+      //obj.update(fields) //修改当前行数据
+    });
+
+    /**
+      * 初始化表单，要加上，不然刷新部分组件可能会不加载
+      */
+    form.render();
+
+    //监听选择：过滤器类型
+    form.on('select(type)', function(data){
+      filter_sel_action(data.value);
+    });
+    //监听提交
+    form.on('submit(saveBtn)', function (data) {
+      $.ajax({
+        url: API.create,
+        type:'post',
+        data: data.field,
+        success:function(d){
+          console.log(d);
+          if (d.ret !== 200) {
+            layer.msg(d.msg);
+            return;
+          }
+          layer.msg('保存成功', function(){
+            //miniPage.hashHome();
+            window.location.reload();
+          });          
+        },
+        complete: function () {
+        },
+        error : function(request) {
+          layer.alert('未知错误，请截图当前界面，然后求助于QQ群：859882209、931954050、924099912！', {icon: 2, title: '出错提示'});
+        }
+      });
+      return false;
+    });
+  });
+</script>

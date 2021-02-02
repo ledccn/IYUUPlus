@@ -1,0 +1,294 @@
+<style>
+  .layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+    <table id="tableId" lay-filter="tableFilter"></table>
+    <fieldset class="layui-elem-field">
+      <legend>新增/编辑下载器</legend>
+      <div class="layui-field-box">
+        <form class="layui-form layuimini-form" lay-filter="form" id="form">
+          <input type="hidden" name="config_filename" value="clients">
+          <div class="layui-form-item">
+            <label class="layui-form-label">下载器类型</label>
+            <div class="layui-input-inline">
+            <select name="type" lay-filter="type" lay-verify="required" lay-reqtext="下载器类型不能为空">
+              <option value="">请选择下载器类型</option>
+              <option value="qBittorrent">qBittorrent</option>
+              <option value="transmission">Transmission</option>
+            </select>
+            </div>
+            <div class="layui-inline">
+              支持的下载器：<img src="https://www.iyuu.cn/usr/uploads/client/qBittorrent.ico" width="38" height="38" />
+              <img src="https://www.iyuu.cn/usr/uploads/client/transmission.ico" width="38" height="38" />
+            </div>
+          </div>
+          <div class="layuimini-form" id="clients_type_view"></div>
+    
+          <div class="layui-form-item">
+            <div class="layui-input-block">
+              <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确认保存</button>
+              <button class="layui-btn layui-btn-primary" data-refresh="刷新">重置</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </fieldset>
+  </div>
+</div>
+<!-- 模板：下载器配置字段 -->
+<script type="text/html" id="clients_type_tpl">
+  <input type="hidden" name="action" value="{{ d.action || 'add'}}">
+  {{# if (d.action === 'edit') { }}
+  <input type="hidden" name="uuid" value="">
+  {{# } }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">下载器名字</label>
+    <div class="layui-input-block">
+      <input type="text" name="name" lay-verify="required" lay-reqtext="下载器名字不能为空" placeholder="请输入下载器名字" class="layui-input">
+      <tip>给下载器起个名字，方便你找到它。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">下载器地址端口</label>
+    <div class="layui-input-block">
+      <input type="text" name="host" lay-verify="required" lay-reqtext="下载器完整地址不能为空" placeholder="请输入下载器完整地址（包含端口）" class="layui-input">
+      <tip id="tips">完整的服务器地址（含端口），如：http://192.168.3.1:9091</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">下载器接入点</label>
+    <div class="layui-input-block">
+      <input type="text" name="endpoint" placeholder="请输入下载器接入点，如果不懂请保持默认。" class="layui-input" value="{{ d.endpoint || ''}}">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">用户名</label>
+    <div class="layui-input-block">
+      <input type="text" name="username" lay-verify="required" lay-reqtext="用户名不能为空" placeholder="请输入用户名" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">密码</label>
+    <div class="layui-input-block">
+      <input type="text" name="password" lay-verify="required" lay-reqtext="密码不能为空" placeholder="请输入密码" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">Docker安装</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="docker" lay-skin="switch" lay-text="YES|NO" lay-filter="docker"><br/><tip>当前下载器是否安装在Docker容器内。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">默认下载器</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="default" lay-skin="switch" lay-text="YES|NO" lay-filter="default">
+    </div>
+  </div>
+  {{# if (d.type === 'qBittorrent') { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label">创建多文件子目录</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="root_folder" lay-skin="switch" lay-text="YES|NO" checked><br/><tip>qBittorrent下载服务器的专属配置，如果您不理解此处含义，请保持默认。</tip>
+    </div>
+  </div>
+  {{# } }}
+  <div class="layui-form-item">
+    <label class="layui-form-label">BT_backup目录</label>
+    <div class="layui-input-block">
+      <input type="text" name="BT_backup" placeholder="请输入种子的BT_backup" class="layui-input">
+      <tip>如果您暂时用不到转移做种客户端的功能，此处可以留空。</tip>
+    </div>
+  </div>
+</script>
+<script>
+  layui.use(['table','form','miniPage','laytpl'], function () {
+    let $ = layui.$,
+      layer = layui.layer,
+      table = layui.table,
+      form = layui.form,
+      miniPage = layui.miniPage,
+      laytpl = layui.laytpl;
+
+    const API = {
+      tableList: '/Api/Config?config_filename=clients&action=list'
+      ,create: '/Api/Config'
+      ,delete: '/Api/Config?config_filename=clients&action=del'
+      ,clients_field_rule:{
+        type: ''
+        ,action: ''
+        ,endpoint: ''
+        ,BT_backup: true
+      }
+    };
+    sessionStorage.setItem('clients_field_rule',JSON.stringify(API.clients_field_rule));
+
+    /**
+     * 下载器选择框
+     */
+    clients_sel_action = function(type = '', action = '') {
+      let rule = JSON.parse(sessionStorage.getItem('clients_field_rule'))
+        ,getTpl = clients_type_tpl.innerHTML
+        ,view = document.getElementById('clients_type_view');
+
+      view.innerHTML = '';
+      if (type === '') {
+        return ;
+      }
+      rule.action = action;
+      switch (type) {
+        case 'qBittorrent':
+          rule.type = type;
+          break;
+        case 'transmission':
+          rule.endpoint = '/transmission/rpc';
+          break;
+        default:
+          break;
+      }
+      laytpl(getTpl).render(rule, function(html) {
+        view.innerHTML = html;
+      });
+      form.render();
+    }
+
+    /**
+     * 初始化表格
+     */
+     table.render({
+      elem: '#tableId'
+      ,url: API.tableList
+      ,parseData: function(res){
+        (res.ret === 200) && localStorage.setItem('user_clients',JSON.stringify(res));
+        return {
+          "code": res.ret === 200 ? 0 : res.ret,
+          "msg": res.msg,
+          "count": res.data.total,
+          "data": res.data.items
+        };
+      }
+      ,cols: [[
+        {field: 'name', title: '名称', width:180, align: "center", sort: true, fixed: 'left'}
+        ,{field: 'uuid', title: 'UUID', width:80, align: "center", hide: true}
+        ,{field: 'type', title: '类型', width:180, align: "center", sort: true}
+        ,{field: 'host', title: '地址', minWidth:300, sort: true
+          ,templet: function(d){
+            return d.host + d.endpoint || '';
+          }
+        }
+        ,{field: 'username', title: '用户名', width:150, align: "center", sort: true}
+        ,{field: 'docker', title: 'Docker', width: 90, align: "center", sort: true
+          ,templet: function(d){
+            return d.docker ? 'YES' : '';
+          }
+        }
+        ,{field: 'default', title: '默认', width: 90, align: "center", sort: true
+          ,templet: function(d){
+            return d.default ? 'YES' : '';
+          }
+        }
+        ,{field: 'BT_backup', title: '种子目录', minWidth: 180, sort: true
+          ,templet: function(d){
+            return d.BT_backup || '';
+          }
+        }
+        ,{title: '操作', width: 120, templet: '#tableRowToolbar', fixed: "right", align: "center"}
+      ]]
+      ,done: function(res, curr, count){
+        //如果是异步请求数据方式，res即为你接口返回的信息。
+        //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+        //console.log(res);
+        //console.log(curr);  //得到当前页码
+        //console.log(count); //得到数据总量
+      }
+      ,page: false
+      ,limit:500
+    });
+
+    /**
+     * 监听：行工具条
+     */ 
+     table.on('tool(tableFilter)', function(obj){
+      let layEvent = obj.event;
+      let tr = obj.tr;
+      console.log(obj.data);
+      switch (layEvent) {
+        case 'edit':
+          clients_sel_action(obj.data.type, 'edit');
+          form.val("form", obj.data);
+          break;
+        case 'delete':
+          layer.confirm('真的删除 '+obj.data.name +'吗？', function(index){
+            $.ajax({
+              url: API.delete,
+              type:'get',
+              data: {uuid: obj.data.uuid},
+              success:function(data){
+                if (data.ret !== 200) {
+                  layer.msg(data.msg);
+                  return;
+                }
+                layer.msg('删除成功', function () {
+                });
+                obj.del();
+                layer.close(index);
+              },
+              complete: function () {
+              }
+            });
+          });
+          break;
+        default:
+          break;
+      }
+    });
+
+    //监听行单击事件
+    table.on('row(tableFilter)', function(obj){
+      //同下
+    });
+    //监听行双击事件
+    table.on('rowDouble(tableFilter)', function(obj){
+      //console.log(obj.tr) //得到当前行元素对象
+      console.log(obj.data) //得到当前行数据
+      //obj.del(); //删除当前行
+      //obj.update(fields) //修改当前行数据
+    });
+
+    /**
+      * 初始化表单，要加上，不然刷新部分组件可能会不加载
+      */
+    form.render();
+
+    //监听选择：类型
+    form.on('select(type)', function(data){
+      clients_sel_action(data.value, 'add');
+    });
+    //监听提交
+    form.on('submit(saveBtn)', function (data) {
+      $.ajax({
+        url: API.create,
+        type:'post',
+        data: data.field,
+        success:function(d){
+          console.log(d);
+          if (d.ret !== 200) {
+            layer.msg(d.msg);
+            return;
+          }
+          layer.msg('保存成功', function(){
+            //miniPage.hashHome();
+            window.location.reload();
+          });          
+        },
+        complete: function () {
+        },
+        error : function(request) {
+          layer.alert('未知错误，请截图当前界面，然后求助于QQ群：859882209、931954050、924099912！', {icon: 2, title: '出错提示'});
+        }
+      });
+      return false;
+    });
+  });
+</script>

@@ -1,0 +1,64 @@
+<style>
+.layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+
+    <form class="layui-form layuimini-form" lay-filter="form">
+      <input type="hidden" name="config_filename" value="weixin">
+      <input type="hidden" name="action" value="">
+      <div class="layui-form-item">
+        <label class="layui-form-label required">微信通知</label>
+        <div class="layui-input-block">
+          <input type="checkbox" name="switch" lay-skin="switch" lay-text="ON|OFF">
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">变化通知</label>
+        <div class="layui-input-block">
+          <input type="checkbox" name="notify_on_change" lay-skin="switch" lay-text="ON|OFF">
+        </div>
+        <tip>当成功数+失败数大于0，才发送通知。</tip>
+      </div>
+      <div class="layui-form-item">
+        <div class="layui-input-block">
+          <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">保存</button>
+          <button class="layui-btn layui-btn-primary" data-refresh="刷新">重置</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  layui.use(['form','miniPage'], function () {
+    let $ = layui.$,
+      form = layui.form,
+      layer = layui.layer,
+      miniPage = layui.miniPage;
+
+    const API = {
+      tableList: '/Api/Config?config_filename=weixin&action=get'
+      ,create: '/Api/Config'
+    };
+
+    /**
+     * 初始化赋值
+     */ 
+     $.getJSON(API.tableList, function (data) {
+      if (data.ret === 200) {
+        form.val("form", data.data);
+      }
+    });
+
+    /**
+     * 初始化表单，要加上，不然刷新部分组件可能会不加载
+     */
+    form.render();
+
+    //监听提交
+    form.on('submit(saveBtn)', function (data) {
+      ajax(API.create, data.field, '保存成功', true);
+      return false;
+    });
+  });
+</script>

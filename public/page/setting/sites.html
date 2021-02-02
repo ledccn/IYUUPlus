@@ -1,0 +1,391 @@
+<style>
+  .layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+  .layuimini-form .layui-form-item .layui-form-label {
+    width: 120px !important;
+  }
+  .layuimini-form .layui-form-item .required:after {
+    content: '*';
+    color: red;
+    position: absolute;
+    margin-left: 4px;
+    font-weight: bold;
+    line-height: 1.8em;
+    top: 6px;
+    right: 5px;
+  }
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+    <table id="tableId" lay-filter="tableFilter"></table>
+    <fieldset class="layui-elem-field">
+      <legend>新增/编辑站点</legend>
+      <div class="layui-field-box">
+        <form class="layui-form layuimini-form" lay-filter="form" id="form">
+          <input type="hidden" name="config_filename" value="user_sites">
+          <input type="hidden" name="action" value="add">
+          <div class="layui-form-item">
+            <label class="layui-form-label">站点名字 (<span id="sites_total"></span>个)</label>
+            <div class="layui-input-inline">
+              <select name="name" lay-filter="sites_sel" id="sites_sel" lay-verify="required" lay-reqtext="站点名字不能为空">
+              </select>
+            </div>
+          </div>
+          <div class="layuimini-form" id="site_field_view"></div>
+    
+          <div class="layui-form-item">
+            <div class="layui-input-block">
+              <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确认保存</button>
+              <button class="layui-btn layui-btn-primary" data-refresh="刷新">重置</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </fieldset>
+  </div>
+</div>
+<!-- 模板：站点选择 -->
+<script id="sites_sel_tpl" type="text/html">
+  <option value="">请选择站点</option>
+  {{#  layui.each(d, function(index, item){ }}
+  <option value="{{item}}">{{index + 1}}. {{ item }}</option>
+  {{#  }); }}
+</script>
+<!-- 模板：站点配置字段 -->
+<script id="site_field_tpl" type="text/html">
+  {{# if (d.cookie.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.cookie.required ? 'required' : '' }}">Cookie</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.cookie.name}}" {{ d.cookie.verify ? 'lay-verify="'+d.cookie.verify+'"' : '' }} lay-reqtext="{{d.cookie.name}}不能为空" placeholder="请输入{{d.cookie.name}}" class="layui-input">
+      <tip>作用：模拟您的操作行为。</tip>
+    </div>
+  </div>
+  {{# } }}
+  {{# if (d.passkey.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.passkey.required ? 'required' : '' }}">Passkey</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.passkey.name}}" {{ d.passkey.verify ? 'lay-verify="'+d.passkey.verify+'"' : '' }} lay-reqtext="{{d.passkey.name}}不能为空" placeholder="请输入{{d.passkey.name}}" class="layui-input">
+    </div>
+  </div>
+  {{# } }}
+  {{# if (d.id === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">用户UID</label>
+    <div class="layui-input-block">
+      <input type="number" name="id" lay-verify="required" lay-reqtext="用户id不能为空" placeholder="请输入用户id" class="layui-input">
+    </div>
+  </div>
+  {{# } }}
+  {{# if (d.downHash.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.downHash.required ? 'required' : '' }}">{{d.downHash.name}}</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.downHash.name}}" {{ d.downHash.verify ? 'lay-verify="'+d.downHash.verify+'"' : '' }} lay-reqtext="{{d.downHash.name}}不能为空" placeholder="请输入{{d.downHash.name}}" class="layui-input">
+      <tip>{{d.downHash.desc}}</tip>
+    </div>
+  </div>
+  {{# } }}
+  {{# if (d.limitRule === true) { }}
+  <div class="layui-form-item">
+    <div class="layui-inline">
+      <label class="layui-form-label required">流控规则</label>
+      <div class="layui-input-inline">
+        <input type="number" name="limitRule[count]" lay-verify="required" placeholder="单次辅种数" autocomplete="off" class="layui-input">
+      </div>
+    </div>
+    <div class="layui-inline">
+      <div class="layui-input-inline">
+        <input type="number" name="limitRule[sleep]" lay-verify="required" placeholder="间隔时间" autocomplete="off" class="layui-input">
+      </div>
+    </div>
+  </div>
+  {{# } }}
+  {{# if (d.urlJoin.visible === true) { }}
+  <div class="layui-form-item" pane="">
+    <label class="layui-form-label {{ d.urlJoin.required ? 'required' : '' }}">附加参数</label>
+    <div class="layui-input-block" id="{{d.urlJoin.id}}">
+      {{# if (typeof d.urlJoin.field === 'object') { }}
+      {{# if (d.urlJoin.field.https) { }}<input type="checkbox" name="url_join[https]" title="https=1" value="1" lay-filter="url_join">{{# } }}
+      {{# if (d.urlJoin.field.ipv4) { }}<input type="checkbox" name="url_join[ipv4]" title="ipv4=1" value="1" lay-filter="url_join">{{# } }}
+      {{# if (d.urlJoin.field.ipv6) { }}<input type="checkbox" name="url_join[ipv6]" title="ipv6=1" value="1" lay-filter="url_join">{{# } }}
+      <br/>
+      <tip>参数将会在下载种子时，附加到URL后面；示例：https://xxx.com/download.php?id=1&passkey=xxx&<span class="layui-badge-rim" id="join_value">https=1</span></tip>
+      {{# } }}
+    </div>
+  </div>
+  {{# } }}
+</script>
+<script>
+  layui.use(['table','form','miniPage','laytpl'], function () {
+    let $ = layui.$,
+      layer = layui.layer,
+      table = layui.table,
+      form = layui.form,
+      miniPage = layui.miniPage,
+      laytpl = layui.laytpl;
+
+    const API = {
+      sitesList: '/Api/sitesList'
+      ,tableList: '/Api/Config?config_filename=user_sites&action=list'
+      ,create: '/Api/Config'
+      ,delete: '/Api/Config?config_filename=user_sites&action=del'
+      ,sites_sel: 'sites_sel'
+      ,sites_total: 'sites_total'
+      ,site_field_view: 'site_field_view'
+      ,site_field_rule: {
+        cookie: {name: 'cookie', visible: true, required: false, desc: '', verify: '', reqtext: ''}
+        ,passkey: {name: 'passkey', visible: true, required: true, desc: '', verify: 'required', reqtext: ''}
+        ,id: false
+        ,limitRule: false
+        ,urlJoin: {visible: false, required: false, id: 'url_join', field: {https: true, ipv4: true, ipv6: true}}
+        ,urlReplace: {visible: false, required: false, id: 'url_replace', field: {}}
+        ,downHash: {name: 'downHash', visible: false, required: true, desc: '', verify: '', reqtext: ''}
+      }
+    };
+    //localStorage.setItem('site_field_rule',JSON.stringify(API));
+    sessionStorage.setItem('site_field_rule',JSON.stringify(API.site_field_rule));
+
+    /**
+     * 站点选择框
+     */
+    sites_sel_action = function(site = '', site_field_view = null) {
+      site_field_view = site_field_view || API.site_field_view;
+      let rule = JSON.parse(sessionStorage.getItem('site_field_rule'))
+        ,getTpl = site_field_tpl.innerHTML
+        ,view = document.getElementById(site_field_view);
+
+      view.innerHTML = '';
+      if (site === '') {
+        return ;
+      }
+      switch (site) {
+        //合作站点
+        case 'ourbits':
+          rule.id = true;
+          rule.limitRule = true;
+          rule.urlJoin.visible = true;
+          break;
+        case 'hdhome':
+        case 'pthome':
+        case 'hddolby':
+          rule.id = true;
+          rule.limitRule = true;
+          rule.downHash.visible = true;
+          rule.downHash.desc = 'RSS订阅页面 passkey= 后面的字符串。';
+          break;
+        case 'hdai':
+          rule.id = true;
+          rule.urlJoin.visible = true;
+          break;
+        case 'chdbits':
+          rule.id = true;
+          break;
+        //其他参数
+        case 'm-team':
+          rule.urlJoin.visible = true;
+          break;
+        case 'ssd':
+        case 'pt':
+          rule.limitRule = true;
+          break;
+        //Cookie必须
+        case 'hdcity':
+          rule.cookie.required = true;
+          rule.cookie.verify = 'required';
+          rule.passkey.required = false;
+          rule.passkey.verify = '';
+          break;
+        case 'hdchina':
+        case 'hdsky':
+          rule.cookie.required = true;
+          rule.cookie.verify = 'required';
+          rule.passkey.required = false;
+          rule.passkey.verify = '';
+          rule.limitRule = true;
+          break;
+        //默认规则
+        default:
+          break;
+      }
+      laytpl(getTpl).render(rule, function(html) {
+        view.innerHTML = html;
+      });
+      form.render();
+    }
+    /**
+     * 初始化表格
+     */
+    table.render({
+      elem: '#tableId'
+      ,url: API.tableList
+      ,parseData: function(res){
+        (res.ret === 200) && localStorage.setItem('user_sites',JSON.stringify(res));
+        return {
+          "code": res.ret === 200 ? 0 : res.ret,
+          "msg": res.msg,
+          "count": res.data.total,
+          "data": res.data.items
+        };
+      }
+      ,cols: [[
+        {field: 'name', title: '站点名称', width:150, align: "center", sort: true, fixed: 'left'}
+        ,{field: 'uuid', title: 'UUID', width:80, align: "center", hide: true}
+        ,{field: 'cookie', title: 'Cookie', minWidth:380, align: "center", sort: true}
+        ,{field: 'passkey', title: 'Passkey', width:300, align: "center", sort: true}
+        ,{field: 'id', title: '用户id', width: 110, align: "center", sort: true}
+        ,{field: 'limitRule', title: '流控规则', width: 110, align: "center", sort: true
+          ,templet: function(d){
+            if (d.limitRule) {
+              return Object.values(d.limitRule).join(' # ');
+            }
+            return '';
+          }
+        }
+        ,{field: 'url_join', title: '附加参数', width: 180, align: "center", sort: true
+          ,templet: function(d){
+            if (d.url_join) {
+              return Object.keys(d.url_join).join(', ');
+            }
+            return '';
+          }
+        }
+        ,{title: '操作', width: 120, templet: '#tableRowToolbar', fixed: "right", align: "center"}
+      ]]
+      ,done: function(res, curr, count){
+        //如果是异步请求数据方式，res即为你接口返回的信息。
+        //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+        //console.log(res);
+        //console.log(curr);  //得到当前页码
+        //console.log(count); //得到数据总量
+      }
+      ,page: false
+      ,limit:500
+    });
+
+    /**
+     * 监听：行工具条
+     */ 
+    table.on('tool(tableFilter)', function(obj){
+      let layEvent = obj.event;
+      let tr = obj.tr;
+      console.log(obj.data);
+      switch (layEvent) {
+        case 'edit':
+          sites_sel_action(obj.data.name);
+          //流控规则
+          if (obj.data.limitRule) {
+            format_input('limitRule', obj.data);
+          }
+          //附加参数
+          if (obj.data.url_join) {
+            format_input('url_join', obj.data);
+          }
+          form.val("form", obj.data);
+          break;
+        case 'delete':
+          layer.confirm('真的删除行么', function(index){
+            $.ajax({
+              url: API.delete,
+              type:'get',
+              data: {uuid: obj.data.uuid},
+              success:function(data){
+                if (data.ret !== 200) {
+                    layer.msg(data.msg);
+                    return;
+                }
+                layer.msg('删除成功', function () {
+                });
+                obj.del();
+                layer.close(index);
+              },
+              complete: function () {
+              }
+            });
+          });
+          break;
+        default:
+          break;
+      }
+    });
+
+    //监听行单击事件
+    table.on('row(tableFilter)', function(obj){
+      //同下
+    });
+    //监听行双击事件
+    table.on('rowDouble(tableFilter)', function(obj){
+      //console.log(obj.tr) //得到当前行元素对象
+      console.log(obj.data) //得到当前行数据
+      //obj.del(); //删除当前行
+      //obj.update(fields) //修改当前行数据
+    });
+
+    /**
+    * 初始化表单，要加上，不然刷新部分组件可能会不加载
+    */
+    form.render();
+
+    /**
+     * 请求接口，获取站点列表
+     */
+    $.getJSON(API.sitesList, function (d) {
+      if (d.ret === 200 || d.data.sites) {
+        localStorage.setItem('sites_list',JSON.stringify(d.data));
+        let getTpl = sites_sel_tpl.innerHTML
+          ,view = document.getElementById(API.sites_sel);
+        document.getElementById(API.sites_total).innerHTML = d.data.total;
+        laytpl(getTpl).render(d.data.sites, function(html){
+          view.innerHTML = html;
+        });
+        form.render('select');
+      }
+    });
+
+    /**
+     * 监听选择框：站点
+     */ 
+    form.on('select('+ API.sites_sel +')', function(data){
+      sites_sel_action(data.value);
+    });
+
+    /**
+     * 监听复选框：附加参数
+     */
+    form.on('checkbox('+ API.site_field_rule.urlJoin.id +')', function(data){
+      console.log(data.elem); //得到checkbox原始DOM对象
+      console.log(data.elem.checked); //是否被选中，true或者false
+      console.log(data.value); //复选框value值，也可以通过data.elem.value得到
+      console.log(data.othis); //得到美化后的DOM对象
+    });
+
+    /*
+    * 监听提交
+    */
+    form.on('submit(saveBtn)', function (data) {
+      //console.log(data.field);
+      $.ajax({
+        url: API.create,
+        type:'post',
+        data: data.field,
+        success:function(d){
+          console.log(d);
+          if (d.ret !== 200) {
+            layer.msg(d.msg);
+            return;
+          }
+          layer.msg('新增成功', function(){
+            //miniPage.hashHome();
+            window.location.reload();
+          });          
+        },
+        complete: function () {
+        },
+        error : function(request) {
+          layer.alert('未知错误，请截图当前界面，然后求助于QQ群：859882209、931954050、924099912！', {icon: 2, title: '出错提示'});
+        }
+      });
+      return false;
+    });
+  });
+</script>

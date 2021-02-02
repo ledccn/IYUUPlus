@@ -1,0 +1,152 @@
+<style>
+.layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+    <table id="tableId" lay-filter="tableFilter"></table>
+    <fieldset class="layui-elem-field">
+      <legend>新增/编辑目录</legend>
+      <div class="layui-field-box">
+        <form class="layui-form layuimini-form" lay-filter="form">
+          <input type="hidden" name="config_filename" value="folder">
+          <input type="hidden" name="action" value="add">
+          <input type="hidden" name="uuid" value="">
+          <div class="layui-form-item">
+            <label class="layui-form-label required">目录名字</label>
+            <div class="layui-input-block">
+              <input type="text" name="name" lay-verify="required" lay-reqtext="目录名字不能为空" placeholder="请输入目录名字" class="layui-input">
+              <tip>给这个目录起个名字，方便你更好的识别它。</tip>
+            </div>
+          </div>
+          <div class="layui-form-item">
+            <label class="layui-form-label required">使用的目录</label>
+            <div class="layui-input-block">
+              <input type="text" name="dir" lay-verify="required" lay-reqtext="目录不能为空" placeholder="请输入目录" class="layui-input">
+              <tip>作用：下载目录、BT_backup、辅种目录排除、辅种目录选择等，都会用到此处的设置。</tip>
+            </div>
+          </div>
+    
+          <div class="layui-form-item">
+            <div class="layui-input-block">
+              <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确定保存</button>
+              <button class="layui-btn layui-btn-primary" data-refresh="刷新">重置</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </fieldset>
+  </div>
+</div>
+<script>
+  layui.use(['table','form','miniPage','laytpl'], function () {
+    let $ = layui.$,
+      layer = layui.layer,
+      table = layui.table,
+      form = layui.form,
+      miniPage = layui.miniPage,
+      laytpl = layui.laytpl;
+
+    const API = {
+      tableList: '/Api/Config?config_filename=folder&action=list'
+      ,create: '/Api/Config'
+      ,delete: '/Api/Config?config_filename=folder&action=del'
+    };
+
+    /**
+     * 初始化表格
+     */ 
+     table.render({
+      elem: '#tableId'
+      ,url: API.tableList
+      ,parseData: function(res){
+        (res.ret === 200) && localStorage.setItem('user_folder',JSON.stringify(res));
+        return {
+          "code": res.ret === 200 ? 0 : res.ret,
+          "msg": res.msg,
+          "count": res.data.total,
+          "data": res.data.items
+        };
+      }
+      ,cols: [[
+        {field: 'name', title: '名称', width:180, align: "center", sort: true, fixed: 'left'}
+        ,{field: 'uuid', title: 'UUID', width:80, align: "center", hide: true}
+        ,{field: 'dir', title: '使用的目录', minWidth: 180, sort: true
+          ,templet: function(d){
+            return d.dir || '';
+          }
+        }
+        ,{title: '操作', width: 120, templet: '#tableRowToolbar', fixed: "right", align: "center"}
+      ]]
+      ,done: function(res, curr, count){
+        //如果是异步请求数据方式，res即为你接口返回的信息。
+        //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+        //console.log(res);
+        //console.log(curr);  //得到当前页码
+        //console.log(count); //得到数据总量
+      }
+      ,page: false
+      ,limit:500
+    });
+
+    /**
+     * 监听：行工具条
+     */ 
+     table.on('tool(tableFilter)', function(obj){
+      let layEvent = obj.event;
+      let tr = obj.tr;
+      console.log(obj.data);
+      switch (layEvent) {
+        case 'edit':
+          obj.data.action = layEvent;
+          form.val("form", obj.data);
+          break;
+        case 'delete':
+          layer.confirm('真的删除 '+obj.data.name +'吗？', function(index){
+            $.ajax({
+              url: API.delete,
+              type:'get',
+              data: {uuid: obj.data.uuid},
+              success:function(data){
+                if (data.ret !== 200) {
+                  layer.msg(data.msg);
+                  return;
+                }
+                layer.msg('删除成功', function () {
+                });
+                obj.del();
+                layer.close(index);
+              },
+              complete: function () {
+              }
+            });
+          });
+          break;
+        default:
+          break;
+      }
+    });
+
+    //监听行单击事件
+    table.on('row(tableFilter)', function(obj){
+      //同下
+    });
+    //监听行双击事件
+    table.on('rowDouble(tableFilter)', function(obj){
+      //console.log(obj.tr) //得到当前行元素对象
+      console.log(obj.data) //得到当前行数据
+      //obj.del(); //删除当前行
+      //obj.update(fields) //修改当前行数据
+    });
+
+    /**
+     * 初始化表单，要加上，不然刷新部分组件可能会不加载
+     */
+    form.render();
+
+    //监听提交
+    form.on('submit(saveBtn)', function (data) {
+      ajax(API.create, data.field, '保存成功', true);
+      return false;
+    });
+  });
+</script>

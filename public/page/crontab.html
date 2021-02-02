@@ -1,0 +1,555 @@
+<style>
+  .layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+    <fieldset class="layui-elem-field">
+      <legend>新增/编辑计划任务</legend>
+      <div class="layui-field-box">
+        <form class="layui-form layuimini-form" lay-filter="form" id="form">
+          <input type="hidden" name="config_filename" value="crontab">
+          <div class="layui-form-item">
+            <label class="layui-form-label required">任务类型</label>
+            <div class="layui-input-inline">
+              <select name="type" lay-filter="type" lay-verify="required" lay-reqtext="任务类型不能为空" id="type">
+                <option value="">请选择任务类型</option>
+                <option value="reseed">辅种任务</option>
+                <option value="download">下载任务</option>
+                <option value="url">访问URL</option>
+                <option value="shell">Shell脚本</option>
+                <option value="patch">备份目录</option>
+                <option value="ddns">动态域名DDNS</option>
+                <option value="clear_log">清除日志</option>
+              </select>
+            </div>
+          </div>
+          <div class="layui-form-item">
+            <label class="layui-form-label required">任务名称</label>
+            <div class="layui-input-block">
+              <input type="text" name="name" lay-verify="required" lay-reqtext="任务名称不能为空" placeholder="请输入任务名称" class="layui-input" id="name">
+              <tip>给任务起个名字，方便你找到它。</tip>
+            </div>
+          </div>
+          <div class="layui-form-item">
+            <label class="layui-form-label">任务使能</label>
+            <div class="layui-input-block">
+              <input type="checkbox" name="switch" lay-skin="switch" lay-text="YES|NO" lay-filter="switch" id="switch">
+            </div>
+          </div>
+          <div class="layuimini-form" id="crontab_type_view"></div>
+
+          <div class="layui-form-item">
+            <div class="layui-input-block">
+              <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确认保存</button>
+              <button class="layui-btn layui-btn-primary" data-refresh="刷新">刷新</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </fieldset>
+
+    <table id="tableId" lay-filter="tableFilter"></table>
+  </div>
+</div>
+
+<!-- 模板：计划任务配置字段 -->
+<script type="text/html" id="crontab_type_tpl">
+  <input type="hidden" name="action" value="{{ d.action || 'add'}}">
+  {{# if (d.action === 'edit') { }}
+  <input type="hidden" name="uuid" value="">
+  <input type="hidden" name="startTime" value="">
+  {{# } }}
+
+  <div class="layui-form-item">
+    <label class="layui-form-label required">执行周期</label>
+    <div class="layui-inline">
+      <div class="layui-input-inline" style="width: 100px;">
+        <select name="where" lay-filter="where" lay-verify="required" lay-reqtext="执行周期不能为空" id="where">
+          <option value="day" {{ d.where === 'day' ? 'selected' : ''}}>每天</option>
+          <option value="day_n" {{ d.where === 'day_n' ? 'selected' : ''}}>N天</option>
+          <option value="hour" {{ d.where === 'hour' ? 'selected' : ''}}>每小时</option>
+          <option value="hour_n" {{ d.where === 'hour_n' ? 'selected' : ''}}>N小时</option>
+          <option value="minute_n" {{ d.where === 'minute_n' ? 'selected' : ''}}>N分钟</option>
+          <option value="week" {{ d.where === 'week' ? 'selected' : ''}}>每星期</option>
+          <option value="month" {{ d.where === 'month' ? 'selected' : ''}}>每月</option>
+        </select>
+      </div>
+    </div>
+    <span id="crontab_where_view"></span>
+  </div>
+
+  {{# if (d.type === 'reseed') { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">辅种的站点</label>
+    <div class="layui-input-block" id="reseed_sites_view">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">辅种的下载器</label>
+    <div class="layui-input-block" id="reseed_clients_view">
+    </div>
+  </div>
+  {{# } }}
+
+  {{# if (d.type === 'url') { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">URL地址</label>
+    <div class="layui-input-block">
+      <input type="text" name="urladdress" lay-verify="required" placeholder="请输入URL地址" class="layui-input" value="http://">
+    </div>
+  </div>
+  {{# } }}
+
+  {{# if (d.type === 'shell') { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">脚本内容</label>
+    <div class="layui-input-block">
+      <textarea placeholder="请输入脚本内容" class="layui-textarea" name="body"></textarea>
+    </div>
+  </div>
+  {{# } }}
+</script>
+
+<!-- 模板：辅种任务 [站点] 复选框 -->
+<script id="reseed_sites_tpl" type="text/html">
+{{#  layui.each(d, function(index, item){ }}
+<input type="checkbox" name="sites[{{item}}]" title="{{item}}" checked>
+{{#  }); }}
+</script>
+
+<!-- 模板：辅种任务 [下载器] 复选框 -->
+<script id="reseed_clients_tpl" type="text/html">
+{{#  layui.each(d, function(index, item){ }}
+<input type="checkbox" name="clients[{{item.uuid}}]" title="{{ item.name }}" checked>
+{{#  }); }}
+</script>
+
+<!-- 模板：计划任务 [执行周期] 组合 -->
+<script type="text/html" id="crontab_where_tpl">
+  {{# if (d.weeks) { }}
+  <div class="layui-inline">
+    <div class="layui-input-inline" style="width: 100px;">
+      <select name="weeks" lay-filter="weeks" lay-verify="required" id="weeks">
+        <option value="1" selected>周一</option>
+        <option value="2">周二</option>
+        <option value="3">周三</option>
+        <option value="4">周四</option>
+        <option value="5">周五</option>
+        <option value="6">周六</option>
+        <option value="0">周日</option>
+      </select>
+    </div>
+  </div>
+  {{# } }}
+  {{# if (d.day) { }}
+  <div class="layui-inline">
+    <div class="layui-input-inline" style="width: 140px;">
+      <input type="number" name="day" lay-verify="required" lay-reqtext="{{ d.where === 'day_n' ? '间隔天数' : '每月第几日' }}不能为空" placeholder="请输入{{ d.where === 'day_n' ? '间隔天数' : '每月第几日' }}" class="layui-input" id="day">
+    </div>
+    <div class="layui-form-mid">{{ d.where === 'day_n' ? '天' : '日' }}</div>
+  </div>
+  {{# } }}
+  {{# if (d.hour) { }}
+  <div class="layui-inline">
+    <div class="layui-input-inline" style="width: 100px;">
+      <input type="number" name="hour" lay-verify="required" lay-reqtext="小时不能为空" placeholder="请输入小时" class="layui-input" id="hour">
+    </div>
+    <div class="layui-form-mid">小时</div>
+  </div>
+  {{# } }}
+  {{# if (d.minute) { }}
+  <div class="layui-inline">
+    <div class="layui-input-inline" style="width: 100px;">
+      <input type="number" name="minute" lay-verify="required" lay-reqtext="分钟不能为空" placeholder="请输入分钟" class="layui-input" id="minute">
+    </div>
+    <div class="layui-form-mid">分钟</div>
+  </div>
+  {{# } }}
+</script>
+
+<!-- 模板：表格行工具条 -->
+<script type="text/html" id="tableToolbar">
+  <span class="layui-badge layui-bg-cyan" lay-event="run">运行</span>
+  <span class="layui-badge layui-bg-orange" lay-event="log">日志</span>
+  <span class="layui-badge layui-bg-gray" lay-event="clearLog">清理</span>
+  <span class="layui-badge layui-bg-green" lay-event="edit">编辑</span>
+  <span class="layui-badge" lay-event="delete">删除</span>
+</script>
+<script>
+  layui.use(['table','form','miniPage','laytpl','code'], function () {
+    let $ = layui.$,
+      layer = layui.layer,
+      table = layui.table,
+      form = layui.form,
+      miniPage = layui.miniPage,
+      laytpl = layui.laytpl;
+
+    const API = {
+      tableList: '/Api/Config?config_filename=crontab&action=list'
+      ,create: '/Api/Config'
+      ,delete: '/Api/Config?config_filename=crontab&action=del'
+      ,taskRun: '/Task/start'
+      ,taskLogs: '/Task/logs'
+      ,taskClearLogs: '/Task/clearLogs'
+    };
+
+    /**
+     * 任务类型 选择框
+     * @param {string} type       任务类型
+     * @param {string} action     动作(增、删、改、查)
+     * @param {string} where      执行周期
+     * @param {function} callback 回调函数
+     */
+    crontab_sel_action = function(type = '', action = '', where = 'day', callback = null) {
+      let rule = {
+          type: type
+          ,action: action
+          ,where: where
+        }
+        ,getTpl = crontab_type_tpl.innerHTML
+        ,view = getById('crontab_type_view');
+      //初始清空
+      view.innerHTML = '';
+      if (type === '') {
+        getById('switch').checked = false;
+        form.render();
+        return ;
+      }
+      //新增任务时，清空任务名称 选中任务使能
+      if (action === '' || action === 'add') {
+        getById('name').value = '';
+        getById('switch').checked = true;
+      }
+      laytpl(getTpl).render(rule, function(html) {
+        view.innerHTML = html;
+      });
+      form.render();
+      //联动：任务周期
+      crontab_where_sel_action(rule.where);
+      //联动：辅种站点与下载器的复选框
+      reseed_sel_action(type, callback);
+    }
+
+    /**
+     * 任务周期选择框
+     * @param {string} where     执行周期
+     */
+    crontab_where_sel_action = function(where = '') {
+      let rule = {
+          where: where
+          ,weeks: (where === 'week' ? true : false)
+          ,day: ($.inArray(where, ['day_n', 'month']) >= 0 ? true : false)
+          ,hour: ($.inArray(where, ['hour', 'minute_n']) < 0 ? true : false)
+          ,minute: where ? true : false
+        }
+        ,getTpl = crontab_where_tpl.innerHTML
+        ,view = getById('crontab_where_view');
+      //初始清空
+      view.innerHTML = '';
+      if (where === '') {
+        return ;
+      }
+      laytpl(getTpl).render(rule, function(html) {
+        view.innerHTML = html;
+      });
+      form.render();
+    }
+
+    /**
+     * 任务选择框联动，辅种站点与下载器的选择
+     * @param {string}   type       任务类型
+     * @param {function} callback   回调函数
+     */
+    reseed_sel_action = function(type = '', callback) {
+      if (type !== 'reseed') {
+        return;
+      }
+      //辅种站点
+      $.getJSON('/Api/Config?config_filename=user_sites&action=list', function (d) {
+        let getTpl = reseed_sites_tpl.innerHTML
+          ,view = getById('reseed_sites_view');
+        if (d.ret !== 200 || d.data.total <= 0) {
+          return;
+        }
+        let data = Object.keys(d.data.items).map(function (key){
+          return d.data.items[key].name;
+        });
+        laytpl(getTpl).render(data, function(html) {
+          view.innerHTML = html;
+        });
+        callback !== null && typeof callback[0] === 'function' && callback[0]();
+        form.render('checkbox');
+      });
+      //辅种下载器
+      $.getJSON('/Api/Config?config_filename=clients&action=list', function (d) {
+        let getTpl = reseed_clients_tpl.innerHTML
+          ,view = getById('reseed_clients_view');
+        if (d.ret !== 200 || d.data.total <= 0) {
+          return;
+        }
+        laytpl(getTpl).render(d.data.items, function(html) {
+          view.innerHTML = html;
+        });
+        callback !== null && typeof callback[1] === 'function' && callback[1]();
+        form.render('checkbox');
+      });
+    }
+
+    /**
+     * 初始化表格
+     */ 
+    table.render({
+      elem: '#tableId'
+      ,url: API.tableList
+      ,parseData: function(res){
+        return {
+          "code": res.ret === 200 ? 0 : res.ret,
+          "msg": res.msg,
+          "count": res.data.total,
+          "data": res.data.items
+        };
+      }
+      ,cols: [[
+        {field: 'name', title: '任务名称', width:180, align: "center", sort: true, fixed: 'left'}
+        ,{field: 'uuid', title: 'UUID', width:80, align: "center", hide: true}
+        ,{field: 'type', title: '任务类型', width:150, align: "center", sort: true
+          ,templet: function(d){
+            let type = '';
+            switch (d.type) {
+              case 'reseed':
+                type = '辅种任务';
+                break;
+              case 'download':
+                type = '下载任务';
+                break;
+              case 'url':
+                type = '访问URL';
+                break;
+              case 'shell':
+                type = 'shell脚本';
+                break;
+              case 'patch':
+                type = '备份目录';
+                break;
+              case 'ddns':
+                type = '动态域名DDNS';
+                break;
+              case 'clear_log':
+                type = '清除日志'
+                break;
+              default:
+                break;
+            }
+            return type;
+          }
+        }
+        ,{field: 'switch', title: '使能', width: 73, align: "center", sort: true
+          ,templet: function(d){
+            return d.switch ? '<span class="layui-badge layui-bg-green">YES</span>' : '<span class="layui-badge">NO</span>';
+          }
+        }
+        ,{field: 'where', title: '执行周期', width:110, sort: true
+          ,templet: function(d){
+            return d.where ? '<span class="layui-badge layui-bg-orange">' + d.crontab + '</span>' : '';
+          }
+        }
+        ,{field: 'urladdress', title: 'URL地址', minWidth: 130, align: "center", sort: true
+          ,templet: function(d){
+            return d.urladdress || '';
+          }
+        }
+        ,{field: 'body', title: '任务/脚本内容', minWidth: 180, sort: true
+          ,templet: function(d){
+            return d.body || d.command || '';
+          }
+        }
+        ,{title: '操作', width: 230, templet: '#tableToolbar', fixed: "right", align: "center"}
+      ]]
+      ,done: function(res, curr, count){
+        //如果是异步请求数据方式，res即为你接口返回的信息。
+        //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+        //console.log(res);
+        //console.log(curr);  //得到当前页码
+        //console.log(count); //得到数据总量
+      }
+      ,skin: 'line'
+      //,even: true
+      ,size: 'sm'
+      ,page: false
+      ,limit:500
+    });
+
+    /**
+     * 监听：行工具条
+     */ 
+    table.on('tool(tableFilter)', function(obj){
+      let layEvent = obj.event;
+      let tr = obj.tr;
+      //console.log(obj.data);
+      switch (layEvent) {
+        case 'run':
+          $.ajax({
+            url: API.taskRun,
+            type:'get',
+            data: {uuid: obj.data.uuid},
+            success:function(data){
+              if (data.ret !== 200) {
+                layer.msg(data.msg);
+                return;
+              }
+              let msg = data.data.success ? '运行成功' : '运行失败';
+              layer.msg(msg, function () {
+              });
+            },
+            complete: function () {
+            }
+          });
+          break;
+        case 'clearLog':
+          $.ajax({
+            url: API.taskClearLogs,
+            type:'get',
+            data: {uuid: obj.data.uuid},
+            success:function(data){
+              if (data.ret !== 200) {
+                layer.msg(data.msg);
+                return;
+              }
+              let msg = data.data.success ? '日志清理成功' : '日志清理失败';
+              layer.msg(msg, function () {
+              });
+            },
+            complete: function () {
+            }
+          });
+          break;
+        case 'log':
+          $.ajax({
+            url: API.taskLogs,
+            type:'get',
+            data: {uuid: obj.data.uuid},
+            success:function(data){
+              if (data.ret !== 200) {
+                layer.msg(data.msg);
+                return;
+              }
+              layer.open({
+                type: 1
+                ,title: false
+                ,area: ['1080px','700px']
+                ,offset: '100px'
+                ,shade: 0.8
+                ,id: obj.data.uuid
+                ,moveType: 1 //拖拽模式，0或者1
+                ,content: '<pre class="layui-code">'+ data.data.logs +'</pre>'
+                ,success: function(layero){
+                  layui.code();
+                }
+              });
+            },
+            complete: function () {
+            }
+          });
+          break;
+        case 'edit':
+          getById('switch').checked = false;  //取消使能
+          let formData = JSON.parse(JSON.stringify(obj.data));
+          format_input('sites', formData);
+          format_input('clients', formData);
+          delete formData.sites;
+          delete formData.clients;
+          let callback = [
+            function(){
+              //取消复选框
+              $('#reseed_sites_view').find(':input').each(function () {
+                $(this).attr('checked', false);
+              });
+              form.val("form", formData);
+            },
+            function(){
+              //取消复选框
+              $('#reseed_clients_view :input').removeAttr("checked");
+              form.val("form", formData);
+            }
+          ];
+          crontab_sel_action(obj.data.type, 'edit', obj.data.where, callback);
+          form.val("form", formData);
+          break;
+        case 'delete':
+          layer.confirm('真的删除 '+obj.data.name +'吗？', function(index){
+            $.ajax({
+              url: API.delete,
+              type:'get',
+              data: {uuid: obj.data.uuid},
+              success:function(data){
+                if (data.ret !== 200) {
+                  layer.msg(data.msg);
+                  return;
+                }
+                layer.msg('删除成功', function () {
+                });
+                obj.del();
+                layer.close(index);
+              },
+              complete: function () {
+              }
+            });
+          });
+          break;
+        default:
+          break;
+      }
+    });
+
+    //监听行单击事件
+    table.on('row(tableFilter)', function(obj){
+      //同下
+    });
+    //监听行双击事件
+    table.on('rowDouble(tableFilter)', function(obj){
+      //console.log(obj.tr) //得到当前行元素对象
+      console.log(obj.data) //得到当前行数据
+      //obj.del(); //删除当前行
+      //obj.update(fields) //修改当前行数据
+    });
+
+    /**
+      * 初始化表单，要加上，不然刷新部分组件可能会不加载
+      */
+    form.render();
+
+    //监听选择：类型
+    form.on('select(type)', function(data){
+      crontab_sel_action(data.value, 'add');
+    });
+    //监听选择：执行周期where
+    form.on('select(where)', function(data){
+      crontab_where_sel_action(data.value);
+    });
+    //监听提交
+    form.on('submit(saveBtn)', function (data) {
+      $.ajax({
+        url: API.create,
+        type:'post',
+        data: data.field,
+        success:function(d){
+          console.log(d);
+          if (d.ret !== 200) {
+            layer.msg(d.msg);
+            return;
+          }
+          layer.msg('保存成功', function(){
+            //miniPage.hashHome();
+            window.location.reload();
+          });          
+        },
+        complete: function () {
+        },
+        error : function(request) {
+          layer.alert('未知错误，请截图当前界面，然后求助于QQ群：859882209、931954050、924099912！', {icon: 2, title: '出错提示'});
+        }
+      });
+      return false;
+    });
+  });
+</script>

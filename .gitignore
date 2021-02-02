@@ -1,0 +1,9 @@
+/.git
+/.idea
+/.vscode
+/composer
+/db
+/composer.lock
+*.bat
+*.log
+.env
