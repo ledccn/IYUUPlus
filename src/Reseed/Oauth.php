@@ -18,6 +18,8 @@ class Oauth
      */
     public static function init($config = [])
     {
+        $dir = dirname(self::SiteLoginCache);
+        is_dir($dir) or mkdir($dir, 0777, true);
         self::$conf = $config;
     }
 

@@ -119,6 +119,9 @@ class Config
     public static function createFilePath(string $name = '', string $type = 'array'):string
     {
         $ext = isset(self::extMap[$type]) ? self::extMap[$type] : self::extMap['object'];
+        clearstatcache();
+        is_dir(db_path()) or mkdir(db_path(), 0777, true);
+
         return db_path() . DIRECTORY_SEPARATOR . $name . $ext;
     }
 }

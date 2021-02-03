@@ -26,6 +26,7 @@ ENV APP_ENV=${app_env:-"prod"} \
 RUN set -ex \
         # change apk source repo
         #&& sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/' /etc/apk/repositories \
+        #&& sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories \
         && apk update \
         && apk add --no-cache \
         # Install base packages ('ca-certificates' will install 'nghttp2-libs')

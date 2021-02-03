@@ -41,7 +41,7 @@ function getUUID(int $pid = 0):string
     if (function_exists('posix_getpid')) {
         $pid = posix_getpid();
     }
-    return sprintf('pid%d_%d_%s', $pid, mt_rand(1, 9999), uniqid());
+    return sprintf('pid%d_%s', $pid, uniqid());
 }
 
 /**

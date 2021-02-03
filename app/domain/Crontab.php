@@ -228,10 +228,8 @@ class Crontab
     {
         clearstatcache();
         $_dir = cron_path() . DIRECTORY_SEPARATOR . $dir;
-        if(!is_dir($_dir))
-        {
-            mkdir($_dir, 0777, true);
-        }
+        is_dir($_dir) or mkdir($_dir, 0777, true);
+
         return $_dir . DIRECTORY_SEPARATOR  . $filename . $suffix;
     }
 
