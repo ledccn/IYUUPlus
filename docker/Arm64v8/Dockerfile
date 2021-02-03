@@ -17,7 +17,7 @@ ARG app_env=prod
 
 ENV APP_ENV=${app_env:-"prod"} \
     TIMEZONE=${timezone:-"Asia/Shanghai"} \
-    cron="3 */10 * * *"
+    cron="10 */10 * * *"
 
 ##
 # ---------- building ----------
@@ -26,7 +26,7 @@ ENV APP_ENV=${app_env:-"prod"} \
 RUN set -ex \
         # change apk source repo
         #&& sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/' /etc/apk/repositories \
-        #&& sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories \
+        && sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories \
         && apk update \
         && apk add --no-cache \
         # Install base packages ('ca-certificates' will install 'nghttp2-libs')
@@ -79,7 +79,8 @@ RUN set -ex \
         php7-zip \
         php7-zlib \
         php7-xml \
-        && git clone https://github.com/ledccn/IYUUPlus.git /IYUU \
+        # && git clone https://github.com/ledccn/IYUUPlus.git /IYUU \
+        && git clone https://gitee.com/ledc/iyuuplus.git /IYUU \
         && cd /IYUU && php -r "file_exists('.env') || copy('.env.example', '.env');" \
         && apk del --purge *-dev \
         # install latest composer
