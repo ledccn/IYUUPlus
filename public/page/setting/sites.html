@@ -229,11 +229,12 @@
         };
       }
       ,cols: [[
-        {field: 'name', title: '站点名称', width:150, align: "center", sort: true, fixed: 'left'}
+        {type:'numbers', fixed: 'left'}
+        ,{field: 'name', title: '站点名称', width:130, align: "center", sort: true}
         ,{field: 'uuid', title: 'UUID', width:80, align: "center", hide: true}
         ,{field: 'cookie', title: 'Cookie', minWidth:380, align: "center", sort: true}
         ,{field: 'passkey', title: 'Passkey', width:300, align: "center", sort: true}
-        ,{field: 'id', title: '用户id', width: 110, align: "center", sort: true}
+        ,{field: 'id', title: '用户id', width: 90, align: "center", sort: true}
         ,{field: 'limitRule', title: '流控规则', width: 110, align: "center", sort: true
           ,templet: function(d){
             if (d.limitRule) {

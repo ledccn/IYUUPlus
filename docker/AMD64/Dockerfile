@@ -81,7 +81,8 @@ RUN set -ex \
         php7-zip \
         php7-zlib \
         php7-xml \
-        && git clone https://github.com/ledccn/IYUUPlus.git /IYUU \
+        # && git clone https://github.com/ledccn/IYUUPlus.git /IYUU \
+        && git clone https://gitee.com/ledc/iyuuplus.git /IYUU \
         && cd /IYUU && php -r "file_exists('.env') || copy('.env.example', '.env');" \
         && apk del --purge *-dev \
         # install latest composer

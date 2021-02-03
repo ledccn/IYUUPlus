@@ -38,11 +38,11 @@
         </div>
         <div class="layui-form-item">
           <label class="layui-icon layui-icon-username" for="token"></label>
-          <input type="text" name="token" lay-verify="required" placeholder="请填写爱语飞飞Token" autocomplete="off" class="layui-input" id="token">
+          <input type="text" name="token" lay-verify="required|token" placeholder="请填写爱语飞飞Token" lay-reqtext="爱语飞飞Token不能为空" autocomplete="off" class="layui-input" id="token">
         </div>
         <div class="layui-form-item">
           <label class="layui-icon layui-icon-password"></label>
-          <input type="password" name="password" lay-verify="required" placeholder="密码" autocomplete="off" class="layui-input" value="">
+          <input type="password" name="password" lay-verify="required|pass" placeholder="密码" lay-reqtext="密码不能为空（首次填写可以设置密码）。" autocomplete="off" class="layui-input" value="">
         </div>
         <div class="layui-form-item">
           <input type="checkbox" name="rememberMe" value="true" lay-skin="primary" title="记住Token" id="rememberMe">
@@ -157,6 +157,29 @@
       });
     });
 
+    /**
+     * 表单验证
+     */
+    form.verify({
+      token: function(value, item){ //value：表单的值、item：表单的DOM对象
+        if(!new RegExp("^[a-zA-Z0-9_\u4e00-\u9fa5\\s·]+$").test(value)){
+          return '爱语飞飞Token不能有特殊字符';
+        }
+        if(/(^\_)|(\__)|(\_+$)/.test(value)){
+          return '爱语飞飞Token首尾不能出现下划线\'_\'';
+        }
+        if(/^\d+\d+\d$/.test(value)){
+          return '爱语飞飞Token不能全为数字';
+        }
+      }
+      //我们既支持上述函数式的方式，也支持下述数组的形式
+      //数组的两个值分别代表：[正则匹配、匹配不符时的提示文字]
+      ,pass: [
+        /^[\S]{6,30}$/
+        ,'密码必须6到30位，且不能出现空格'
+      ] 
+    });
+    
     // 登录事件
     form.on('submit('+ API.submitFilter +')', function (d) {
       console.log(d.field);
@@ -193,6 +216,7 @@
 
     /**
      * 用户验证弹窗
+     * @param {object} recommend    推荐站点
      */ 
     user_verify_action = function(recommend) {
       getById('verify').classList.remove('layui-hide');
@@ -216,6 +240,8 @@
 
     /**
      * 弹窗内：显示站点选择框
+     * @param {object} recommend    推荐站点
+     * @param {int} total           推荐站点总数
      */
     sites_show = function(recommend = null, total = 0) {
       let getTpl = sites_sel_tpl.innerHTML
@@ -229,6 +255,7 @@
 
     /**
      * 弹窗内：站点选择框动作
+     * @param {string} site       站点名字
      */
     sites_sel_action = function(site = '') {
       let rule = JSON.parse(JSON.stringify(API.site_field_rule))

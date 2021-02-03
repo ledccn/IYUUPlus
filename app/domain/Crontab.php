@@ -80,7 +80,7 @@ class Crontab
             !is_dir($dir) and mkdir($dir, 0777, true);
         });
 
-        // 初始化计划任务文件
+        // 初始化计划任务文件[不同平台的配置导入，会造成command错误，需要重新解析命令]
         $cron = Conf::get(domainConfig::filename['crontab'], Constant::config_format, []);
         array_walk($cron, function ($v, $k){
             self::createHock($v);
