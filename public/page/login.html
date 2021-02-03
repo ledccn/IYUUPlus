@@ -41,7 +41,11 @@
           <input type="text" name="token" lay-verify="required" placeholder="请填写爱语飞飞Token" autocomplete="off" class="layui-input" id="token">
         </div>
         <div class="layui-form-item">
-          <input type="checkbox" name="rememberMe" value="true" lay-skin="primary" title="记住" id="rememberMe">
+          <label class="layui-icon layui-icon-password"></label>
+          <input type="password" name="password" lay-verify="required" placeholder="密码" autocomplete="off" class="layui-input" value="">
+        </div>
+        <div class="layui-form-item">
+          <input type="checkbox" name="rememberMe" value="true" lay-skin="primary" title="记住Token" id="rememberMe">
         </div>
         <div class="layui-form-item">
           <button class="layui-btn layui-btn layui-btn-normal layui-btn-fluid" lay-submit="" lay-filter="login">登 入</button>
@@ -156,21 +160,20 @@
     // 登录事件
     form.on('submit('+ API.submitFilter +')', function (d) {
       console.log(d.field);
-      data = d.field;
       //Token
-      if (data.token === '') {
+      if (d.field.token === '') {
         layer.msg('爱语飞飞token不能为空！');
         return false;
       }
       //记住
-      sessionStorage.setItem('token', data.token);
-      if (data.rememberMe) {
-        localStorage.setItem('token', data.token);
+      sessionStorage.setItem('token', d.field.token);
+      if (d.field.rememberMe) {
+        localStorage.setItem('token', d.field.token);
       } else {
         localStorage.removeItem('token');
       }
       //Ajax
-      $.getJSON(API.Login, {token: data.token}, function (data) {
+      $.getJSON(API.Login, d.field, function (data) {
         if (data && data.ret === 200) {
           localStorage.setItem('sites', JSON.stringify(data.data.sites));
           layer.msg('登录成功，正在跳转……', function () {
@@ -212,7 +215,7 @@
     }
 
     /**
-     * 显示站点选择框
+     * 弹窗内：显示站点选择框
      */
     sites_show = function(recommend = null, total = 0) {
       let getTpl = sites_sel_tpl.innerHTML
@@ -225,7 +228,7 @@
     }
 
     /**
-     * 站点选择框动作
+     * 弹窗内：站点选择框动作
      */
     sites_sel_action = function(site = '') {
       let rule = JSON.parse(JSON.stringify(API.site_field_rule))
@@ -243,14 +246,14 @@
     }
 
     /**
-     * 监听选择框：站点
+     * 监听弹窗内：选择框 站点
      */ 
     form.on('select('+ API.sites_sel +')', function(data){
       sites_sel_action(data.value);
     });
 
     /*
-    * 监听用户验证提交
+    * 监听弹窗内：用户验证提交
     */
     form.on('submit(saveBtn)', function (data) {
       data.field['token'] = getById('token').value;

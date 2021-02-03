@@ -1,7 +1,9 @@
 <?php
 namespace app\domain;
 
+use IYUU\Library\IFile;
 use support\Request;
+use app\common\exception\BusinessException;
 use app\common\components\Curl;
 use app\common\Constant;
 use app\common\Config;
@@ -92,5 +94,77 @@ class Users
             $rs['msg'] = $msg;
             return $rs;
         }
+    }
+
+    /**
+     * 验证用户输入的密码
+     * @param Request $request
+     * @return bool
+     * @throws BusinessException
+     */
+    public static function checkPassword(Request $request):bool
+    {
+        $password = $request->get('password');
+        if (empty($password)) {
+            throw new BusinessException('密码不能为空', 250);
+        }
+        $userProfile = Config::get(self::getUserProfileName(), 'json');
+        if (is_null($userProfile)) {
+            //初次使用，设置用户密码
+            return self::setPassword($password);
+        }
+
+        //验证密码
+        $salt = $userProfile['salt'];
+        if ($userProfile['pass_hash'] !== self::createPassHash($password, $salt)) {
+            throw new BusinessException('密码错误，请重新输入！',250);
+        }
+        return true;
+    }
+
+    /**
+     * 设置用户密码
+     * @param string $password
+     * @return bool
+     * @throws BusinessException
+     */
+    public static function setPassword(string $password):bool
+    {
+        //粗略验证
+        if (strlen($password) < 6) {
+            throw new BusinessException('密码必须超过6位', 250);
+        }
+        if (in_array($password, ['admin','root','adminadmin','administrator'])) {
+            throw new BusinessException('密码太弱，不安全', 250);
+        }
+
+        $salt = getUUID();  //太淡了，加点盐
+        $userProfile = [
+            'pass_hash' => self::createPassHash($password, $salt),
+            'salt'      => $salt,
+            'created_at'   => time()
+        ];
+
+        return Config::set(self::getUserProfileName(), $userProfile, 'json');
+    }
+
+    /**
+     * 生成密码hash
+     * @param string $password
+     * @param string $salt
+     * @return string
+     */
+    public static function createPassHash(string $password, string $salt):string
+    {
+        return md5($salt . $password . $salt);
+    }
+
+    /**
+     * 用户特征文件名
+     * @return string
+     */
+    public static function getUserProfileName():string
+    {
+        return 'userProfile';
     }
 }

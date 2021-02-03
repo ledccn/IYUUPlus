@@ -20,11 +20,13 @@ class Api extends BaseController
      * 登录 [跳过AuthCheck中间件]
      * @param Request $request
      * @return Response
+     * @throws BusinessException
      */
     public function Login(Request $request): Response
     {
         $rs = self::RS;
         $token = $request->get('token');
+        domainUsers::checkPassword($request);
         if (check_token($token)) {
             $rs = domainUsers::checkToken($token, $request);
         } else {
