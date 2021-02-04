@@ -29,7 +29,7 @@ goto :installError
 :install
 rem 通过GIT下载源码
 git clone https://gitee.com/ledc/iyuuplus.git %~dp0IYUUPlus
-echo "通过GIT自动安装完成，正在准备执行程序..."
+echo "通过GIT自动安装完成，开始检测php执行程序..."
 cd IYUUPlus
 goto :checkPHP
 
@@ -52,11 +52,14 @@ goto :checkPHP
 
 :pull
 rem 通过GIT更新源码
-echo "正在为您自动更新..."
-git --version
-git fetch --all
-git reset --hard origin/master
-echo "升级完成！"
+if exist "%~dp0.git\config" (
+    echo "正在为您自动更新..."
+    git fetch --all
+    git reset --hard origin/master
+    echo "升级完成！"
+) else (
+    echo "当前IYUUPlus源码，并非通过git拉取，不支持自动更新"
+)
 echo.
 goto :checkPHP
 
@@ -74,6 +77,7 @@ goto :end
 
 :start
 rem 运行脚本
+%PHP_BINARY% -v
 echo.
 echo "如果您需要停止程序，请按下组合键：CTRL + C"
 %PHP_BINARY% start.php task.php
