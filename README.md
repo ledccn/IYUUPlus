@@ -11,11 +11,13 @@ IYUU自动辅种工具，目前能对国内大部分的PT站点自动辅种，�
 
 # 安装教程：
 
-Docker命令行安装教程：https://github.com/ledccn/IYUUPlus/tree/master/docker
+Docker命令行安装：https://github.com/ledccn/IYUUPlus/tree/master/docker
 
-群晖docker安装教程：https://www.iyuu.cn/archives/426/
+群晖Docker安装：https://www.iyuu.cn/archives/426/
 
-ARM平台docker命令行安装教程：https://www.iyuu.cn/archives/427/
+ARM平台Docker命令行安装：https://www.iyuu.cn/archives/427/
+
+Windows安装：https://www.iyuu.cn/archives/429/
 
 
 
