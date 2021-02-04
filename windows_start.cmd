@@ -42,7 +42,8 @@ goto :end
 
 :checkGit
 rem 检查GIT程序
-git --version|find "git version">nul&&goto :pull
+echo "正在检测git二进制程序..."
+git --version|find "git version">nul && goto :pull
 cls
 echo "当前IYUUPlus运行环境未检测到git程序，不支持自动更新。"
 echo "推荐您使用git来下载整个代码库！"
@@ -52,11 +53,16 @@ goto :checkPHP
 
 :pull
 rem 通过GIT更新源码
-echo "正在为您自动更新..."
 git --version
-git fetch --all
-git reset --hard origin/master
-echo "升级完成！"
+echo.
+if exist "%~dp0.git\config" (
+    echo "正在为您自动更新..."
+    git fetch --all
+    git reset --hard origin/master
+    echo "升级完成！"
+) else (
+    echo "当前IYUUPlus源码，并非通过git拉取，不支持自动更新"
+)
 echo.
 goto :checkPHP
 
@@ -69,11 +75,13 @@ echo "没有检测到PHP执行程序！！！"
 echo "如果您已下载过php程序，请在解压缩之后，把php文件夹添加进系统的环境变量。"
 echo "或者把php执行程序，解压缩到当前目录下的‘php’文件夹。"
 echo "脚本运行终止！！！"
+echo.
 pause
 goto :end
 
 :start
 rem 运行脚本
+%PHP_BINARY% -v
 echo.
 echo "如果您需要停止程序，请按下组合键：CTRL + C"
 %PHP_BINARY% start.php task.php
