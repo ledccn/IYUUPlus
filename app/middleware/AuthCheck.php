@@ -1,5 +1,5 @@
 <?php
-namespace app\common\middleware;
+namespace app\middleware;
 
 use Webman\MiddlewareInterface;
 use Webman\Http\Response;
@@ -17,8 +17,8 @@ class AuthCheck implements MiddlewareInterface
         $session = $request->session();
         $action = $request->action;
         $skip = in_array($action, ['Login', 'checkLogin', 'BindToken']);    // 严格区分大小写
-        // 拦截条件：token不存在 & 非登录操作
         if (!$skip && !$session->get(Constant::Session_Token_Key)) {
+            // 拦截条件：token不存在 & 非登录操作
             return redirect('/page/login.html');
         }
         return $next($request);

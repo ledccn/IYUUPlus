@@ -34,7 +34,6 @@ class Users
      */
     public static function checkToken(string $token, Request $request):array
     {
-        $login = false;
         $curl = Curl::one();
         $api_url = Constant::API_BASE;
         $api_action = Constant::API['sites'];
@@ -45,21 +44,16 @@ class Users
             $sites = array_column($rs['data']['sites'], null, 'site');
             Config::set('sites', $sites, Constant::config_format);
             Config::set('iyuu', ['iyuu.cn' => $token], Constant::config_format);
-            $login = true;
+            // 验证通过，写入Session
+            $session = $request->session();
+            $session->set(Constant::Session_Token_Key, $token);
         } else {
             if (($rs['ret'] === 403) && isset($rs['data']['recommend']) && is_array($rs['data']['recommend'])) {
                 //用户未绑定合作站点
                 $recommend = $rs['data']['recommend'];
                 Config::set('recommend', $recommend, Constant::config_format);
                 Config::set('iyuu', ['iyuu.cn' => $token], Constant::config_format);
-                //$login = true;
             }
-        }
-
-        if ($login) {
-            // 验证通过，写入Session
-            $session = $request->session();
-            $session->set(Constant::Session_Token_Key, $token);
         }
         return $rs;
     }
