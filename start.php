@@ -24,7 +24,8 @@ if (class_exists('app\\common\\ICheck')) {
 //不存在env时，复制一份
 is_file(__DIR__ . DIRECTORY_SEPARATOR . '.env') || copy(__DIR__ . DIRECTORY_SEPARATOR . '.env.example', __DIR__ . DIRECTORY_SEPARATOR . '.env');
 //检查db_path目录
-is_writable(db_path()) || exit('错误：'.db_path().'目录无写入权限，程序终止！');
+is_dir(db_path()) or mkdir(db_path(), 0777, true);
+is_writable(db_path()) or exit('错误：'.db_path().'目录无写入权限，程序终止！');
 
 if (method_exists('Dotenv\Dotenv', 'createUnsafeImmutable')) {
     Dotenv::createUnsafeImmutable(base_path())->load();
