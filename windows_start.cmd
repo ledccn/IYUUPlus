@@ -14,34 +14,33 @@ echo.
 goto :ping
 
 :ping
-echo "正在为您检查本机网络情况，请耐心等待..."
+echo "正在为您检查本机网络，请耐心等待..."
 ping demo.iyuu.cn
 echo.
 goto :checkEnv
 
 :checkEnv
-rem 检查.env.example文件是否存在
+echo "检查.env.example文件是否存在..."
 if exist "%~dp0.env.example" goto :checkGit
-rem 检查GIT程序
+echo "检查GIT，尝试安装源码..."
 git --version|find "git version">nul&&goto :install
 goto :installError
 
 :install
-rem 通过GIT下载源码
+echo "通过GIT下载源码..."
 git clone https://gitee.com/ledc/iyuuplus.git %~dp0IYUUPlus
 echo "通过GIT自动安装完成，开始检测php执行程序..."
 cd IYUUPlus
 goto :checkPHP
 
 :installError
-rem 安装错误
 cls
 echo "当前运行环境未检测到git程序，自动安装失败。"
 pause
 goto :end
 
 :checkGit
-rem 检查GIT程序
+echo "检查GIT执行程序..."
 git --version|find "git version">nul&&goto :pull
 cls
 echo "当前IYUUPlus运行环境未检测到git程序，不支持自动更新。"
@@ -76,7 +75,6 @@ pause
 goto :end
 
 :start
-rem 运行脚本
 %PHP_BINARY% -v
 echo.
 echo "如果您需要停止程序，请按下组合键：CTRL + C"
