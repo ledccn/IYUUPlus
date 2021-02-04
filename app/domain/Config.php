@@ -28,6 +28,7 @@ class Config
         'user'    => 'user',
         'user_sites'=> 'user_sites',
         'weixin'  => 'weixin',
+        'userProfile' => 'userProfile',
     ];
 
     /**

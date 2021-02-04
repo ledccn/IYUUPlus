@@ -29,9 +29,14 @@ class Config
         if (empty($filename)) {
             return false;
         }
-        $file_name = $absolutePath ? $filename : static::createFilePath($filename, $type);
 
         clearstatcache();
+        if ($absolutePath) {
+            $dir = dirname($filename);
+            is_dir($dir) or mkdir($dir, 0777, true);
+        }
+        
+        $file_name = $absolutePath ? $filename : static::createFilePath($filename, $type);
         if (file_exists($file_name)) {
             chmod($file_name, 0777);
         }
@@ -67,8 +72,8 @@ class Config
         if (empty($filename)) {
             return $default;
         }
-        $file_name = $absolutePath ? $filename : static::createFilePath($filename, $type);
 
+        $file_name = $absolutePath ? $filename : static::createFilePath($filename, $type);
         clearstatcache();
         if (is_file($file_name)) {
             switch (strtolower($type)) {
@@ -119,9 +124,6 @@ class Config
     public static function createFilePath(string $name = '', string $type = 'array'):string
     {
         $ext = isset(self::extMap[$type]) ? self::extMap[$type] : self::extMap['object'];
-        clearstatcache();
-        is_dir(db_path()) or mkdir(db_path(), 0777, true);
-
         return db_path() . DIRECTORY_SEPARATOR . $name . $ext;
     }
 }

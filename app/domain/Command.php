@@ -13,14 +13,21 @@ class Command
         $taskType = $param['type'] ?? null;
         switch ($taskType) {
             case 'reseed':
-                return PHP_BINARY . ' ' . BASE_PATH . DIRECTORY_SEPARATOR . 'bin/iyuu.php '.$param['uuid'];
+                return self::Reseed($param);
             default:
                 return 'date';
         }
     }
 
-    public static function Reseed()
-    {}
+    /**
+     * 辅种任务
+     * @param array $param
+     * @return string
+     */
+    public static function Reseed(array $param):string
+    {
+        return PHP_BINARY . ' ' . BASE_PATH . DIRECTORY_SEPARATOR . 'bin/iyuu.php '.$param['uuid'];
+    }
 
     public static function Download()
     {}

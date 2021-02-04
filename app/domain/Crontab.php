@@ -67,20 +67,14 @@ class Crontab
      */
     public static function onWorkerStart()
     {
-        // db目录
-        if(!is_dir(db_path()))
-        {
-            mkdir(db_path(), 0777, true);
-        }
-
         // 初始化目录
         $sys_dir = [self::cron_dir, self::run_dir, self::pid_dir, self::lock_dir, self::log_dir];
         array_walk($sys_dir, function ($v, $k){
             $dir = cron_path() . DIRECTORY_SEPARATOR . $v;
-            !is_dir($dir) and mkdir($dir, 0777, true);
+            is_dir($dir) or mkdir($dir, 0777, true);
         });
 
-        // 初始化计划任务文件[不同平台的配置导入，会造成command错误，需要重新解析命令]
+        // 初始化计划任务文件[不同平台的配置，会造成command错误，需要重新解析命令]
         $cron = Conf::get(domainConfig::filename['crontab'], Constant::config_format, []);
         array_walk($cron, function ($v, $k){
             self::createHock($v);
