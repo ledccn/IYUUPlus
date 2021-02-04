@@ -3,12 +3,12 @@ title IYUUPlus
 cd /d "%~dp0"
 chcp 65001
 
+
 :ping
-echo 正在为您检查本机网络情况耐心等待...
+echo 正在为您检查本机网络情况，请耐心等待...
 echo.
-ping demo.iyuu.cn | find "超时"  > NUL &&  goto fail
-ping demo.iyuu.cn | find "目标主机"  > NUL &&  goto fail
-echo 本机网络良好……
+ping demo.iyuu.cn
+echo.
 goto :git
 
 
@@ -33,16 +33,10 @@ goto :start
 
 :start
 echo.
-echo 停止程序：CTRL + C
+echo 如果您需要停止程序，请按下组合键：CTRL + C
 php %~dp0start.php %~dp0task.php
 pause
 goto :end
-
-
-:fail
-cls
-echo 网络状况不太好呀，无法连接API服务器...
-pause
 
 
 :end
