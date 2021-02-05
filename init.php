@@ -30,9 +30,7 @@ echo microtime(true).' composer依赖载入完成！'.PHP_EOL;
 
 // 定义目录
 defined('ROOT_PATH') or define('ROOT_PATH', __DIR__);
-defined('DB_PATH') or define('DB_PATH', __DIR__ . DIRECTORY_SEPARATOR . 'db');
 defined('RUNTIME_PATH') or define('RUNTIME_PATH', __DIR__ . DIRECTORY_SEPARATOR . 'runtime');
-defined('CRONATB_PATH') or define('CRONATB_PATH', RUNTIME_PATH . DIRECTORY_SEPARATOR . 'crontab');
 defined('TORRENT_PATH') or define('TORRENT_PATH', RUNTIME_PATH . DIRECTORY_SEPARATOR . 'torrent');
 defined('DS') or define('DS', DIRECTORY_SEPARATOR);
 

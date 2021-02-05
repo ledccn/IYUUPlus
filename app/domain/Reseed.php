@@ -3,6 +3,8 @@ namespace app\domain;
 
 use app\common\Config as Conf;
 use app\common\Constant;
+use IYUU\Library\IFile;
+
 /**
  * 辅种相关
  * Class Reseed
@@ -56,5 +58,43 @@ class Reseed
         }
 
         return $rs;
+    }
+
+    /**
+     * 获取辅种缓存的存放路径
+     * @return string
+     */
+    public static function getReseedCachePath():string
+    {
+        return runtime_path() . DIRECTORY_SEPARATOR . 'torrent' . DIRECTORY_SEPARATOR . 'cachehash';
+    }
+
+    /**
+     * 获取转移缓存的存放路径
+     * @return string
+     */
+    public static function getMoveCachePath():string
+    {
+        return runtime_path() . DIRECTORY_SEPARATOR . 'torrent' . DIRECTORY_SEPARATOR . 'cachemove';
+    }
+
+    /**
+     * 清理辅种缓存
+     * @return bool
+     */
+    public static function clearReseedCache():bool
+    {
+        $dir = self::getReseedCachePath();
+        return IFile::rmdir($dir, true);
+    }
+
+    /**
+     * 清理转移缓存
+     * @return bool
+     */
+    public static function clearMoveCache():bool
+    {
+        $dir = self::getMoveCachePath();
+        return IFile::rmdir($dir, true);
     }
 }

@@ -147,7 +147,7 @@ class Api extends BaseController
     }
 
     /**
-     * 清理缓存
+     * 清理系统级别的缓存、日志
      * @param Request $request
      * @return Response
      */

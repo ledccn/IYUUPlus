@@ -8,7 +8,6 @@ use app\common\Config as Conf;
 use app\common\Constant;
 use app\domain\Config;
 use app\domain\Crontab;
-use app\domain\Reseed;
 /**
  * Class Status
  * @package app\controller
@@ -49,21 +48,20 @@ class Status extends BaseController
         $system_info = sprintf('%s / %s', PHP_OS, PHP_OS_FAMILY);
         //读取git信息
         $updated_at = get_current_git_filemtime() . (get_current_git_commit() ?  ' (' . get_current_git_commit() . ')' : '');
-        $str = '<a href="https://github.com/ledccn/IYUUPlus/commits/master" target="_blank">%s</a>';
-        $updated_at = sprintf($str, strlen($updated_at) > 10 ? $updated_at : '点此查看');
+        $updated_at = strlen($updated_at) > 10 ? $updated_at : '点此查看';
 
         $rs['data'] = [
-            'cron_total' => count($cron),
-            'sites_total'=> count($user_sites),
-            'sites_conut'=> count($sites),
+            'cron_total'    => count($cron),
+            'sites_total'   => count($user_sites),
+            'sites_conut'   => count($sites),
             'clients_total' => count($clients),
-            'project'   => iyuu_name(),
-            'version' => $version,
-            'updated_at' => $updated_at,
-            'system_info' => $system_info,
-            'PHP_VERSION' => PHP_VERSION,
-            'PHP_BINARY'  => PHP_BINARY,
-            'RUNTIME_PATH'   => runtime_path(),
+            'project'       => iyuu_name(),
+            'version'       => $version,
+            'updated_at'    => $updated_at,
+            'system_info'   => $system_info,
+            'PHP_VERSION'   => PHP_VERSION,
+            'PHP_BINARY'    => PHP_BINARY,
+            'RUNTIME_PATH'  => runtime_path(),
         ];
         return json($rs);
     }

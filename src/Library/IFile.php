@@ -60,6 +60,7 @@ class IFile
 
     /**
      * @brief  清空目录下的所有文件
+     * @param string $dir
      * @return bool false:失败; true:成功;
      */
     public static function clearDir($dir)

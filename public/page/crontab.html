@@ -167,6 +167,15 @@
   {{# } }}
 </script>
 
+<!-- 模板：表格头工具栏 -->
+<script type="text/html" id="tableTopToolbar">
+  <div class="layui-btn-container">
+    <button class="layui-btn layui-btn-danger layui-btn-sm" lay-event="clearReseedCache">清理辅种缓存</button>
+    <button class="layui-btn layui-btn-danger layui-btn-sm" lay-event="clearMoveCache">清理转移缓存</button>
+    <button class="layui-btn layui-btn-danger layui-btn-sm" lay-event="refreshCrontab">刷新任务</button>
+  </div>
+</script>
+
 <!-- 模板：表格行工具条 -->
 <script type="text/html" id="tableToolbar">
   <span class="layui-badge layui-bg-cyan" lay-event="run">运行</span>
@@ -301,6 +310,12 @@
     table.render({
       elem: '#tableId'
       ,url: API.tableList
+      ,toolbar: '#tableTopToolbar'
+      ,defaultToolbar: ['filter', 'print', {
+        title: '提示'
+        ,layEvent: 'LAYTABLE_TIPS'
+        ,icon: 'layui-icon-tips'
+      }]
       ,parseData: function(res){
         return {
           "code": res.ret === 200 ? 0 : res.ret,
@@ -377,6 +392,38 @@
       ,size: 'sm'
       ,page: false
       ,limit:500
+    });
+
+    /**
+     * 监听：头工具栏事件
+     */
+    table.on('toolbar(tableFilter)', function(obj){
+      let checkStatus = table.checkStatus(obj.config.id);
+      let data = checkStatus.data;
+      switch(obj.event){
+        case 'clearReseedCache':
+        case 'clearMoveCache':
+          $.getJSON('/Task/clearCache', {'type': obj.event}, function (d) {
+            if (d.ret === 200) {
+              layer.msg(d.data.success ? '清理成功' : '清理失败');
+              return;
+            }
+            layer.msg('接口请求失败：/Task/clearCache');
+          });
+        break;
+        case 'refreshCrontab':
+          $.getJSON('/Task/refresh', function (d) {
+            if (d.ret === 200) {
+              layer.msg(d.data.success ? '全部任务刷新成功' : '任务刷新失败');
+              return;
+            }
+            layer.msg('接口请求失败：/Task/refresh');
+          });
+        break;
+        case 'LAYTABLE_TIPS':
+          layer.alert('这是工具栏右侧自定义的一个图标按钮');
+        break;
+      };
     });
 
     /**
