@@ -40,7 +40,7 @@
                                                         <h5>任务统计</h5>
                                                     </div>
                                                     <div class="panel-content">
-                                                        <h1 class="no-margins" id="user_total">0</h1>
+                                                        <h1 class="no-margins" id="cron_total">0</h1>
                                                         <small>当前计划任务数</small>
                                                     </div>
                                                 </div>
@@ -55,7 +55,7 @@
                                                     </div>
                                                     <div class="panel-content">
                                                         <h1 class="no-margins" id="sites_total">0</h1>
-                                                        <small>当前支持站点数</small>
+                                                        <small>已配置站点数 （总支持：<span class="layui-badge layui-bg-gray" id="sites_conut"></span>）</small>
                                                     </div>
                                                 </div>
                                             </div>
@@ -65,11 +65,11 @@
                                                 <div class="panel-body">
                                                     <div class="panel-title">
                                                         <span class="label pull-right layui-bg-orange">实时</span>
-                                                        <h5>请求统计</h5>
+                                                        <h5>下载器统计</h5>
                                                     </div>
                                                     <div class="panel-content">
-                                                        <h1 class="no-margins" id="request_total">0</h1>
-                                                        <small>接口请求数</small>
+                                                        <h1 class="no-margins" id="clients_total">0</h1>
+                                                        <small>已配置的下载器</small>
                                                     </div>
                                                 </div>
                                             </div>
@@ -183,20 +183,6 @@
                                 移动端的友好支持。<br>
                             </div>
                         </div>
-                        <div class="layuimini-notice">
-                            <div class="layuimini-notice-title">新增系统404模板</div>
-                            <div class="layuimini-notice-extra">2019-07-11 12:57</div>
-                            <div class="layuimini-notice-content layui-hide">
-                                界面足够简洁清爽。<br>
-                                一个接口几行代码而已直接初始化整个框架，无需复杂操作。<br>
-                                支持多tab，可以打开多窗口。<br>
-                                支持无限级菜单和对font-awesome图标库的完美支持。<br>
-                                失效以及报错菜单无法直接打开，并给出弹出层提示完美的线上用户体验。<br>
-                                url地址hash定位，可以清楚看到当前tab的地址信息。<br>
-                                刷新页面会保留当前的窗口，并且会定位当前窗口对应左侧菜单栏。<br>
-                                移动端的友好支持。<br>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -211,13 +197,33 @@
                             <tbody>
                             <tr>
                                 <td>项目名称</td>
-                                <td>
-                                    IYUUAutoReseed
+                                <td id="project">
+                                  IYUUPlus
                                 </td>
                             </tr>
                             <tr>
                                 <td>当前版本</td>
                                 <td id="version">v2.0.0</td>
+                            </tr>
+                            <tr>
+                              <td>最后更新</td>
+                              <td id="updated_at"></td>
+                            </tr>
+                            <tr>
+                              <td>系统环境</td>
+                              <td id="system_info"></td>
+                            </tr>
+                            <tr>
+                              <td>PHP版本</td>
+                              <td id="PHP_VERSION"></td>
+                            </tr>
+                            <tr>
+                              <td>PHP路径</td>
+                              <td id="PHP_BINARY"></td>
+                            </tr>
+                            <tr>
+                              <td>运行时</td>
+                              <td id="RUNTIME_PATH"></td>
                             </tr>
                             <tr>
                                 <td>主要特色</td>
@@ -226,7 +232,7 @@
                             <tr>
                                 <td>接口文档</td>
                                 <td>
-                                    API接口文档：<a href="https://api.iyuu.cn/docs.php" target="_blank">点击查看</a>
+                                    API接口文档：
                                 </td>
                             </tr>
                             <tr>
@@ -241,8 +247,10 @@
                                 <td>Gitee</td>
                                 <td style="padding-bottom: 0;">
                                     <div class="layui-btn-container">
-                                        <a href="https://gitee.com/ledc/IYUUAutoReseed" target="_blank" style="margin-right: 15px"><img src="https://gitee.com/ledc/IYUUAutoReseed/badge/star.svg?theme=dark" alt="star"></a>
-                                        <a href="https://gitee.com/ledc/IYUUAutoReseed" target="_blank"><img src="https://gitee.com/ledc/IYUUAutoReseed/badge/fork.svg?theme=dark" alt="fork"></a>
+                                      <a href="https://gitee.com/ledc/iyuuplus" target="_blank" style="margin-right: 15px"><img src="https://gitee.com/ledc/iyuuplus/badge/star.svg?theme=dark" alt="star"></a>
+                                      <a href="https://gitee.com/ledc/iyuuplus" target="_blank" style="margin-right: 15px"><img src="https://gitee.com/ledc/iyuuplus/badge/fork.svg?theme=dark" alt="fork"></a>
+                                      <a href="https://gitee.com/ledc/IYUUAutoReseed" target="_blank" style="margin-right: 15px"><img src="https://gitee.com/ledc/IYUUAutoReseed/badge/star.svg?theme=dark" alt="star"></a>
+                                      <a href="https://gitee.com/ledc/IYUUAutoReseed" target="_blank"><img src="https://gitee.com/ledc/IYUUAutoReseed/badge/fork.svg?theme=dark" alt="fork"></a>
                                     </div>
                                 </td>
                             </tr>
@@ -250,8 +258,10 @@
                                 <td>Github</td>
                                 <td style="padding-bottom: 0;">
                                     <div class="layui-btn-container">
-                                        <iframe src="https://ghbtns.com/github-btn.html?user=ledccn&repo=IYUUAutoReseed&type=star&count=true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
-                                        <iframe src="https://ghbtns.com/github-btn.html?user=ledccn&repo=IYUUAutoReseed&type=fork&count=true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
+                                      <iframe src="https://ghbtns.com/github-btn.html?user=ledccn&repo=IYUUPlus&type=star&count=true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
+                                      <iframe src="https://ghbtns.com/github-btn.html?user=ledccn&repo=IYUUPlus&type=fork&count=true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
+                                      <iframe src="https://ghbtns.com/github-btn.html?user=ledccn&repo=IYUUAutoReseed&type=star&count=true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
+                                      <iframe src="https://ghbtns.com/github-btn.html?user=ledccn&repo=IYUUAutoReseed&type=fork&count=true" frameborder="0" scrolling="0" width="100px" height="20px"></iframe>
                                     </div>
                                 </td>
                             </tr>
@@ -278,15 +288,40 @@
         </div>
     </div>
 </div>
+<script id="notice_tpl" type="text/html">
+  {{#  layui.each(d, function(index, item){ }}
+  <div class="layuimini-notice" data-id="{{ item.id }}">
+    <div class="layuimini-notice-title">{{ item.title }}</div>
+    <div class="layuimini-notice-extra">{{ item.created_at }}</div>
+    <div class="layuimini-notice-content layui-hide">{{ item.content }}</div>
+  </div>
+  {{#  }); }}
+</script>
 <script>
 layui.use(['layer','echarts'], function () {
   let $ = layui.jquery,
       layer = layui.layer,
       echarts = layui.echarts;
 
+  //init页面信息
+  $.getJSON('/Status/welcome', function (d) {
+    if (d.ret === 200) {
+      let elem = null;
+      for (let key in d.data) {
+        elem = document.getElementById(key);
+        if (elem) {
+            elem.innerHTML = d.data[key];
+        }
+      }
+      return;
+    }
+    layer.msg('接口请求失败/Status/welcome', function () {
+    });
+  });
+
   /**
-    * 查看公告信息
-    **/
+   * 查看公告信息
+   */
   $('body').on('click', '.layuimini-notice', function () {
     let title = $(this).children('.layuimini-notice-title').text(),
         noticeTime = $(this).children('.layuimini-notice-extra').text(),

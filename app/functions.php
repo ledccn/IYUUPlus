@@ -1,10 +1,49 @@
 <?php
 /**
  * 返回IYUU当前版本号
+ * @return string
  */
 function IYUU_VERSION():string
 {
     return '2.0.0';
+}
+
+/**
+ * 返回项目名称
+ * @return string
+ */
+function iyuu_name():string
+{
+    return 'IYUUPlus';
+}
+
+/**
+ * 获取当前版本commit
+ * @param string $branch
+ * @param bool $short
+ * @return string
+ */
+function get_current_git_commit($branch = 'master', $short = true):string
+{
+    if ($hash = file_get_contents(sprintf(base_path() . '/.git/refs/heads/%s', $branch))) {
+        $hash = trim($hash);
+
+        return $short ? substr($hash, 0, 7) : $hash;
+    }
+    return '';
+}
+
+/**
+ * 获取当前版本时间
+ * @param string $branch
+ * @return string
+ */
+function get_current_git_filemtime($branch = 'master'):string
+{
+    if ($time = filemtime(sprintf(base_path() . '/.git/refs/heads/%s', $branch))) {
+        return date("Y-m-d H:i:s", $time);
+    }
+    return '';
 }
 
 /**

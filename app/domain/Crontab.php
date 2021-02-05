@@ -3,7 +3,6 @@ namespace app\domain;
 
 use app\common\Config as Conf;
 use app\common\Constant;
-use app\domain\Config as domainConfig;
 
 /**
  * 计划任务相关
@@ -75,7 +74,7 @@ class Crontab
         });
 
         // 初始化计划任务文件[不同平台的配置，会造成command错误，需要重新解析命令]
-        $cron = Conf::get(domainConfig::filename['crontab'], Constant::config_format, []);
+        $cron = self::crontabConfig();
         array_walk($cron, function ($v, $k){
             self::createHock($v);
         });
@@ -296,6 +295,15 @@ class Crontab
         $logFile = self::getLogFile($uuid);
         $ret = Conf::set($logFile, date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
         return is_bool($ret) ? $ret : ($ret >= 10 ? true : false);
+    }
+
+    /**
+     * 用户Cron配置
+     * @return array
+     */
+    public static function crontabConfig():array
+    {
+        return Conf::get(Config::filename['crontab'], Constant::config_format, []);
     }
 
     /**

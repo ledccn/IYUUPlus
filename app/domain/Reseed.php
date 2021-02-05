@@ -3,7 +3,6 @@ namespace app\domain;
 
 use app\common\Config as Conf;
 use app\common\Constant;
-
 /**
  * 辅种相关
  * Class Reseed
@@ -30,15 +29,15 @@ class Reseed
         //检查使能
         if (isset($cron['switch']) && $cron['switch'] === 'on') {
             //IYUU密钥
-            $iyuu = self::iyuuConfig();
+            $iyuu = Config::getIyuu();
             $rs['iyuu.cn'] = $iyuu['iyuu.cn'];
 
             //默认
-            $default = self::defaultConfig();
+            $default = Config::getDefault();
             $rs['default'] = $default;
 
             //解析站点
-            $sites = self::userSitesConfig();
+            $sites = Config::getUserSites();
             if (!empty($cron['sites']) && !empty($sites)) {
                 $key = $cron['sites'];
                 $rs['sites'] = array_filter($sites, function ($v, $k) use ($key) {
@@ -47,7 +46,7 @@ class Reseed
             }
 
             //解析下载器
-            $clients = self::clientsConfig();
+            $clients = Config::getClients();
             if (!empty($cron['clients']) && !empty($clients)) {
                 $key = $cron['clients'];
                 $rs['clients'] = array_filter($clients, function ($k) use ($key) {
@@ -57,41 +56,5 @@ class Reseed
         }
 
         return $rs;
-    }
-
-    /**
-     * IYUU密钥
-     * @return array
-     */
-    public static function iyuuConfig():array
-    {
-        return Conf::get(Config::filename['iyuu'], Constant::config_format, []);
-    }
-
-    /**
-     * 默认配置
-     * @return array
-     */
-    public static function defaultConfig():array
-    {
-        return Conf::get(Config::filename['default'], Constant::config_format, []);
-    }
-
-    /**
-     * 客户端
-     * @return array
-     */
-    public static function clientsConfig():array
-    {
-        return Conf::get(Config::filename['clients'], Constant::config_format, []);
-    }
-
-    /**
-     * 用户拥有的站点
-     * @return array
-     */
-    public static function userSitesConfig():array
-    {
-        return Conf::get(Config::filename['user_sites'], Constant::config_format, []);
     }
 }

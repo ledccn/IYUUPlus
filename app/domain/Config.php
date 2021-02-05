@@ -154,6 +154,51 @@ class Config
     }
 
     /**
+     * IYUU密钥
+     * @return array
+     */
+    public static function getIyuu():array
+    {
+        return Conf::get(self::filename['iyuu'], Constant::config_format, []);
+    }
+
+    /**
+     * 默认配置
+     * @return array
+     */
+    public static function getDefault():array
+    {
+        return Conf::get(self::filename['default'], Constant::config_format, []);
+    }
+
+    /**
+     * 客户端
+     * @return array
+     */
+    public static function getClients():array
+    {
+        return Conf::get(self::filename['clients'], Constant::config_format, []);
+    }
+
+    /**
+     * 用户拥有的站点
+     * @return array
+     */
+    public static function getUserSites():array
+    {
+        return Conf::get(self::filename['user_sites'], Constant::config_format, []);
+    }
+
+    /**
+     * 所有站点
+     * @return array
+     */
+    public static function getSites():array
+    {
+        return Conf::get(self::filename['sites'], Constant::config_format, []);
+    }
+
+    /**
      * 把旧配置格式转换为新格式 [兼容性处理]
      */
     public static function format()

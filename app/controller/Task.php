@@ -55,6 +55,18 @@ class Task extends BaseController
     }
 
     /**
+     * 停止正在执行的计划任务
+     * @param Request $request
+     * @return Response
+     */
+    public function stop(Request $request): Response
+    {
+        $rs = self::RS;
+        $uuid = $request->get('uuid');
+        return json(domainReseed::configParser($uuid));
+    }
+
+    /**
      * 查看任务的log
      * @param Request $request
      * @return Response
@@ -84,18 +96,6 @@ class Task extends BaseController
             'success' => Crontab::clearLogs($uuid)
         ];
         return json($rs);
-    }
-
-    /**
-     * 停止正在执行的计划任务
-     * @param Request $request
-     * @return Response
-     */
-    public function stop(Request $request): Response
-    {
-        $rs = self::RS;
-        $uuid = $request->get('uuid');
-        return json(domainReseed::configParser($uuid));
     }
 
     /**
