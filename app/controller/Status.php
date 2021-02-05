@@ -45,7 +45,7 @@ class Status extends BaseController
         $user_sites = Config::getUserSites();
         $sites = Config::getSites();
         $clients = Config::getClients();
-        $version = '免费版v'.IYUU_VERSION();
+        $version = 'v'.IYUU_VERSION();
         $system_info = sprintf('%s / %s', PHP_OS, PHP_OS_FAMILY);
         //读取git信息
         $updated_at = get_current_git_filemtime() . (get_current_git_commit() ?  ' (' . get_current_git_commit() . ')' : '');
