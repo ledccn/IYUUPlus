@@ -4,7 +4,7 @@ namespace app\controller;
 use support\Request;
 use support\Response;
 use app\common\exception\BusinessException;
-use app\common\Config as conf;
+use app\common\Config as Conf;
 use app\common\Constant;
 use app\domain\Config;
 use app\domain\Crontab;
