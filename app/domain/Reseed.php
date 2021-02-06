@@ -85,7 +85,7 @@ class Reseed
     public static function clearReseedCache():bool
     {
         $dir = self::getReseedCachePath();
-        return IFile::rmdir($dir, true);
+        return is_dir($dir) ? IFile::rmdir($dir, true) : true;
     }
 
     /**
@@ -95,6 +95,6 @@ class Reseed
     public static function clearMoveCache():bool
     {
         $dir = self::getMoveCachePath();
-        return IFile::rmdir($dir, true);
+        return is_dir($dir) ? IFile::rmdir($dir, true) : true;
     }
 }

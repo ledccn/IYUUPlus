@@ -161,33 +161,33 @@
      * 表单验证
      */
     form.verify({
-      token: function(value, item){ //value：表单的值、item：表单的DOM对象
+      token: function(value, item){
+        //value：表单的值、item：表单的DOM对象
+        let name = '爱语飞飞Token';
         if(!new RegExp("^[a-zA-Z0-9_\u4e00-\u9fa5\\s·]+$").test(value)){
-          return '爱语飞飞Token不能有特殊字符';
+          return name + '不能有特殊字符';
         }
         if(/(^\_)|(\__)|(\_+$)/.test(value)){
-          return '爱语飞飞Token首尾不能出现下划线\'_\'';
+          return name + '首尾不能出现下划线\'_\'';
         }
         if(/^\d+\d+\d$/.test(value)){
-          return '爱语飞飞Token不能全为数字';
+          return name + '不能全为数字';
+        }
+        if (value.length < 46 || value.length > 60) {
+          return name + '格式错误';
         }
       }
-      //我们既支持上述函数式的方式，也支持下述数组的形式
-      //数组的两个值分别代表：[正则匹配、匹配不符时的提示文字]
       ,pass: [
         /^[\S]{6,30}$/
         ,'密码必须6到30位，且不能出现空格'
       ] 
     });
     
-    // 登录事件
+    /**
+     * 登录事件
+     */
     form.on('submit('+ API.submitFilter +')', function (d) {
       console.log(d.field);
-      //Token
-      if (d.field.token === '') {
-        layer.msg('爱语飞飞token不能为空！');
-        return false;
-      }
       //记住
       sessionStorage.setItem('token', d.field.token);
       if (d.field.rememberMe) {
@@ -197,13 +197,13 @@
       }
       //Ajax
       $.getJSON(API.Login, d.field, function (data) {
-        if (data && data.ret === 200) {
+        if (data && data.ret === 200 && data.data.sites) {
           localStorage.setItem('sites', JSON.stringify(data.data.sites));
           layer.msg('登录成功，正在跳转……', function () {
             window.location = '/index.html';
           });
         } else {
-          if (data && data.ret === 403) {
+          if (data && data.ret === 403 && data.data.recommend) {
             localStorage.setItem('recommend', JSON.stringify(data.data.recommend));
             user_verify_action(data.data.recommend);
           } else {
