@@ -83,6 +83,7 @@ class Users
             return self::checkToken($token, $request);
         } else {
             //绑定失败
+            $rs['ret'] = 401;
             $msg = !empty($rs['msg']) ? $rs['msg'] : '远端服务器无响应，请稍后重试！';
             $msg = !empty($rs['data']['errmsg']) ? $rs['data']['errmsg'] : $msg;
             $rs['msg'] = $msg;

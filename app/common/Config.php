@@ -31,14 +31,13 @@ class Config
         }
 
         clearstatcache();
-        if ($absolutePath) {
-            $dir = dirname($filename);
-            is_dir($dir) or mkdir($dir, 0777, true);
-        }
-        
         $file_name = $absolutePath ? $filename : static::createFilePath($filename, $type);
+
         if (file_exists($file_name)) {
             chmod($file_name, 0777);
+        } else {
+            $dir = dirname($file_name);
+            is_dir($dir) or mkdir($dir, 0777, true);
         }
         switch (strtolower($type)) {
             case 'object':
