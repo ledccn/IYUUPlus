@@ -330,9 +330,9 @@
     /**
      * 请求接口，获取站点列表
      */
-    $.getJSON(API.sitesList, function (d) {
+    $.getJSON(API.sitesList, {filter:true}, function (d) {
       if (d.ret === 200 || d.data.sites) {
-        localStorage.setItem('sites_list',JSON.stringify(d.data));
+        localStorage.setItem('sites_list', JSON.stringify(d.data));
         let getTpl = sites_sel_tpl.innerHTML
           ,view = document.getElementById(API.sites_sel);
         document.getElementById(API.sites_total).innerHTML = d.data.total;

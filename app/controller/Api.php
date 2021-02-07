@@ -135,11 +135,21 @@ class Api extends BaseController
     public function sitesList(Request $request): Response
     {
         $rs = self::RS;
-        $sites = Config::get('sites', Constant::config_format);
+        $sites = domainConfig::getSites();
         if (empty($sites)) {
             throw new BusinessException('您的账号尚未进行用户验证。', 401);
         }
-        ksort($sites);
+
+        //过滤用户已有站点
+        $filter = $request->get('filter');
+        if ($filter) {
+            $user_sites = domainConfig::getUserSites();
+            $sites = array_filter($sites, function ($k) use ($user_sites) {
+                return !array_key_exists($k, $user_sites);
+            }, ARRAY_FILTER_USE_KEY);
+            ksort($sites);
+        }
+
         $rs['data']['sites'] = $sites;
         $rs['data']['total'] = count($sites);
         return json($rs);
