@@ -47,7 +47,7 @@
 <script id="sites_sel_tpl" type="text/html">
   <option value="">请选择站点</option>
   {{#  layui.each(d, function(index, item){ }}
-  <option value="{{item}}">{{index + 1}}. {{ item }}</option>
+  <option value="{{index}}">{{ item.site }}{{ item.nickname ? ' ' + item.nickname : '' }}</option>
   {{#  }); }}
 </script>
 <!-- 模板：站点配置字段 -->
