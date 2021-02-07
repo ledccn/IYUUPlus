@@ -47,7 +47,7 @@
 <script id="sites_sel_tpl" type="text/html">
   <option value="">请选择站点</option>
   {{#  layui.each(d, function(index, item){ }}
-  <option value="{{index}}">{{ item.site }}{{ item.nickname ? ' ' + item.nickname : '' }}</option>
+  <option value="{{index}}"{{ item.disabled ? ' disabled' : '' }}>{{ item.site }}{{ item.nickname ? ' ' + item.nickname : '' }}</option>
   {{#  }); }}
 </script>
 <!-- 模板：站点配置字段 -->
@@ -330,7 +330,7 @@
     /**
      * 请求接口，获取站点列表
      */
-    $.getJSON(API.sitesList, function (d) {
+    $.getJSON(API.sitesList, {filter: true}, function (d) {
       if (d.ret === 200 || d.data.sites) {
         localStorage.setItem('sites_list', JSON.stringify(d.data));
         let getTpl = sites_sel_tpl.innerHTML

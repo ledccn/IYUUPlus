@@ -144,9 +144,11 @@ class Api extends BaseController
         $filter = $request->get('filter');
         if ($filter) {
             $user_sites = domainConfig::getUserSites();
-            $sites = array_filter($sites, function ($k) use ($user_sites) {
-                return !array_key_exists($k, $user_sites);
-            }, ARRAY_FILTER_USE_KEY);
+            array_walk($sites, function (&$v, $k) use ($user_sites) {
+                if (array_key_exists($k, $user_sites)) {
+                    $v['disabled'] = true;
+                }
+            });
             ksort($sites);
         }
 
