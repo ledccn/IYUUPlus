@@ -199,6 +199,22 @@ class Config
     }
 
     /**
+     * 禁用用户已经配置过的站点
+     * @param array $sites
+     * @return array
+     */
+    public static function disabledUserSites(&$sites):array
+    {
+        $user_sites = self::getUserSites();
+        array_walk($sites, function (&$v, $k) use ($user_sites) {
+            if (array_key_exists($k, $user_sites)) {
+                $v['disabled'] = true;
+            }
+        });
+        return $sites;
+    }
+
+    /**
      * 把旧配置格式转换为新格式 [兼容性处理]
      */
     public static function format()

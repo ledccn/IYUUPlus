@@ -143,14 +143,9 @@ class Api extends BaseController
         //过滤用户已有站点
         $filter = $request->get('filter');
         if ($filter) {
-            $user_sites = domainConfig::getUserSites();
-            array_walk($sites, function (&$v, $k) use ($user_sites) {
-                if (array_key_exists($k, $user_sites)) {
-                    $v['disabled'] = true;
-                }
-            });
-            ksort($sites);
+            domainConfig::disabledUserSites($sites);
         }
+        ksort($sites);
 
         $rs['data']['sites'] = $sites;
         $rs['data']['total'] = count($sites);
