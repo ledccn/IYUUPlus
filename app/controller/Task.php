@@ -23,7 +23,8 @@ class Task extends BaseController
     {
         $rs = self::RS;
         $uuid = $request->get('uuid');
-        return json(domainReseed::configParser($uuid));
+        $rs['data'] = domainReseed::configParser($uuid);
+        return json($rs);
     }
 
     /**
@@ -36,6 +37,7 @@ class Task extends BaseController
         $rs = self::RS;
         $uuid = $request->get('uuid');
         $switch = $request->get('switch');
+        //TODO...
         return json(domainReseed::configParser($uuid));
     }
 
@@ -63,6 +65,7 @@ class Task extends BaseController
     {
         $rs = self::RS;
         $uuid = $request->get('uuid');
+        //TODO...
         return json(domainReseed::configParser($uuid));
     }
 
