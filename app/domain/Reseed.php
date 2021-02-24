@@ -24,7 +24,9 @@ class Reseed
             'sites'   => [],
             'clients' => [],
         ];
-
+        if (empty($uuid)) {
+            return $rs;
+        }
         $cronFilename = Config::filename['crontab'];
         $cron = Conf::get($cronFilename, Constant::config_format, []);
         $cron = array_key_exists($uuid, $cron) ? $cron[$uuid] : [];

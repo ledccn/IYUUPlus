@@ -167,9 +167,9 @@ class AutoReseed
         self::savePid($cron_name);
         Oauth::init(self::$conf);
         // 用户选择辅种的站点
-        self::$_sites = empty(self::$conf['sites']) ? [] : self::$conf['sites'];
+        self::$_sites = self::$conf['sites'];
         // 用户辅种的下载器
-        self::$clients = empty(self::$conf['clients']) ? [] : self::$conf['clients'];
+        self::$clients = self::$conf['clients'];
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
     }
 
@@ -197,7 +197,7 @@ class AutoReseed
         register_shutdown_function(function () use (&$cron_name){
             self::deletePid();
             $lockFile = domainCrontab::getLockFile($cron_name);
-            unlink($lockFile);
+            is_file($lockFile) and unlink($lockFile);
         });
     }
 
