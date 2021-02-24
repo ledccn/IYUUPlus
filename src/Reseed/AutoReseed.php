@@ -168,6 +168,13 @@ class AutoReseed
         Oauth::init(self::$conf);
         // 用户选择辅种的站点
         self::$_sites = self::$conf['sites'];
+        // 对url拼接串进行预处理
+        array_walk(self::$_sites, function (&$v, $k){
+            if (!empty($v['url_join'])) {
+                $url_join = http_build_query($v['url_join']);
+                $v['url_join'] = [$url_join];
+            }
+        });
         // 用户辅种的下载器
         self::$clients = self::$conf['clients'];
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
@@ -693,8 +700,10 @@ class AutoReseed
         }
         // 按客户端循环辅种 结束
     }
+
     /**
      * 请求NexusPHP详情页
+     * @descr 天空、瓷器、城市 个别站用到
      * @param $protocol     string      协议
      * @param $torrent      array       种子
      * @param $cookie       string      Cookie
@@ -719,8 +728,10 @@ class AutoReseed
         }
         return $details_html;
     }
+
     /**
      * 微信通知cookie失效，延时15秒提示
+     * @descr 天空、瓷器、城市 个别站用到
      * @param $siteName
      */
     private static function cookieExpired($siteName)
@@ -730,6 +741,223 @@ class AutoReseed
         self::ff($siteName. '站点，cookie已过期，请更新后重新辅种！');
         sleepIYUU(15, 'cookie已过期，请更新后重新辅种！已加入排除列表');
     }
+
+    /**
+     * 辅种前置检查
+     * @param $k                int         客户端key
+     * @param $torrent          array       可辅的种子
+     * @param $infohash_Dir     array       当前客户端hash目录对应字典
+     * @param $downloadDir      string      辅种目录
+     * @param $_url             string      种子临时连接
+     * @return bool     true 可辅种 | false 不可辅种
+     */
+    private static function reseedCheck($k, $torrent, $infohash_Dir, $downloadDir, $_url)
+    {
+        self::checkPid() or die('检测到当前任务被外部主动停止，进程退出！'.PHP_EOL);
+        $sid = $torrent['sid'];
+        $torrent_id = $torrent['torrent_id'];
+        $info_hash = $torrent['info_hash'];
+        $siteName = self::$sites[$sid]['site'];
+        $reseed_check = self::$sites[$sid]['reseed_check'];
+        if ($reseed_check && is_array($reseed_check)) {
+            // 循环检查所有项目
+            foreach ($reseed_check as $item) {
+                echo "clients_".$k."正在循环检查所有项目... {$siteName}".PHP_EOL;
+                $item = ($item === 'uid' ? 'id' : $item);   // 兼容性处理
+                if (empty(self::$_sites[$siteName]) || empty(self::$_sites[$siteName][$item])) {
+                    $msg =  '-------因当前' .$siteName. "站点未设置".$item."，已跳过！！".PHP_EOL.PHP_EOL;
+                    echo $msg;
+                    self::$wechatMsg['reseedSkip']++;
+                    return false;
+                }
+            }
+        }
+        // 重复做种检测
+        if (isset($infohash_Dir[$info_hash])) {
+            echo '-------与客户端现有种子重复：'.$_url.PHP_EOL.PHP_EOL;
+            self::$wechatMsg['reseedRepeat']++;
+            return false;
+        }
+        // 历史添加检测
+        if (is_file(self::$cacheHash . $info_hash.'.txt')) {
+            echo '-------当前种子上次辅种已成功添加【'.self::$cacheHash . $info_hash.'】，已跳过！ '.$_url.PHP_EOL.PHP_EOL;
+            self::$wechatMsg['reseedPass']++;
+            return false;
+        }
+        // 检查站点是否可以辅种
+        if (in_array($siteName, self::$noReseed)) {
+            echo '-------已跳过不辅种的站点：'.$_url.PHP_EOL.PHP_EOL;
+            self::$wechatMsg['reseedPass']++;
+            // 写入日志文件，供用户手动辅种
+            wlog('clients_'.$k.PHP_EOL.$downloadDir.PHP_EOL.$_url.PHP_EOL.PHP_EOL, $siteName);
+            return false;
+        }
+        // 流控检测
+        if (isset(self::$_sites[$siteName]['limit'])) {
+            echo "-------因当前" .$siteName. "站点触发流控，已跳过！！ {$_url}".PHP_EOL.PHP_EOL;
+            // 流控日志
+            if ($siteName == 'hdchina') {
+                $details_page = str_replace('{}', $torrent_id, 'details.php?id={}&hit=1');
+                $_url = 'https://' .self::$sites[$sid]['base_url']. '/' .$details_page;
+            }
+            wlog('clients_'.$k.PHP_EOL.$downloadDir.PHP_EOL."-------因当前" .$siteName. "站点触发流控，已跳过！！ {$_url}".PHP_EOL.PHP_EOL, 'reseedLimit');
+            self::$wechatMsg['reseedSkip']++;
+            return false;
+        }
+        // 操作站点流控的配置
+        if (isset(self::$_sites[$siteName]['limitRule']) && self::$_sites[$siteName]['limitRule']) {
+            $limitRule = self::$_sites[$siteName]['limitRule'];
+            if (isset($limitRule['count']) && isset($limitRule['sleep'])) {
+                if ($limitRule['count'] <= 0) {
+                    echo '-------当前站点辅种数量已满足规则，保障账号安全已跳过：'.$_url.PHP_EOL.PHP_EOL;
+                    self::$wechatMsg['reseedPass']++;
+                    return false;
+                } else {
+                    // 异步间隔流控算法：各站独立、执行时间最优
+                    $lastTime = isset($limitRule['time']) ? $limitRule['time'] : 0; // 最近一次辅种成功的时间
+                    if ($lastTime) {
+                        $interval = time() - $lastTime;   // 间隔时间
+                        if ($interval < $limitRule['sleep']) {
+                            $t = $limitRule['sleep'] - $interval +  mt_rand(1, 5);
+                            do {
+                                echo microtime(true)." 为账号安全，辅种进程休眠 {$t} 秒后继续...".PHP_EOL;
+                                sleep(1);
+                            } while (--$t > 0);
+                        }
+                    }
+                }
+            } else {
+                echo '-------当前站点流控规则错误，缺少count或sleep参数！请重新配置！'.$_url.PHP_EOL.PHP_EOL;
+                self::$wechatMsg['reseedPass']++;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 获取站点种子的URL
+     * @param string $site
+     * @param string $url
+     * @return string           带host的完整种子下载连接
+     */
+    private static function getTorrentUrl($site = '', $url = '')
+    {
+        // 注入合作站种子的URL规则
+        $url = self::getRecommendTorrentUrl($site, $url);
+        // 进行补全
+        if (!empty(self::$_sites[$site]['passkey']) && empty(self::$_sites[$site]['url_replace'])) {
+            self::$_sites[$site]['url_replace'] = array('{passkey}' => trim(self::$_sites[$site]['passkey']));
+        }
+        // 通用操作：替换
+        if (!empty(self::$_sites[$site]['url_replace'])) {
+            $url = strtr($url, self::$_sites[$site]['url_replace']);
+        }
+        // 通用操作：拼接
+        if (!empty(self::$_sites[$site]['url_join'])) {
+            $url = $url . (strpos($url, '?') === false ? '?' : '&') . implode('&', self::$_sites[$site]['url_join']);
+        }
+        return $url;
+    }
+
+    /**
+     * 注入合作站种子的URL规则
+     * @param string $site
+     * @param string $url
+     * @return string
+     */
+    private static function getRecommendTorrentUrl($site = '', $url = '')
+    {
+        if (in_array($site, self::$recommend)) {
+            $now = time();
+            $uid = isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0;
+            $pk = isset(self::$_sites[$site]['passkey']) ? trim(self::$_sites[$site]['passkey']) : $now;
+            $hash = md5($pk);
+
+            $signString = self::getDownloadTorrentSign($site);  // 检查签名有效期，如果过期获取新的签名
+            switch ($site) {
+                case 'pthome':
+                case 'hdhome':
+                case 'hddolby':
+                    if (isset(self::$_sites[$site]['downHash']) && self::$_sites[$site]['downHash']) {
+                        $hash = self::$_sites[$site]['downHash'];    // 直接提交专用下载hash
+                    }
+                    break;
+                case 'ourbits':
+                    // 兼容旧版本的IYUU
+                    if ($uid) {
+                        $url = str_replace('passkey={passkey}', 'uid={uid}&hash={hash}', $url);
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            // 注入替换规则
+            $replace = [
+                '{uid}' => $uid,
+                '{hash}'=> $hash,
+                '{passkey}' => $pk,
+            ];
+            self::$_sites[$site]['url_replace'] = $replace;
+
+            // 注入拼接规则
+            if (empty(self::$_sites[$site]['url_join'])) {
+                self::$_sites[$site]['runtime_url_join'] = [];      //保存用户配置规则
+                self::$_sites[$site]['url_join'] = array($signString);
+            } else {
+                // 用户已配置过url_join 1.先保存用户原来的规则；2.恢复规则；3.注入签名规则
+                if (!isset(self::$_sites[$site]['runtime_url_join'])) {
+                    self::$_sites[$site]['runtime_url_join'] = self::$_sites[$site]['url_join'];      //保存用户配置规则
+                } else {
+                    self::$_sites[$site]['url_join'] = self::$_sites[$site]['runtime_url_join'];      //恢复用户配置规则
+                }
+                self::$_sites[$site]['url_join'][] = $signString;
+            }
+        }
+
+        return $url;
+    }
+
+    /**
+     * 获取下载合作站种子的签名
+     * @descr 检查签名有效期，如果过期将获取新的签名
+     * @param string $site
+     * @return string
+     */
+    private static function getDownloadTorrentSign($site = '')
+    {
+        $signKEY = 'signString';
+        $expireKEY = 'signExpire';
+        if (isset(self::$_sites[$site][$signKEY]) && isset(self::$_sites[$site][$expireKEY]) && (self::$_sites[$site][$expireKEY] > time())) {
+            return self::$_sites[$site][$signKEY];     // 缓存在有效期内，直接返回
+        }
+
+        // 请求IYUU获取签名
+        $data = [
+            'sign' => self::$conf['iyuu.cn'],
+            'timestamp' => time(),
+            'version'   => self::VER,
+            'site'      => $site,
+            'uid'       => isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0,
+        ];
+        $res = self::$curl->get(self::$apiUrl . self::$endpoints['getSign'], $data);
+        $ret = json_decode($res->response, true);
+        $signString = '';
+        if (isset($ret['ret']) && $ret['ret'] === 200) {
+            if (isset($ret['data'][$signKEY]) && isset($ret['data']['expire'])) {
+                $signString = $ret['data'][$signKEY];
+                $expire     = $ret['data']['expire'];
+                self::$_sites[$site][$signKEY]     = $signString;
+                self::$_sites[$site][$expireKEY]   = time() + $expire - 60;     // 提前60秒过期
+            }
+        } else {
+            echo $site.' 很抱歉，请求IYUU辅种签名时失败啦，请稍后重新尝试辅种！详情：'.$ret['msg'].PHP_EOL;
+        }
+
+        return $signString;
+    }
+
     /**
      * IYUUAutoReseed做种客户端转移
      */
@@ -848,98 +1076,6 @@ class AutoReseed
             }
         }
     }
-    /**
-     * 辅种前置检查
-     * @param $k                int         客户端key
-     * @param $torrent          array       可辅的种子
-     * @param $infohash_Dir     array       当前客户端hash目录对应字典
-     * @param $downloadDir      string      辅种目录
-     * @param $_url             string      种子临时连接
-     * @return bool     true 可辅种 | false 不可辅种
-     */
-    private static function reseedCheck($k, $torrent, $infohash_Dir, $downloadDir, $_url)
-    {
-        self::checkPid() or die('检测到当前任务被外部主动停止，进程退出！'.PHP_EOL);
-        $sid = $torrent['sid'];
-        $torrent_id = $torrent['torrent_id'];
-        $info_hash = $torrent['info_hash'];
-        $siteName = self::$sites[$sid]['site'];
-        $reseed_check = self::$sites[$sid]['reseed_check'];
-        if ($reseed_check && is_array($reseed_check)) {
-            // 循环检查所有项目
-            foreach ($reseed_check as $item) {
-                echo "clients_".$k."正在循环检查所有项目... {$siteName}".PHP_EOL;
-                $item = ($item === 'uid' ? 'id' : $item);   // 兼容性处理
-                if (empty(self::$_sites[$siteName]) || empty(self::$_sites[$siteName][$item])) {
-                    $msg =  '-------因当前' .$siteName. "站点未设置".$item."，已跳过！！".PHP_EOL.PHP_EOL;
-                    echo $msg;
-                    self::$wechatMsg['reseedSkip']++;
-                    return false;
-                }
-            }
-        }
-        // 重复做种检测
-        if (isset($infohash_Dir[$info_hash])) {
-            echo '-------与客户端现有种子重复：'.$_url.PHP_EOL.PHP_EOL;
-            self::$wechatMsg['reseedRepeat']++;
-            return false;
-        }
-        // 历史添加检测
-        if (is_file(self::$cacheHash . $info_hash.'.txt')) {
-            echo '-------当前种子上次辅种已成功添加【'.self::$cacheHash . $info_hash.'】，已跳过！ '.$_url.PHP_EOL.PHP_EOL;
-            self::$wechatMsg['reseedPass']++;
-            return false;
-        }
-        // 检查站点是否可以辅种
-        if (in_array($siteName, self::$noReseed)) {
-            echo '-------已跳过不辅种的站点：'.$_url.PHP_EOL.PHP_EOL;
-            self::$wechatMsg['reseedPass']++;
-            // 写入日志文件，供用户手动辅种
-            wlog('clients_'.$k.PHP_EOL.$downloadDir.PHP_EOL.$_url.PHP_EOL.PHP_EOL, $siteName);
-            return false;
-        }
-        // 流控检测
-        if (isset(self::$_sites[$siteName]['limit'])) {
-            echo "-------因当前" .$siteName. "站点触发流控，已跳过！！ {$_url}".PHP_EOL.PHP_EOL;
-            // 流控日志
-            if ($siteName == 'hdchina') {
-                $details_page = str_replace('{}', $torrent_id, 'details.php?id={}&hit=1');
-                $_url = 'https://' .self::$sites[$sid]['base_url']. '/' .$details_page;
-            }
-            wlog('clients_'.$k.PHP_EOL.$downloadDir.PHP_EOL."-------因当前" .$siteName. "站点触发流控，已跳过！！ {$_url}".PHP_EOL.PHP_EOL, 'reseedLimit');
-            self::$wechatMsg['reseedSkip']++;
-            return false;
-        }
-        // 操作站点流控的配置
-        if (isset(self::$_sites[$siteName]['limitRule']) && self::$_sites[$siteName]['limitRule']) {
-            $limitRule = self::$_sites[$siteName]['limitRule'];
-            if (isset($limitRule['count']) && isset($limitRule['sleep'])) {
-                if ($limitRule['count'] <= 0) {
-                    echo '-------当前站点辅种数量已满足规则，保障账号安全已跳过：'.$_url.PHP_EOL.PHP_EOL;
-                    self::$wechatMsg['reseedPass']++;
-                    return false;
-                } else {
-                    // 异步间隔流控算法：各站独立、执行时间最优
-                    $lastTime = isset($limitRule['time']) ? $limitRule['time'] : 0; // 最近一次辅种成功的时间
-                    if ($lastTime) {
-                        $interval = time() - $lastTime;   // 间隔时间
-                        if ($interval < $limitRule['sleep']) {
-                            $t = $limitRule['sleep'] - $interval +  mt_rand(1, 5);
-                            do {
-                                echo microtime(true)." 为账号安全，辅种进程休眠 {$t} 秒后继续...".PHP_EOL;
-                                sleep(1);
-                            } while (--$t > 0);
-                        }
-                    }
-                }
-            } else {
-                echo '-------当前站点流控规则错误，缺少count或sleep参数！请重新配置！'.$_url.PHP_EOL.PHP_EOL;
-                self::$wechatMsg['reseedPass']++;
-                return false;
-            }
-        }
-        return true;
-    }
 
     /**
      * 过滤已转移的种子hash
@@ -1054,133 +1190,6 @@ class AutoReseed
             }
         }
         return false;
-    }
-
-    /**
-     * 获取站点种子的URL
-     * @param string $site
-     * @param string $url
-     * @return string           带host的完整种子下载连接
-     */
-    private static function getTorrentUrl($site = '', $url = '')
-    {
-        // 注入合作站种子的URL规则
-        $url = self::getRecommendTorrentUrl($site, $url);
-        // 兼容旧配置，进行补全
-        if (isset(self::$_sites[$site]['passkey']) && self::$_sites[$site]['passkey']) {
-            if (empty(self::$_sites[$site]['url_replace'])) {
-                self::$_sites[$site]['url_replace'] = array('{passkey}' => trim(self::$_sites[$site]['passkey']));
-            }
-        }
-        // 通用操作：替换
-        if (isset(self::$_sites[$site]['url_replace']) && self::$_sites[$site]['url_replace']) {
-            $url = strtr($url, self::$_sites[$site]['url_replace']);
-        }
-        // 通用操作：拼接
-        if (isset(self::$_sites[$site]['url_join']) && self::$_sites[$site]['url_join']) {
-            $url = $url.(strpos($url, '?') === false ? '?' : '&').implode('&', self::$_sites[$site]['url_join']);
-        }
-        return $url;
-    }
-
-    /**
-     * 注入合作站种子的URL规则
-     * @param string $site
-     * @param string $url
-     * @return string
-     */
-    private static function getRecommendTorrentUrl($site = '', $url = '')
-    {
-        if (in_array($site, self::$recommend)) {
-            $now = time();
-            $uid = isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0;
-            $pk = isset(self::$_sites[$site]['passkey']) ? trim(self::$_sites[$site]['passkey']) : $now;
-            $hash = md5($pk);
-
-            $signString = self::getDownloadTorrentSign($site);  // 检查签名有效期，如果过期获取新的签名
-            switch ($site) {
-                case 'pthome':
-                case 'hdhome':
-                case 'hddolby':
-                    //兼容性处理：新旧规则
-                    if (isset(self::$_sites[$site]['downHash']) && self::$_sites[$site]['downHash'] && !empty(self::$_sites[$site]['id'])) {
-                        $url = str_replace('passkey={passkey}', 'uid={uid}&hash={hash}', $url);
-                        $hash = self::$_sites[$site]['downHash'];    // 直接提交专用下载hash
-                    }
-                    break;
-                case 'ourbits':
-                    // 兼容旧版本的IYUU
-                    if (isset(self::$_sites[$site]['id']) && self::$_sites[$site]['id']) {
-                        $url = str_replace('passkey={passkey}', 'uid={uid}&hash={hash}', $url);
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            // 注入替换规则
-            $replace = [
-                '{uid}' => $uid,
-                '{hash}'=> $hash,
-                '{passkey}' => $pk,
-            ];
-            self::$_sites[$site]['url_replace'] = $replace;
-
-            // 注入拼接规则
-            if (empty(self::$_sites[$site]['url_join'])) {
-                self::$_sites[$site]['runtime_url_join'] = [];      //保存用户配置规则
-                self::$_sites[$site]['url_join'] = array($signString);
-            } else {
-                // 用户已配置过url_join 1.先保存用户原来的规则；2.恢复规则；3.注入签名规则
-                if (!isset(self::$_sites[$site]['runtime_url_join'])) {
-                    self::$_sites[$site]['runtime_url_join'] = self::$_sites[$site]['url_join'];      //保存用户配置规则
-                } else {
-                    self::$_sites[$site]['url_join'] = self::$_sites[$site]['runtime_url_join'];      //恢复用户配置规则
-                }
-                self::$_sites[$site]['url_join'][] = $signString;
-            }
-        }
-
-        return $url;
-    }
-
-    /**
-     * 获取下载合作站种子的签名
-     * @descr 检查签名有效期，如果过期将获取新的签名
-     * @param string $site
-     * @return string
-     */
-    private static function getDownloadTorrentSign($site = '')
-    {
-        $signKEY = 'signString';
-        $expireKEY = 'signExpire';
-        if (isset(self::$_sites[$site][$signKEY]) && isset(self::$_sites[$site][$expireKEY]) && (self::$_sites[$site][$expireKEY] > time())) {
-            return self::$_sites[$site][$signKEY];     // 缓存在有效期内，直接返回
-        }
-
-        // 请求IYUU获取签名
-        $data = [
-            'sign' => self::$conf['iyuu.cn'],
-            'timestamp' => time(),
-            'version'   => self::VER,
-            'site'      => $site,
-            'uid'       => isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0,
-        ];
-        $res = self::$curl->get(self::$apiUrl . self::$endpoints['getSign'], $data);
-        $ret = json_decode($res->response, true);
-        $signString = '';
-        if (isset($ret['ret']) && $ret['ret'] === 200) {
-            if (isset($ret['data'][$signKEY]) && isset($ret['data']['expire'])) {
-                $signString = $ret['data'][$signKEY];
-                $expire     = $ret['data']['expire'];
-                self::$_sites[$site][$signKEY]     = $signString;
-                self::$_sites[$site][$expireKEY]   = time() + $expire - 60;     // 提前60秒过期
-            }
-        } else {
-            echo $site.' 很抱歉，请求IYUU辅种签名时失败啦，请稍后重新尝试辅种！详情：'.$ret['msg'].PHP_EOL;
-        }
-
-        return $signString;
     }
 
     /**
