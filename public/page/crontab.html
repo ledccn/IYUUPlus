@@ -14,12 +14,13 @@
               <select name="type" lay-filter="type" lay-verify="required" lay-reqtext="任务类型不能为空" id="type">
                 <option value="">请选择任务类型</option>
                 <option value="reseed">辅种任务</option>
-                <option value="download">下载任务</option>
+                <option value="move">转移任务</option>
+                <!-- <option value="download">下载任务</option>
                 <option value="url">访问URL</option>
                 <option value="shell">Shell脚本</option>
                 <option value="patch">备份目录</option>
                 <option value="ddns">动态域名DDNS</option>
-                <option value="clear">清除日志</option>
+                <option value="clear">清除日志</option> -->
               </select>
             </div>
           </div>
@@ -91,6 +92,37 @@
   </div>
   {{# } }}
 
+  {{# if (d.type === 'move') { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">来源下载器</label>
+    <div class="layui-input-block" id="form_clients_view">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">转移到下载器</label>
+    <div class="layui-input-block" id="to_clients_view">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">跳校验</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="skip_check" lay-skin="switch" lay-text="YES|NO" lay-filter="skip_check" id="skip_check">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">自动开始</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="paused" lay-skin="switch" lay-text="YES|NO" lay-filter="paused" id="paused">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">删除源做种</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="delete_torrent" lay-skin="switch" lay-text="YES|NO" lay-filter="delete_torrent" id="delete_torrent">
+    </div>
+  </div>
+  {{# } }}
+
   {{# if (d.type === 'url') { }}
   <div class="layui-form-item">
     <label class="layui-form-label required">URL地址</label>
@@ -121,6 +153,13 @@
 <script id="reseed_clients_tpl" type="text/html">
 {{#  layui.each(d, function(index, item){ }}
 <input type="checkbox" name="clients[{{item.uuid}}]" title="{{ item.name }}" checked>
+{{#  }); }}
+</script>
+
+<!-- 模板：转移任务来源 [下载器] 复选框 -->
+<script id="form_clients_tpl" type="text/html">
+{{#  layui.each(d, function(index, item){ }}
+<input type="checkbox" name="form_clients[{{item.uuid}}]" title="{{ item.name }}" checked>
 {{#  }); }}
 </script>
 
@@ -207,9 +246,9 @@
      * @param {string} type       任务类型
      * @param {string} action     动作(增、删、改、查)
      * @param {string} where      执行周期
-     * @param {function} callback 回调函数
+     * @param {object} formData   编辑时表单数据
      */
-    crontab_sel_action = function(type = '', action = '', where = 'day', callback = null) {
+    crontab_sel_action = function(type = '', action = '', where = 'day', formData = null) {
       let rule = {
           type: type
           ,action: action
@@ -236,7 +275,9 @@
       //联动：任务周期
       crontab_where_sel_action(rule.where);
       //联动：辅种站点与下载器的复选框
-      reseed_sel_action(type, callback);
+      reseed_sel_action(type, formData);
+      //联动：转移任务下载器的选择
+      move_sel_action(type, formData);
     }
 
     /**
@@ -266,12 +307,33 @@
 
     /**
      * 任务选择框联动，辅种站点与下载器的选择
-     * @param {string}   type       任务类型
-     * @param {function} callback   回调函数
+     * @param {string} type       任务类型
+     * @param {object} formData   编辑时表单数据
      */
-    reseed_sel_action = function(type = '', callback) {
+    reseed_sel_action = function(type = '', formData) {
       if (type !== 'reseed') {
         return;
+      }
+      let callback = null;
+      if (formData !== null) {
+        format_input('sites', formData);
+        format_input('clients', formData);
+        delete formData.sites;
+        delete formData.clients;
+        callback = [
+          function(){
+            //取消复选框
+            $('#reseed_sites_view').find(':input').each(function () {
+              $(this).attr('checked', false);
+            });
+            form.val("form", formData);
+          },
+          function(){
+            //取消复选框
+            $('#reseed_clients_view :input').removeAttr("checked");
+            form.val("form", formData);
+          }
+        ];
       }
       //辅种站点
       $.getJSON('/Api/Config?config_filename=user_sites&action=list', function (d) {
@@ -305,6 +367,50 @@
     }
 
     /**
+     * 任务选择框联动，转移做种任务下载器的选择
+     * @param {string} type       任务类型
+     * @param {object} formData   编辑时表单数据
+     */
+    move_sel_action = function(type = '', formData) {
+      if (type !== 'move') {
+        return;
+      }
+      if (formData !== null) {
+        format_input('form_clients', formData);
+        format_input('clients', formData);
+        delete formData.form_clients;
+        delete formData.clients;
+      }
+      let callback = function(){
+        //取消复选框
+        $('#form_clients_view').find(':input').each(function () {
+          $(this).attr('checked', false);
+        });
+        //取消复选框
+        $('#to_clients_view :input').removeAttr("checked");
+        formData !==null && form.val("form", formData);
+      };
+      //辅种下载器
+      $.getJSON('/Api/Config?config_filename=clients&action=list', function (d) {
+        let form_tpl = form_clients_tpl.innerHTML
+          ,toTpl = reseed_clients_tpl.innerHTML
+          ,form_view = getById('form_clients_view')
+          ,to_view = getById('to_clients_view');
+        if (d.ret !== 200 || d.data.total <= 0) {
+          return;
+        }
+        laytpl(form_tpl).render(d.data.items, function(html) {
+          form_view.innerHTML = html;
+        });
+        laytpl(toTpl).render(d.data.items, function(html) {
+          to_view.innerHTML = html;
+        });
+        callback !== null && typeof callback === 'function' && callback();
+        form.render('checkbox');
+      });
+    }
+
+    /**
      * 初始化表格
      */ 
     table.render({
@@ -333,6 +439,9 @@
             switch (d.type) {
               case 'reseed':
                 type = '辅种任务';
+                break;
+              case 'move':
+                type = '转移任务';
                 break;
               case 'download':
                 type = '下载任务';
@@ -502,26 +611,9 @@
         case 'edit':
           getById('switch').checked = false;  //取消使能
           let formData = JSON.parse(JSON.stringify(obj.data));
-          format_input('sites', formData);
-          format_input('clients', formData);
-          delete formData.sites;
-          delete formData.clients;
-          let callback = [
-            function(){
-              //取消复选框
-              $('#reseed_sites_view').find(':input').each(function () {
-                $(this).attr('checked', false);
-              });
-              form.val("form", formData);
-            },
-            function(){
-              //取消复选框
-              $('#reseed_clients_view :input').removeAttr("checked");
-              form.val("form", formData);
-            }
-          ];
-          crontab_sel_action(obj.data.type, 'edit', obj.data.where, callback);
+          crontab_sel_action(obj.data.type, 'edit', obj.data.where, formData);
           form.val("form", formData);
+          form.render();
           break;
         case 'delete':
           layer.confirm('真的删除 '+obj.data.name +'吗？', function(index){

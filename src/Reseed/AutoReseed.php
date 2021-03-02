@@ -133,13 +133,11 @@ class AutoReseed
      */
     public static function init()
     {
-        //sleep(mt_rand(1, 5));
-        self::getCliInput();
-
         self::$curl = new Curl();
         self::$curl->setOpt(CURLOPT_SSL_VERIFYPEER, false);
         self::$curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);
 
+        self::getCliInput();
         self::Oauth();
         self::getSites();
         self::ShowTableSites();
@@ -203,28 +201,30 @@ class AutoReseed
 
         //注册一个会在php中止时执行的函数
         register_shutdown_function(function () use (&$cron_name){
-            self::deletePid();
+            self::deletePid(self::$pid_file);
             $lockFile = domainCrontab::getLockFile($cron_name);
-            is_file($lockFile) and unlink($lockFile);
+            self::deletePid($lockFile);
         });
     }
 
     /**
      * 删除pid文件
+     * @param string $file
      */
-    protected static function deletePid()
+    protected static function deletePid($file = '')
     {
-        self::checkPid() and unlink(self::$pid_file);
+        self::checkPid($file) and unlink($file);
     }
 
     /**
      * 检查pid文件
+     * @param string $file
      * @return bool
      */
-    protected static function checkPid()
+    protected static function checkPid($file = '')
     {
         clearstatcache();
-        return is_file(self::$pid_file);
+        return is_file($file);
     }
 
     /**
@@ -330,10 +330,6 @@ class AutoReseed
                 self::$links[$k]['root_folder'] = isset($v['root_folder']) ? $v['root_folder'] : 1;
                 $result = $client->status();
                 print $v['type'].'：'.$v['host']." Rpc连接 [{$result}]".PHP_EOL;
-                // 检查转移做种 (self::$move为空，移动配置为真)
-                if (is_null(self::$move) && !empty($v['move'])) {
-                    self::$move = array($k, $v['move']);
-                }
             } catch (\Exception $e) {
                 die('[连接错误] '. $v['host'] . $e->getMessage() . PHP_EOL);
             }
@@ -883,7 +879,8 @@ class AutoReseed
         }
         // 通用操作：拼接
         if (!empty(self::$_sites[$site]['url_join'])) {
-            $url = $url . (strpos($url, '?') === false ? '?' : '&') . implode('&', self::$_sites[$site]['url_join']);
+            $delimiter = strpos($url, '?') === false ? '?' : '&';
+            $url = $url . $delimiter . implode('&', self::$_sites[$site]['url_join']);
         }
         return $url;
     }
