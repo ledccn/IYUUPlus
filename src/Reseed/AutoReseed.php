@@ -160,6 +160,7 @@ class AutoReseed
         // 命令行参数
         global $argv;
         $cron_name = isset($argv[1]) ? $argv[1] : null;
+        is_null($cron_name) and die('缺少命令行参数。');
         self::$conf = domainReseed::configParser($cron_name);
         if (empty(self::$conf['sites']) || empty(self::$conf['clients'])) {
             die('解析计划任务失败：站点或客户端为空！可能当前任务已被停止或删除！'.PHP_EOL);
@@ -269,6 +270,18 @@ class AutoReseed
             die('网络故障或远端服务器无响应，请稍后再试！！！');
         }
         self::$sites = array_column($sites, null, 'id');
+        // 初始化辅种检查规则    2020年12月12日新增
+        array_walk(self::$sites, function (&$v, $k) {
+            if (empty($v['reseed_check'])) {
+                $v['reseed_check'] = [];
+            } else {
+                $rule = explode(',', $v['reseed_check']);
+                array_walk($rule, function (&$vv, $kk) {
+                    $vv = trim($vv);
+                });
+                $v['reseed_check'] = $rule ? $rule : [];
+            }
+        });
     }
 
     /**
@@ -426,279 +439,294 @@ class AutoReseed
     {
         // 支持站点数量
         self::$wechatMsg['sitesCount'] = count(self::$sites);
-        // 遍历客户端 开始
-        foreach (self::$links as $k => $v) {
-            if (empty($v)) {
-                echo "【".$v['_config']['name']."】 用户名或密码未配置，已跳过".PHP_EOL.PHP_EOL;
+        // 按客户端循环辅种 开始
+        foreach (self::$links as $clientKey => $clientValue) {
+            if (empty($clientValue)) {
+                echo "【".$clientValue['_config']['name']."】 用户名或密码未配置，已跳过".PHP_EOL.PHP_EOL;
                 continue;
             }
-            // 过滤无需辅种的客户端
-            if ((self::$move !== null) && (self::$move[0] != $k) && (self::$move[1] == 2)) {
-                echo "【".$v['_config']['name']."】 根据设置无需辅种，已跳过！";
-                continue;
-            }
-            echo "正在从下载器 【".$v['_config']['name']."】 获取种子哈希……".PHP_EOL;
-            $hashArray = self::$links[$k]['rpc']->all();
+            echo "正在从下载器 【".$clientValue['_config']['name']."】 获取种子哈希……".PHP_EOL;
+            $hashArray = self::$links[$clientKey]['rpc']->all();
             if (empty($hashArray)) {
                 continue;
             }
-            $infohash_Dir = $hashArray['hashString'];   // 哈希目录字典
+            $hashString = $hashArray['hashString'];   // 哈希目录字典
             unset($hashArray['hashString']);
             // 签名
-            $hashArray['sign'] = Oauth::getSign();
-            $hashArray['timestamp'] = time();
-            $hashArray['version'] = self::VER;
+            $sign['sign'] = Oauth::getSign();
+            $sign['timestamp'] = time();
+            $sign['version'] = self::VER;
             // 写请求日志
-            wlog($hashArray, 'Request_'.$k);
-            self::$wechatMsg['hashCount'] += count($infohash_Dir);
-            // 此处优化大于一万条做种时，设置超时
-            if (count($infohash_Dir) > 5000) {
+            wlog($hashArray, 'Request_'.$clientKey);
+            self::$wechatMsg['hashCount'] += count($hashString);
+            // 此处优化大于5000条做种时，设置超时
+            if (count($hashString) > 5000) {
                 $connecttimeout = isset(self::$conf['default']['CONNECTTIMEOUT']) && self::$conf['default']['CONNECTTIMEOUT'] > 60 ? self::$conf['default']['CONNECTTIMEOUT'] : 60;
                 $timeout = isset(self::$conf['default']['TIMEOUT']) && self::$conf['default']['TIMEOUT'] > 600 ? self::$conf['default']['TIMEOUT'] : 600;
                 self::$curl->setOpt(CURLOPT_CONNECTTIMEOUT, $connecttimeout);
                 self::$curl->setOpt(CURLOPT_TIMEOUT, $timeout);
-            }
-            echo "正在向服务器提交 【".$v['_config']['name']."】 种子哈希……".PHP_EOL;
-            $res = self::$curl->post(self::$apiUrl . self::$endpoints['infohash'], $hashArray);
-            $res = json_decode($res->response, true);
-            // 写响应日志
-            wlog($res, 'Response_'.$k);
-            $data = isset($res['data']) && $res['data'] ? $res['data'] : array();
-            if (empty($data)) {
-                echo "clients_".$k." 没有查询到可辅种数据".PHP_EOL.PHP_EOL;
-                continue;
-            }
-            // 判断返回值
-            if (isset($res['ret']) && $res['ret'] === 200) {
-                echo "【".$v['_config']['name']."】 辅种数据下载成功！！！".PHP_EOL.PHP_EOL;
-                echo '【提醒】未配置passkey的站点都会跳过！'.PHP_EOL.PHP_EOL;
+                $hashJson = $hashArray['hash'];
+                $infoHash = json_decode($hashJson, true);     // Json转数组
+                $hash = array_chunk($infoHash, 5000);       // 分隔数组
+                foreach ($hash as $info_hash) {
+                    $hashArray = [];
+                    sort($info_hash);
+                    $json = json_encode($info_hash, JSON_UNESCAPED_UNICODE);
+                    $hashArray['hash'] = $json;
+                    $hashArray['sha1'] = sha1($json);
+                    self::requestApi($hashString, array_merge($hashArray, $sign), $clientKey, $clientValue);
+                }
             } else {
-                $msg = isset($res['msg']) && $res['msg'] ? $res['msg'] : '远端服务器无响应，请稍后重试！';
-                echo '-----辅种失败，原因：' .$msg.PHP_EOL.PHP_EOL;
-                continue;
+                self::requestApi($hashString, array_merge($hashArray, $sign), $clientKey, $clientValue);
             }
-            // 遍历当前客户端可辅种数据
-            foreach ($data as $info_hash => $reseed) {
-                $downloadDir = $infohash_Dir[$info_hash];   // 辅种目录
-                foreach ($reseed['torrent'] as $id => $value) {
-                    // 匹配的辅种数据累加
-                    self::$wechatMsg['reseedCount']++;
-                    // 站点id
-                    $sid = $value['sid'];
-                    // 种子id
-                    $torrent_id = $value['torrent_id'];
-                    // 检查禁用站点
-                    if (empty(self::$sites[$sid])) {
-                        echo '-----当前站点不受支持，已跳过。' .PHP_EOL.PHP_EOL;
-                        self::$wechatMsg['reseedSkip']++;
-                        continue;
-                    }
-                    // 站名
-                    $siteName = self::$sites[$sid]['site'];
-                    // 错误通知
-                    self::setNotify($siteName, $sid, $torrent_id);
-                    // 协议
-                    $protocol = self::$sites[$sid]['is_https'] == 0 ? 'http://' : 'https://';
-                    // 种子页规则
-                    $download_page = str_replace('{}', $torrent_id, self::$sites[$sid]['download_page']);
+        }
+    }
 
-                    // 辅种检查规则初始化   2020年12月12日新增
-                    if (!is_array(self::$sites[$sid]['reseed_check'])) {
-                        // 初始化
-                        if (!empty(self::$sites[$sid]['reseed_check'])) {
-                            $reseed_check = explode(',', self::$sites[$sid]['reseed_check']);
-                            array_walk($reseed_check, function (&$v, $k) {
-                                $v = trim($v);
-                            });
-                            self::$sites[$sid]['reseed_check'] = $reseed_check;
-                        } else {
-                            self::$sites[$sid]['reseed_check'] = [];
-                        }
-                    }
-                    $reseed_check = self::$sites[$sid]['reseed_check']; // 赋值
+    /**
+     * 当前请求API接口获取数据
+     * @param array $hashString         当前客户端infohash与目录对应的字典
+     * @param array $hashArray          当前客户端infohash
+     * @param int   $clientKey          当前客户端key
+     * @param array $clientValue        当前客户端配置
+     */
+    private static function requestApi($hashString, $hashArray, $clientKey, $clientValue)
+    {
+        echo "正在向服务器提交 【".$clientValue['_config']['name']."】 种子哈希……".PHP_EOL;
+        $res = self::$curl->post(self::$apiUrl . self::$endpoints['infohash'], $hashArray);
+        $res = json_decode($res->response, true);
+        // 写响应日志
+        wlog($res, 'Response_'.$clientKey);
+        $data = isset($res['data']) && $res['data'] ? $res['data'] : array();
+        if (empty($data)) {
+            echo "clients_".$clientKey." 没有查询到可辅种数据".PHP_EOL.PHP_EOL;
+            return;
+        }
+        // 判断返回值
+        if (isset($res['ret']) && $res['ret'] === 200) {
+            echo "【".$clientValue['_config']['name']."】 辅种数据下载成功！！！".PHP_EOL.PHP_EOL;
+            echo '【提醒】未配置passkey的站点都会跳过！'.PHP_EOL.PHP_EOL;
+        } else {
+            $msg = isset($res['msg']) && $res['msg'] ? $res['msg'] : '远端服务器无响应，请稍后重试！';
+            echo '-----辅种失败，原因：' .$msg.PHP_EOL.PHP_EOL;
+            return;
+        }
+        // 遍历当前客户端可辅种数据
+        self::selfClientReseed($data, $hashString, $clientKey);
+    }
 
-                    // 临时种子连接（会写入辅种日志）
-                    $_url = $protocol . self::$sites[$sid]['base_url']. '/' .$download_page;
-                    /**
-                     * 辅种前置检查
-                     */
-                    if (!self::reseedCheck($k, $value, $infohash_Dir, $downloadDir, $_url)) {
-                        continue;
-                    }
-                    /**
-                     * 种子推送方式区分
-                     */
-                    if (in_array('cookie', $reseed_check)) {
-                        // 特殊站点：种子元数据推送给下载器
-                        $reseedPass = false;    // 标志：跳过辅种
-                        $cookie = trim(self::$_sites[$siteName]['cookie']);
-                        $userAgent = self::$conf['default']['ua'];
-                        switch ($siteName) {
-                            case 'hdchina':
-                                // 请求详情页
-                                $details_html = self::getNexusPHPdetailsPage($protocol, $value, $cookie, $userAgent);
-                                if (is_null($details_html)) {
-                                    $reseedPass = true;
-                                    break;
-                                }
-                                // 搜索种子地址
-                                $remove = '{hash}';
-                                $offset = strpos($details_html, str_replace($remove, '', self::$sites[$sid]['download_page']));
-                                if ($offset === false) {
-                                    $reseedPass = true;
-                                    self::cookieExpired($siteName);     // cookie失效
-                                    break;
-                                }
-                                // 提取种子地址
-                                $regex = "/download.php\?hash\=(.*?)[\"|\']/i";   // 提取种子hash的正则表达式
-                                if (preg_match($regex, $details_html, $matchs)) {
-                                    // 拼接种子地址
-                                    $_url = str_replace($remove, $matchs[1], $_url);
-                                    echo "下载种子：".$_url.PHP_EOL;
-                                    $url = download($_url, $cookie, $userAgent);
-                                    if (strpos($url, '第一次下载提示') != false) {
-                                        self::$noReseed[] = $siteName;
-                                        $reseedPass = true;
+    /**
+     * 遍历当前客户端可辅种数据
+     * @param array $data           接口返回的可辅种数据
+     * @param array $hashString     当前客户端infohash与目录对应的字典
+     * @param int   $clientKey      当前客户端key
+     */
+    private static function selfClientReseed($data = [], $hashString = [], $clientKey = 0)
+    {
+        foreach ($data as $info_hash => $reseed) {
+            $downloadDir = $hashString[$info_hash];   // 辅种目录
+            foreach ($reseed['torrent'] as $id => $value) {
+                // 匹配的辅种数据累加
+                self::$wechatMsg['reseedCount']++;
+                $sid = $value['sid'];                // 站点id
+                $torrent_id = $value['torrent_id'];  // 种子id
+                // 检查禁用站点
+                if (empty(self::$sites[$sid])) {
+                    echo '-----当前站点不受支持，已跳过。' .PHP_EOL.PHP_EOL;
+                    self::$wechatMsg['reseedSkip']++;
+                    continue;
+                }
+                // 站名
+                $siteName = self::$sites[$sid]['site'];
+                // 错误通知
+                self::setNotify($siteName, $sid, $torrent_id);
+                // 协议
+                $protocol = self::$sites[$sid]['is_https'] == 0 ? 'http://' : 'https://';
+                // 种子页规则
+                $download_page = str_replace('{}', $torrent_id, self::$sites[$sid]['download_page']);
+                // 辅种检查规则
+                $reseed_check = self::$sites[$sid]['reseed_check']; // 赋值
 
-                                        echo "当前站点触发第一次下载提示，已加入排除列表".PHP_EOL;
-                                        sleepIYUU(30, '请进入瓷器详情页，点右上角蓝色框：下载种子，成功后更新cookie！');
-                                        self::ff($siteName. '站点，辅种时触发第一次下载提示！');
-                                        break;
-                                    }
-                                    if (strpos($url, '系统检测到过多的种子下载请求') != false) {
-                                        self::$_sites[$siteName]['limit'] = 1;
-                                        $reseedPass = true;
+                // 临时种子连接（会写入辅种日志）
+                $_url = $protocol . self::$sites[$sid]['base_url']. '/' .$download_page;
+                /**
+                 * 辅种前置检查
+                 */
+                if (!self::reseedCheck($clientKey, $value, $hashString, $downloadDir, $_url)) {
+                    continue;
+                }
+                /**
+                 * 种子推送方式区分
+                 */
+                if (in_array('cookie', $reseed_check)) {
+                    // 特殊站点：种子元数据推送给下载器
+                    $url = '';
+                    $reseedPass = false;    // 标志：跳过辅种
 
-                                        echo "当前站点触发人机验证，已加入流控列表".PHP_EOL;
-                                        self::ff($siteName. '站点，辅种时触发人机验证！');
-                                        break;
-                                    }
-                                } else {
-                                    $reseedPass = true;
-                                    sleepIYUU(15, $siteName.'正则表达式未匹配到种子地址，可能站点已更新，请联系IYUU作者！');
-                                }
+                    $cookie = trim(self::$_sites[$siteName]['cookie']);
+                    $userAgent = self::$conf['default']['ua'];
+                    switch ($siteName) {
+                        case 'hdchina':
+                            // 请求详情页
+                            $details_html = self::getNexusPHPdetailsPage($protocol, $value, $cookie, $userAgent);
+                            if (is_null($details_html)) {
+                                $reseedPass = true;
                                 break;
-                            case 'hdcity':
-                                $details_url = $protocol . self::$sites[$sid]['base_url'] . '/t-' .$torrent_id;
-                                print "种子详情页：".$details_url.PHP_EOL;
-                                if (empty(self::$_sites[$siteName]['cuhash'])) {
-                                    // 请求包含cuhash的列表页
-                                    $html = download($protocol .self::$sites[$sid]['base_url']. '/pt', $cookie, $userAgent);
-                                    // 搜索cuhash
-                                    $offset = strpos($html, 'cuhash=');
-                                    if ($offset === false) {
-                                        self::cookieExpired($siteName);     // cookie失效
-                                        $reseedPass = true;
-                                        break;
-                                    }
-                                    // 提取cuhash
-                                    $regex = "/cuhash\=(.*?)[\"|\']/i";   // 提取种子cuhash的正则表达式
-                                    if (preg_match($regex, $html, $matchs)) {
-                                        self::$_sites[$siteName]['cuhash'] = $matchs[1];
-                                    } else {
-                                        $reseedPass = true;
-                                        sleepIYUU(15, $siteName.'正则表达式未匹配到cuhash，可能站点已更新，请联系IYUU作者！');
-                                        break;
-                                    }
-                                }
+                            }
+                            // 搜索种子地址
+                            $remove = '{hash}';
+                            $offset = strpos($details_html, str_replace($remove, '', self::$sites[$sid]['download_page']));
+                            if ($offset === false) {
+                                $reseedPass = true;
+                                self::cookieExpired($siteName);     // cookie失效
+                                break;
+                            }
+                            // 提取种子地址
+                            $regex = "/download.php\?hash\=(.*?)[\"|\']/i";   // 提取种子hash的正则表达式
+                            if (preg_match($regex, $details_html, $matchs)) {
                                 // 拼接种子地址
-                                $remove = '{cuhash}';
-                                $_url = str_replace($remove, self::$_sites[$siteName]['cuhash'], $_url);
-                                // 城市下载种子会302转向
+                                $_url = str_replace($remove, $matchs[1], $_url);
                                 echo "下载种子：".$_url.PHP_EOL;
                                 $url = download($_url, $cookie, $userAgent);
-                                if (strpos($url, 'Non-exist torrent id!') != false) {
-                                    echo '种子已被删除！'.PHP_EOL;
-                                    self::sendNotify('404');
-                                    // 标志：跳过辅种
+                                if (strpos($url, '第一次下载提示') != false) {
+                                    self::$noReseed[] = $siteName;
                                     $reseedPass = true;
-                                }
-                                break;
-                            case 'hdsky':
-                                // 请求详情页
-                                $details_html = self::getNexusPHPdetailsPage($protocol, $value, $cookie, $userAgent);
-                                if (is_null($details_html)) {
-                                    $reseedPass = true;
+
+                                    echo "当前站点触发第一次下载提示，已加入排除列表".PHP_EOL;
+                                    sleepIYUU(30, '请进入瓷器详情页，点右上角蓝色框：下载种子，成功后更新cookie！');
+                                    self::ff($siteName. '站点，辅种时触发第一次下载提示！');
                                     break;
                                 }
-                                // 搜索种子地址
-                                $remove = 'id={}&passkey={passkey}';
-                                $offset = strpos($details_html, str_replace($remove, '', self::$sites[$sid]['download_page']));
+                                if (strpos($url, '系统检测到过多的种子下载请求') != false) {
+                                    self::$_sites[$siteName]['limit'] = 1;
+                                    $reseedPass = true;
+
+                                    echo "当前站点触发人机验证，已加入流控列表".PHP_EOL;
+                                    self::ff($siteName. '站点，辅种时触发人机验证！');
+                                    break;
+                                }
+                            } else {
+                                $reseedPass = true;
+                                sleepIYUU(15, $siteName.'正则表达式未匹配到种子地址，可能站点已更新，请联系IYUU作者！');
+                            }
+                            break;
+                        case 'hdcity':
+                            $details_url = $protocol . self::$sites[$sid]['base_url'] . '/t-' .$torrent_id;
+                            print "种子详情页：".$details_url.PHP_EOL;
+                            if (empty(self::$_sites[$siteName]['cuhash'])) {
+                                // 请求包含cuhash的列表页
+                                $html = download($protocol .self::$sites[$sid]['base_url']. '/pt', $cookie, $userAgent);
+                                // 搜索cuhash
+                                $offset = strpos($html, 'cuhash=');
                                 if ($offset === false) {
                                     self::cookieExpired($siteName);     // cookie失效
                                     $reseedPass = true;
                                     break;
                                 }
-                                // 提取种子地址
-                                $regex = '/download.php\?(.*?)["|\']/i';
-                                if (preg_match($regex, $details_html, $matchs)) {
-                                    // 拼接种子地址
-                                    $download_page = str_replace($remove, '', self::$sites[$sid]['download_page']).str_replace('&amp;', '&', $matchs[1]);
-                                    $_url = $protocol . self::$sites[$sid]['base_url']. '/' . $download_page;
-                                    print "下载种子：".$_url.PHP_EOL;
-                                    $url = download($_url, $cookie, $userAgent);
-                                    if (strpos($url, '第一次下载提示') != false) {
-                                        self::$noReseed[] = $siteName;
-                                        $reseedPass = true;
-
-                                        echo "当前站点触发第一次下载提示，已加入排除列表".PHP_EOL;
-                                        echo "请进入种子详情页，下载种子，成功后更新cookie！".PHP_EOL;
-                                        sleepIYUU(30, '请进入种子详情页，下载种子，成功后更新cookie！');
-                                        self::ff($siteName. '站点，辅种时触发第一次下载提示！');
-                                    }
+                                // 提取cuhash
+                                $regex = "/cuhash\=(.*?)[\"|\']/i";   // 提取种子cuhash的正则表达式
+                                if (preg_match($regex, $html, $matchs)) {
+                                    self::$_sites[$siteName]['cuhash'] = $matchs[1];
                                 } else {
                                     $reseedPass = true;
-                                    sleepIYUU(15, $siteName.'正则表达式未匹配到种子地址，可能站点已更新，请联系IYUU作者！');
+                                    sleepIYUU(15, $siteName.'正则表达式未匹配到cuhash，可能站点已更新，请联系IYUU作者！');
+                                    break;
                                 }
-                                break;
-                            default:
-                                // 默认站点：推送给下载器种子URL链接
-                                break;
-                        }
-                        // 检查switch内是否异常
-                        if ($reseedPass) {
-                            continue;
-                        }
-                        $downloadUrl = $_url;
-                    } else {
-                        $url = self::getTorrentUrl($siteName, $_url);
-                        $downloadUrl = $url;
-                    }
-
-                    // 把种子URL，推送给下载器
-                    echo '推送种子：' . $_url . PHP_EOL;
-                    // 成功true | 失败false
-                    $ret = self::add($k, $url, $downloadDir);
-
-                    // 规范日志内容
-                    $log = 'clients_'. $k . PHP_EOL . $downloadDir . PHP_EOL . $downloadUrl . PHP_EOL.PHP_EOL;
-                    if ($ret) {
-                        // 成功
-                        // 操作流控参数
-                        if (isset(self::$_sites[$siteName]['limitRule']) && self::$_sites[$siteName]['limitRule']) {
-                            $limitRule = self::$_sites[$siteName]['limitRule'];
-                            if ($limitRule['count']) {
-                                self::$_sites[$siteName]['limitRule']['count']--;
-                                self::$_sites[$siteName]['limitRule']['time'] = time();
                             }
-                        }
-                        // 添加成功，以infohash为文件名，写入缓存；所有客户端共用缓存，不可以重复辅种！如果需要重复辅种，请经常删除缓存！
-                        wlog($log, $value['info_hash'], self::$cacheHash);
-                        wlog($log, 'reseedSuccess');
-                        // 成功累加
-                        self::$wechatMsg['reseedSuccess']++;
-                    } else {
-                        // 失败
-                        wlog($log, 'reseedError');
-                        // 失败累加
-                        self::$wechatMsg['reseedError']++;
+                            // 拼接种子地址
+                            $remove = '{cuhash}';
+                            $_url = str_replace($remove, self::$_sites[$siteName]['cuhash'], $_url);
+                            // 城市下载种子会302转向
+                            echo "下载种子：".$_url.PHP_EOL;
+                            $url = download($_url, $cookie, $userAgent);
+                            if (strpos($url, 'Non-exist torrent id!') != false) {
+                                echo '种子已被删除！'.PHP_EOL;
+                                self::sendNotify('404');
+                                // 标志：跳过辅种
+                                $reseedPass = true;
+                            }
+                            break;
+                        case 'hdsky':
+                            // 请求详情页
+                            $details_html = self::getNexusPHPdetailsPage($protocol, $value, $cookie, $userAgent);
+                            if (is_null($details_html)) {
+                                $reseedPass = true;
+                                break;
+                            }
+                            // 搜索种子地址
+                            $remove = 'id={}&passkey={passkey}';
+                            $offset = strpos($details_html, str_replace($remove, '', self::$sites[$sid]['download_page']));
+                            if ($offset === false) {
+                                self::cookieExpired($siteName);     // cookie失效
+                                $reseedPass = true;
+                                break;
+                            }
+                            // 提取种子地址
+                            $regex = '/download.php\?(.*?)["|\']/i';
+                            if (preg_match($regex, $details_html, $matchs)) {
+                                // 拼接种子地址
+                                $download_page = str_replace($remove, '', self::$sites[$sid]['download_page']).str_replace('&amp;', '&', $matchs[1]);
+                                $_url = $protocol . self::$sites[$sid]['base_url']. '/' . $download_page;
+                                print "下载种子：".$_url.PHP_EOL;
+                                $url = download($_url, $cookie, $userAgent);
+                                if (strpos($url, '第一次下载提示') != false) {
+                                    self::$noReseed[] = $siteName;
+                                    $reseedPass = true;
+
+                                    echo "当前站点触发第一次下载提示，已加入排除列表".PHP_EOL;
+                                    echo "请进入种子详情页，下载种子，成功后更新cookie！".PHP_EOL;
+                                    sleepIYUU(30, '请进入种子详情页，下载种子，成功后更新cookie！');
+                                    self::ff($siteName. '站点，辅种时触发第一次下载提示！');
+                                }
+                            } else {
+                                $reseedPass = true;
+                                sleepIYUU(15, $siteName.'正则表达式未匹配到种子地址，可能站点已更新，请联系IYUU作者！');
+                            }
+                            break;
+                        default:
+                            // 默认站点：推送给下载器种子URL链接
+                            break;
                     }
+                    // 检查switch内是否异常
+                    if ($reseedPass) {
+                        continue;
+                    }
+                    $downloadUrl = $_url;
+                } else {
+                    $url = self::getTorrentUrl($siteName, $_url);
+                    $downloadUrl = $url;
                 }
-                // 当前种子辅种 结束
+
+                // 把种子URL或元数据，推送给下载器
+                echo '推送种子：' . $_url . PHP_EOL;
+                // 成功true | 失败false
+                $ret = self::add($clientKey, $url, $downloadDir);
+
+                // 规范日志内容
+                $log = 'clients_'. $clientKey . PHP_EOL . $downloadDir . PHP_EOL . $downloadUrl . PHP_EOL.PHP_EOL;
+                if ($ret) {
+                    // 成功
+                    // 操作流控参数
+                    if (isset(self::$_sites[$siteName]['limitRule']) && self::$_sites[$siteName]['limitRule']) {
+                        $limitRule = self::$_sites[$siteName]['limitRule'];
+                        if ($limitRule['count']) {
+                            self::$_sites[$siteName]['limitRule']['count']--;
+                            self::$_sites[$siteName]['limitRule']['time'] = time();
+                        }
+                    }
+                    // 添加成功，以infohash为文件名，写入缓存；所有客户端共用缓存，不可以重复辅种！如果需要重复辅种，请经常删除缓存！
+                    wlog($log, $value['info_hash'], self::$cacheHash);
+                    wlog($log, 'reseedSuccess');
+                    // 成功累加
+                    self::$wechatMsg['reseedSuccess']++;
+                } else {
+                    // 失败
+                    wlog($log, 'reseedError');
+                    // 失败累加
+                    self::$wechatMsg['reseedError']++;
+                }
             }
-            // 当前客户端辅种 结束
+            // 当前种子辅种 结束
         }
-        // 按客户端循环辅种 结束
     }
 
     /**

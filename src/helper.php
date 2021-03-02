@@ -270,7 +270,7 @@ function filter($site = '', $torrent = array())
 }
 
 /**
- * 日志记录函数
+ * 日志记录函数(追加式写入)
  * @param string $data
  * @param string $name
  * @param string $path
