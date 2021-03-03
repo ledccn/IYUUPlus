@@ -1,5 +1,5 @@
 @echo off
-chcp 65001
+:chcp 65001
 title IYUUPlus
 cd /d "%~dp0"
 echo Docker: https://hub.docker.com/r/iyuucn/iyuuplus
