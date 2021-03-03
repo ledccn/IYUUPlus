@@ -89,6 +89,7 @@
     <label class="layui-form-label required">辅种的下载器</label>
     <div class="layui-input-block" id="reseed_clients_view">
     </div>
+    <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 如果您新增站点或者新增下载器，需要编辑计划任务重新勾选。</div>
   </div>
   {{# } }}
 
@@ -104,21 +105,48 @@
     </div>
   </div>
   <div class="layui-form-item">
+    <label class="layui-form-label required">排除目录</label>
+    <div class="layui-input-block">
+      <div id="path_filter_view"></div>
+      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 转移过滤器：不转移此路径内种子文件。</div>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">选择目录</label>
+    <div class="layui-input-block">
+      <div id="path_selector_view"></div>
+      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 转移选择器：只转移此路径内文件(为空时，全转移) 【优先级：过滤器 ＞ 选择器】。</div>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">路径转换类型</label>
+    <div class="layui-input-inline">
+      <select name="path_type" lay-filter="path_type">
+        <option value="" selected="">请选择转换类型</option>
+        <option value="0">相等</option><option value="1">减</option><option value="2">加</option><option value="3">替换</option>
+      </select>
+    </div>
+    <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 用于相对路径与绝对路径之间互相转换，实现种子对应资源目录，是客户端做种转移的重要步骤。</div>
+  </div>
+  <div class="layui-form-item">
     <label class="layui-form-label">跳校验</label>
     <div class="layui-input-block">
       <input type="checkbox" name="skip_check" lay-skin="switch" lay-text="YES|NO" lay-filter="skip_check" id="skip_check">
+      <tip>转移时，跳过校验。</tip>
     </div>
   </div>
   <div class="layui-form-item">
     <label class="layui-form-label">自动开始</label>
     <div class="layui-input-block">
       <input type="checkbox" name="paused" lay-skin="switch" lay-text="YES|NO" lay-filter="paused" id="paused">
+      <tip>转移成功，自动开始任务。</tip>
     </div>
   </div>
   <div class="layui-form-item">
     <label class="layui-form-label">删除源做种</label>
     <div class="layui-input-block">
       <input type="checkbox" name="delete_torrent" lay-skin="switch" lay-text="YES|NO" lay-filter="delete_torrent" id="delete_torrent">
+      <tip>转移成功，删除当前做种。</tip>
     </div>
   </div>
   {{# } }}
@@ -156,10 +184,17 @@
 {{#  }); }}
 </script>
 
-<!-- 模板：转移任务来源 [下载器] 复选框 -->
+<!-- 模板：转移任务来源 [下载器] 单选框 -->
 <script id="form_clients_tpl" type="text/html">
 {{#  layui.each(d, function(index, item){ }}
-<input type="checkbox" name="form_clients[{{item.uuid}}]" title="{{ item.name }}" checked>
+<input type="radio" name="form_clients" value="{{item.uuid}}" title="{{ item.name }}">
+{{#  }); }}
+</script>
+
+<!-- 模板：转移任务目标 [下载器] 单选框 -->
+<script id="to_clients_tpl" type="text/html">
+{{#  layui.each(d, function(index, item){ }}
+<input type="radio" name="to_clients" value="{{item.uuid}}" title="{{ item.name }}">
 {{#  }); }}
 </script>
 
@@ -224,13 +259,14 @@
   <span class="layui-badge" lay-event="delete">删除</span>
 </script>
 <script>
-  layui.use(['table','form','miniPage','laytpl','code'], function () {
+  layui.use(['table','form','miniPage','laytpl','code','transfer'], function () {
     let $ = layui.$,
       layer = layui.layer,
       table = layui.table,
       form = layui.form,
       miniPage = layui.miniPage,
-      laytpl = layui.laytpl;
+      laytpl = layui.laytpl
+      transfer = layui.transfer;
 
     const API = {
       tableList: '/Api/Config?config_filename=crontab&action=list'
@@ -320,6 +356,8 @@
         format_input('clients', formData);
         delete formData.sites;
         delete formData.clients;
+        console.log(formData);
+        //定义回调
         callback = [
           function(){
             //取消复选框
@@ -348,6 +386,7 @@
         laytpl(getTpl).render(data, function(html) {
           view.innerHTML = html;
         });
+        //回调
         callback !== null && typeof callback[0] === 'function' && callback[0]();
         form.render('checkbox');
       });
@@ -361,6 +400,7 @@
         laytpl(getTpl).render(d.data.items, function(html) {
           view.innerHTML = html;
         });
+        //回调
         callback !== null && typeof callback[1] === 'function' && callback[1]();
         form.render('checkbox');
       });
@@ -375,38 +415,95 @@
       if (type !== 'move') {
         return;
       }
+      let callback = null;
       if (formData !== null) {
-        format_input('form_clients', formData);
-        format_input('clients', formData);
-        delete formData.form_clients;
-        delete formData.clients;
+        console.log(formData);
+        //定义回调
+        callback = function(){
+          form.val("form", formData);
+        };
       }
-      let callback = function(){
-        //取消复选框
-        $('#form_clients_view').find(':input').each(function () {
-          $(this).attr('checked', false);
-        });
-        //取消复选框
-        $('#to_clients_view :input').removeAttr("checked");
-        formData !==null && form.val("form", formData);
-      };
-      //辅种下载器
+      //获取所有下载器
       $.getJSON('/Api/Config?config_filename=clients&action=list', function (d) {
-        let form_tpl = form_clients_tpl.innerHTML
-          ,toTpl = reseed_clients_tpl.innerHTML
+        let formTpl = form_clients_tpl.innerHTML
+          ,toTpl = to_clients_tpl.innerHTML
           ,form_view = getById('form_clients_view')
           ,to_view = getById('to_clients_view');
         if (d.ret !== 200 || d.data.total <= 0) {
           return;
         }
-        laytpl(form_tpl).render(d.data.items, function(html) {
+        //来源下载器
+        laytpl(formTpl).render(d.data.items, function(html) {
           form_view.innerHTML = html;
         });
+        //转移到下载器
         laytpl(toTpl).render(d.data.items, function(html) {
           to_view.innerHTML = html;
         });
+        //回调
         callback !== null && typeof callback === 'function' && callback();
-        form.render('checkbox');
+        form.render('radio');
+      });
+      //获取目录
+      $.getJSON('/Api/Config?config_filename=folder&action=list', function (d) {
+        if (d.ret !== 200 || d.data.total <= 0) {
+          return;
+        }
+        console.log(d);
+        let _none = '无数据'
+          ,_searchNone = '无匹配数据'
+          ,_folder = '全部目录'
+          ,_height = 250;
+        //过滤器
+        transfer.render({
+          elem: '#path_filter_view'
+          ,id: 'path_filter'
+          ,parseData: function(res){
+            return {
+              "value": res.uuid
+              ,"title": res.name
+              ,"disabled": res.disabled
+              ,"checked": res.checked
+              ,"dir":res.dir
+            }
+          }
+          ,title: [_folder, '排除目录']
+          ,data: d.data.items
+          ,height: _height
+          ,text: {
+            none: _none
+            ,searchNone: _searchNone
+          }
+          ,onchange: function(obj, index){
+            var arr = ['左边', '右边'];
+            layer.msg('来自 <strong>'+ arr[index] + '</strong> 的数据：'+ JSON.stringify(obj));
+          }
+        });
+        //选择器
+        transfer.render({
+          elem: '#path_selector_view'
+          ,id: 'path_selector'
+          ,parseData: function(res){
+            return {
+              "value": res.uuid
+              ,"title": res.name
+              ,"disabled": res.disabled
+              ,"checked": res.checked
+              ,"dir":res.dir
+            }
+          }
+          ,title: [_folder, '选择目录']
+          ,data: d.data.items
+          ,height: _height
+          ,text: {
+            none: _none
+            ,searchNone: _searchNone
+          }
+          ,onchange: function(obj, index){
+            var arr = ['左边', '右边'];
+            layer.msg('来自 <strong>'+ arr[index] + '</strong> 的数据：'+ JSON.stringify(obj));
+          }
+        });
       });
     }
 
@@ -423,6 +520,7 @@
         ,icon: 'layui-icon-tips'
       }]
       ,parseData: function(res){
+        console.log(res);
         return {
           "code": res.ret === 200 ? 0 : res.ret,
           "msg": res.msg,
@@ -492,7 +590,7 @@
       ,done: function(res, curr, count){
         //如果是异步请求数据方式，res即为你接口返回的信息。
         //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
-        //console.log(res);
+        console.log(res);
         //console.log(curr);  //得到当前页码
         //console.log(count); //得到数据总量
       }
@@ -541,7 +639,7 @@
     table.on('tool(tableFilter)', function(obj){
       let layEvent = obj.event;
       let tr = obj.tr;
-      //console.log(obj.data);
+      console.log('原始数据：', obj.data);
       switch (layEvent) {
         case 'run':
           $.ajax({
@@ -648,7 +746,7 @@
     //监听行双击事件
     table.on('rowDouble(tableFilter)', function(obj){
       //console.log(obj.tr) //得到当前行元素对象
-      console.log(obj.data) //得到当前行数据
+      console.log('原始数据：', obj.data) //得到当前行数据
       //obj.del(); //删除当前行
       //obj.update(fields) //修改当前行数据
     });
