@@ -105,19 +105,19 @@
     </div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label required">排除目录</label>
+    <label class="layui-form-label required">过滤器</label>
     <div class="layui-input-block">
       <input type="hidden" name="path_filter" id="path_filter" lay-verify="path_filter" class="layui-input">
       <div id="path_filter_view"></div>
-      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 转移过滤器：不转移此路径内种子文件。</div>
+      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 转移时排除的目录，不转移此路径内种子文件。</div>
     </div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label required">选择目录</label>
+    <label class="layui-form-label required">选择器</label>
     <div class="layui-input-block">
       <input type="hidden" name="path_selector" id="path_selector" lay-verify="path_selector" class="layui-input">
       <div id="path_selector_view"></div>
-      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 转移选择器：只转移此路径内文件(为空时，全转移) 【优先级：过滤器 ＞ 选择器】。</div>
+      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 转移时允许的目录，只转移此路径内种子文件(为空时，全转移) 【优先级：过滤器 ＞ 选择器】。</div>
     </div>
   </div>
   <div class="layui-form-item">
