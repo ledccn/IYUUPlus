@@ -1,7 +1,6 @@
 <?php
 namespace IYUU\Reseed;
 
-use IYUU\Client\AbstractClient;
 use app\domain\Move as domainMove;
 use app\domain\Crontab as domainCrontab;
 
@@ -23,13 +22,21 @@ class MoveTorrent extends AutoReseed
      */
     protected static $clients = [];
     /**
+     * 微信通知消息体
+     * @var array
+     */
+    protected static $wechatMsg = array(
+        'MoveSuccess'       =>  0,      // 移动成功
+        'MoveError'         =>  0,      // 移动失败
+    );
+    /**
      * 初始化
      */
     public static function init()
     {
         self::getCliInput();
         // 连接全局客户端
-        self::links();
+        parent::links();
     }
 
     /**
@@ -42,10 +49,10 @@ class MoveTorrent extends AutoReseed
         $cron_name = isset($argv[1]) ? $argv[1] : null;
         is_null($cron_name) and die('缺少命令行参数。');
         self::$conf = domainMove::configParser($cron_name);
-        //cli(self::$conf);exit;
         // 用户选择的下载器
         self::$clients = self::$conf['clients'];
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
+        //cli(self::$conf);//exit;
     }
 
     /**
@@ -102,7 +109,7 @@ class MoveTorrent extends AutoReseed
                 echo '转换后：'.$downloadDir.PHP_EOL;
                 if (is_null($downloadDir)) {
                     echo 'IYUU自动转移做种客户端--使用教程 https://www.iyuu.cn/archives/351/'.PHP_EOL;
-                    die("全局配置的move数组内，路径转换参数配置错误，请重新配置！！！".PHP_EOL);
+                    die("路径转换参数配置错误，请重新配置！！！".PHP_EOL);
                 }
                 // 种子目录：脚本要能够读取到
                 $path = self::$links[$k]['BT_backup'];
@@ -146,9 +153,9 @@ class MoveTorrent extends AutoReseed
                 $type = self::$links[$rpcKey]['type'];
                 $extra_options = array();
                 // 转移后，是否开始？
-                $extra_options['paused'] = isset(self::$conf['default']['move']['paused']) && self::$conf['default']['move']['paused'] ? true : false;
+                $extra_options['paused'] = isset(self::$conf['paused']) && self::$conf['paused'] ? true : false;
                 if ($type == 'qBittorrent') {
-                    if (isset(self::$conf['default']['move']['skip_check']) && self::$conf['default']['move']['skip_check'] === 1) {
+                    if (isset(self::$conf['skip_check']) && self::$conf['skip_check']) {
                         $extra_options['skip_checking'] = "true";    //转移成功，跳校验
                     }
                 }
@@ -161,17 +168,17 @@ class MoveTorrent extends AutoReseed
                 $log = $info_hash.PHP_EOL.$torrentPath.PHP_EOL.$downloadDir.PHP_EOL.PHP_EOL;
                 if ($ret) {
                     //转移成功时，删除做种，不删资源
-                    if (isset(self::$conf['default']['move']['delete_torrent']) && self::$conf['default']['move']['delete_torrent'] === 1) {
+                    if (isset(self::$conf['delete_torrent']) && self::$conf['delete_torrent']) {
                         self::$links[$k]['rpc']->delete($torrentDelete);
                     }
                     // 转移成功的种子，以infohash为文件名，写入缓存
                     wlog($log, $info_hash, self::$cacheMove);
                     wlog($log, 'MoveSuccess'.$k);
-                    self::$wechatMsg['MoveSuccess']++;
+                    static::$wechatMsg['MoveSuccess']++;
                 } else {
                     // 失败的种子
                     wlog($log, 'MoveError'.$k);
-                    self::$wechatMsg['MoveError']++;
+                    static::$wechatMsg['MoveError']++;
                 }
             }
         }
@@ -200,8 +207,8 @@ class MoveTorrent extends AutoReseed
      */
     private static function pathReplace($path = '')
     {
-        $type = intval(self::$conf['default']['move']['type']);
-        $pathArray = self::$conf['default']['move']['path'];
+        $type = intval(self::$conf['path_type']);
+        $pathArray = self::$conf['path_rule'];
         $path = rtrim($path, DIRECTORY_SEPARATOR);      // 提高Windows转移兼容性
         switch ($type) {
             case 1:         // 减
@@ -241,8 +248,8 @@ class MoveTorrent extends AutoReseed
     {
         $path = rtrim($path, DIRECTORY_SEPARATOR);      // 提高Windows转移兼容性
         // 转移过滤器、选择器 David/2020年7月11日
-        $path_filter = !empty(self::$conf['default']['move']['path_filter']) ? self::$conf['default']['move']['path_filter'] : null;
-        $path_selector = !empty(self::$conf['default']['move']['path_selector']) ? self::$conf['default']['move']['path_selector'] : null;
+        $path_filter = !empty(self::$conf['path_filter']) ? self::$conf['path_filter'] : null;
+        $path_selector = !empty(self::$conf['path_selector']) ? self::$conf['path_selector'] : null;
         if (\is_null($path_filter) && \is_null($path_selector)) {
             return false;
         }
@@ -300,15 +307,15 @@ class MoveTorrent extends AutoReseed
     {
         $br = PHP_EOL;
         $text = 'IYUU自动辅种-统计报表';
-        $desp = '### 版本号：'. self::VER . $br;
+        $desp = '### 版本号：'. static::VER . $br;
         // 移动做种
-        if (self::$wechatMsg['MoveSuccess'] || self::$wechatMsg['MoveError']) {
+        if (static::$wechatMsg['MoveSuccess'] || static::$wechatMsg['MoveError']) {
             $desp .= $br.'----------'.$br;
-            $desp .= '**移动成功：'.self::$wechatMsg['MoveSuccess']. '**  [会把hash加入移动缓存]' .$br;
-            $desp .= '**移动失败：'.self::$wechatMsg['MoveError']. '**  [解决错误提示，可以重试]' .$br;
+            $desp .= '**移动成功：'.static::$wechatMsg['MoveSuccess']. '**  [会把hash加入移动缓存]' .$br;
+            $desp .= '**移动失败：'.static::$wechatMsg['MoveError']. '**  [解决错误提示，可以重试]' .$br;
             $desp .= '**如需重新移动，请删除 ./torrent/cachemove 移动缓存。**'.$br;
         }
         $desp .= $br.'*此消息将在3天后过期*。';
-        return self::ff($text, $desp);
+        return static::ff($text, $desp);
     }
 }

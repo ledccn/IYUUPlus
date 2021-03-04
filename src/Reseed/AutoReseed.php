@@ -307,25 +307,25 @@ class AutoReseed
      */
     protected static function links()
     {
-        foreach (self::$clients as $k => $v) {
+        foreach (static::$clients as $k => $v) {
             // 跳过未配置的客户端
             if (empty($v['username']) || empty($v['password'])) {
-                self::$links[$k] = array();
+                static::$links[$k] = array();
                 echo "clients_".$v['name']." 用户名或密码未配置，已跳过！".PHP_EOL.PHP_EOL;
                 continue;
             }
             try {
                 // 传入配置，创建客户端实例
                 $client = AbstractClient::create($v);
-                self::$links[$k]['rpc'] = $client;
-                self::$links[$k]['_config'] = $v;
-                self::$links[$k]['type'] = $v['type'];
-                self::$links[$k]['BT_backup'] = isset($v['BT_backup']) && $v['BT_backup'] ? $v['BT_backup'] : '';
-                self::$links[$k]['root_folder'] = isset($v['root_folder']) ? $v['root_folder'] : 1;
+                static::$links[$k]['rpc'] = $client;
+                static::$links[$k]['_config'] = $v;
+                static::$links[$k]['type'] = $v['type'];
+                static::$links[$k]['BT_backup'] = isset($v['BT_backup']) && $v['BT_backup'] ? $v['BT_backup'] : '';
+                static::$links[$k]['root_folder'] = isset($v['root_folder']) ? $v['root_folder'] : 1;
                 $result = $client->status();
                 print $v['type'].'：'.$v['host']." Rpc连接 [{$result}]".PHP_EOL;
             } catch (\Exception $e) {
-                die('[连接错误] '. $v['host'] . $e->getMessage() . PHP_EOL);
+                die('[连接错误] '. $v['host'] . ' ' . $e->getMessage() . PHP_EOL);
             }
         }
     }
@@ -1049,7 +1049,7 @@ class AutoReseed
      */
     protected static function ff($text='', $desp='')
     {
-        $token = self::$conf['iyuu.cn'];
+        $token = static::$conf['iyuu.cn'];
         $desp = empty($desp) ? date("Y-m-d H:i:s") : $desp;
         $postdata = http_build_query(array(
             'text' => $text,
