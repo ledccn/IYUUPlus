@@ -181,6 +181,15 @@ class Config
     }
 
     /**
+     * 目录
+     * @return array
+     */
+    public static function getFolder():array
+    {
+        return Conf::get(self::filename['folder'], Constant::config_format, []);
+    }
+
+    /**
      * 用户拥有的站点
      * @return array
      */

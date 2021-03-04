@@ -1,20 +1,63 @@
 <?php
 namespace IYUU\Reseed;
 
-use Curl\Curl;
 use IYUU\Client\AbstractClient;
-use IYUU\Library\IFile;
-use IYUU\Library\Table;
-use app\domain\Reseed as domainReseed;
+use app\domain\Move as domainMove;
 use app\domain\Crontab as domainCrontab;
 
 class MoveTorrent extends AutoReseed
 {
     /**
-     * 客户端转移做种 格式：['客户端key', '移动参数move']
-     * @var null
+     * 配置
+     * @var array
      */
-    private static $move = null;
+    protected static $conf = [];
+    /**
+     * RPC连接
+     * @var array
+     */
+    protected static $links = [];
+    /**
+     * 客户端
+     * @var array
+     */
+    protected static $clients = [];
+    /**
+     * 初始化
+     */
+    public static function init()
+    {
+        self::getCliInput();
+        // 连接全局客户端
+        self::links();
+    }
+
+    /**
+     * 解析命令行参数
+     */
+    protected static function getCliInput()
+    {
+        // 命令行参数
+        global $argv;
+        $cron_name = isset($argv[1]) ? $argv[1] : null;
+        is_null($cron_name) and die('缺少命令行参数。');
+        self::$conf = domainMove::configParser($cron_name);
+        //cli(self::$conf);exit;
+        // 用户选择的下载器
+        self::$clients = self::$conf['clients'];
+        echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
+    }
+
+    /**
+     * 转移，总入口
+     */
+    public static function call()
+    {
+        self::move();
+        self::wechatMessage();
+        exit(self::$ExitCode);
+    }
+
     /**
      * IYUUAutoReseed做种客户端转移
      */
@@ -22,7 +65,7 @@ class MoveTorrent extends AutoReseed
     {
         //遍历客户端
         foreach (self::$links as $k => $v) {
-            if (self::$move[0] == $k) {
+            if ($k === self::$conf['form_clients']['uuid']) {
                 echo "clients_".$k."是目标转移客户端，避免冲突，已跳过！".PHP_EOL.PHP_EOL;
                 continue;
             }
@@ -99,7 +142,7 @@ class MoveTorrent extends AutoReseed
                 echo "种子已推送给下载器，正在转移做种...".PHP_EOL;
 
                 // 目标下载器类型
-                $rpcKey = self::$move[0];
+                $rpcKey = self::$conf['to_clients']['uuid'];
                 $type = self::$links[$rpcKey]['type'];
                 $extra_options = array();
                 // 转移后，是否开始？
@@ -111,7 +154,7 @@ class MoveTorrent extends AutoReseed
                 }
 
                 // 添加转移任务：成功返回：true
-                $ret = self::add(self::$move[0], $torrent, $downloadDir, $extra_options);
+                $ret = self::add($rpcKey, $torrent, $downloadDir, $extra_options);
                 /**
                  * 转移成功的种子写日志
                  */
@@ -247,5 +290,25 @@ class MoveTorrent extends AutoReseed
             }
         }
         return false;
+    }
+
+    /**
+     * 微信模板消息拼接方法
+     * @return string           发送情况，json
+     */
+    protected static function wechatMessage()
+    {
+        $br = PHP_EOL;
+        $text = 'IYUU自动辅种-统计报表';
+        $desp = '### 版本号：'. self::VER . $br;
+        // 移动做种
+        if (self::$wechatMsg['MoveSuccess'] || self::$wechatMsg['MoveError']) {
+            $desp .= $br.'----------'.$br;
+            $desp .= '**移动成功：'.self::$wechatMsg['MoveSuccess']. '**  [会把hash加入移动缓存]' .$br;
+            $desp .= '**移动失败：'.self::$wechatMsg['MoveError']. '**  [解决错误提示，可以重试]' .$br;
+            $desp .= '**如需重新移动，请删除 ./torrent/cachemove 移动缓存。**'.$br;
+        }
+        $desp .= $br.'*此消息将在3天后过期*。';
+        return self::ff($text, $desp);
     }
 }

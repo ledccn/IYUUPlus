@@ -975,7 +975,7 @@ class AutoReseed
      * 微信模板消息拼接方法
      * @return string           发送情况，json
      */
-    private static function wechatMessage()
+    protected static function wechatMessage()
     {
         if (isset(self::$conf['notify_on_change']) && self::$conf['notify_on_change'] && self::$wechatMsg['reseedSuccess'] == 0 && self::$wechatMsg['reseedError'] == 0) {
             return '';
@@ -997,13 +997,6 @@ class AutoReseed
         }
         // 重新辅种
         $desp .= '**如需重新辅种，请删除 ./torrent/cachehash 辅种缓存。**'.$br;
-        // 移动做种
-        if (self::$wechatMsg['MoveSuccess'] || self::$wechatMsg['MoveError']) {
-            $desp .= $br.'----------'.$br;
-            $desp .= '**移动成功：'.self::$wechatMsg['MoveSuccess']. '**  [会把hash加入移动缓存]' .$br;
-            $desp .= '**移动失败：'.self::$wechatMsg['MoveError']. '**  [解决错误提示，可以重试]' .$br;
-            $desp .= '**如需重新移动，请删除 ./torrent/cachemove 移动缓存。**'.$br;
-        }
         $desp .= $br.'*此消息将在3天后过期*。';
         return self::ff($text, $desp);
     }
@@ -1054,7 +1047,7 @@ class AutoReseed
      * @param string $desp
      * @return false|string
      */
-    private static function ff($text='', $desp='')
+    protected static function ff($text='', $desp='')
     {
         $token = self::$conf['iyuu.cn'];
         $desp = empty($desp) ? date("Y-m-d H:i:s") : $desp;
