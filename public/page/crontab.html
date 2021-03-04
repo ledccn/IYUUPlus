@@ -123,12 +123,19 @@
   <div class="layui-form-item">
     <label class="layui-form-label required">路径转换类型</label>
     <div class="layui-input-inline">
-      <select name="path_type" lay-filter="path_type">
+      <select name="path_type" lay-filter="path_type" id="path_type" lay-verify="required" lay-reqtext="路径转换类型不能为空">
         <option value="" selected="">请选择转换类型</option>
         <option value="0">相等</option><option value="1">减</option><option value="2">加</option><option value="3">替换</option>
       </select>
     </div>
     <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 用于相对路径与绝对路径之间互相转换，实现种子对应资源目录，是客户端做种转移的重要步骤。</div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">路径转换规则</label>
+    <div class="layui-input-block">
+      <textarea placeholder="请输入路径转换规则，一行为一条规则；" class="layui-textarea" name="path_rule"></textarea>
+      <tip>路径转换规则每行代表一条规则，每条规则如果包含两个文件夹，请用<span class="layui-badge">{##}</span></b>作为分隔符。<br />举例：路径转换类型<span class="layui-badge layui-bg-cyan">加</span>，路径转换规则<span class="layui-badge layui-bg-black">/downloads{##}/volume1</span>，<span class="layui-badge layui-bg-blue">转移时从路径前段匹配/downloads成功时，加/volume1得到完整的转换后路径：/volume1/downloads</span>。</tip>
+    </div>
   </div>
   <div class="layui-form-item">
     <label class="layui-form-label">跳校验</label>
@@ -431,13 +438,13 @@
       }
       //获取所有下载器
       $.getJSON('/Api/Config?config_filename=clients&action=list', function (d) {
+        if (d.ret !== 200 || d.data.total <= 0) {
+          return;
+        }
         let formTpl = form_clients_tpl.innerHTML
           ,toTpl = to_clients_tpl.innerHTML
           ,form_view = getById('form_clients_view')
           ,to_view = getById('to_clients_view');
-        if (d.ret !== 200 || d.data.total <= 0) {
-          return;
-        }
         //来源下载器
         laytpl(formTpl).render(d.data.items, function(html) {
           form_view.innerHTML = html;
