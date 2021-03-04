@@ -107,6 +107,7 @@
   <div class="layui-form-item">
     <label class="layui-form-label required">排除目录</label>
     <div class="layui-input-block">
+      <input type="hidden" name="path_filter" id="path_filter" lay-verify="path_filter" class="layui-input">
       <div id="path_filter_view"></div>
       <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 转移过滤器：不转移此路径内种子文件。</div>
     </div>
@@ -114,6 +115,7 @@
   <div class="layui-form-item">
     <label class="layui-form-label required">选择目录</label>
     <div class="layui-input-block">
+      <input type="hidden" name="path_selector" id="path_selector" lay-verify="path_selector" class="layui-input">
       <div id="path_selector_view"></div>
       <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 转移选择器：只转移此路径内文件(为空时，全转移) 【优先级：过滤器 ＞ 选择器】。</div>
     </div>
@@ -172,30 +174,30 @@
 
 <!-- 模板：辅种任务 [站点] 复选框 -->
 <script id="reseed_sites_tpl" type="text/html">
-{{#  layui.each(d, function(index, item){ }}
-<input type="checkbox" name="sites[{{item}}]" title="{{item}}" checked>
-{{#  }); }}
+  {{#  layui.each(d, function(index, item){ }}
+  <input type="checkbox" name="sites[{{item}}]" title="{{item}}" checked>
+  {{#  }); }}
 </script>
 
 <!-- 模板：辅种任务 [下载器] 复选框 -->
 <script id="reseed_clients_tpl" type="text/html">
-{{#  layui.each(d, function(index, item){ }}
-<input type="checkbox" name="clients[{{item.uuid}}]" title="{{ item.name }}" checked>
-{{#  }); }}
+  {{#  layui.each(d, function(index, item){ }}
+  <input type="checkbox" name="clients[{{item.uuid}}]" title="{{ item.name }}" checked>
+  {{#  }); }}
 </script>
 
 <!-- 模板：转移任务来源 [下载器] 单选框 -->
 <script id="form_clients_tpl" type="text/html">
-{{#  layui.each(d, function(index, item){ }}
-<input type="radio" name="form_clients" value="{{item.uuid}}" title="{{ item.name }}">
-{{#  }); }}
+  {{#  layui.each(d, function(index, item){ }}
+  <input type="radio" name="form_clients" value="{{item.uuid}}" title="{{ item.name }}">
+  {{#  }); }}
 </script>
 
 <!-- 模板：转移任务目标 [下载器] 单选框 -->
 <script id="to_clients_tpl" type="text/html">
-{{#  layui.each(d, function(index, item){ }}
-<input type="radio" name="to_clients" value="{{item.uuid}}" title="{{ item.name }}">
-{{#  }); }}
+  {{#  layui.each(d, function(index, item){ }}
+  <input type="radio" name="to_clients" value="{{item.uuid}}" title="{{ item.name }}">
+  {{#  }); }}
 </script>
 
 <!-- 模板：计划任务 [执行周期] 组合 -->
@@ -276,6 +278,10 @@
       ,taskLogs: '/Task/logs'
       ,taskClearLogs: '/Task/clearLogs'
     };
+
+    const path_filter = 'path_filter'
+      ,path_selector = 'path_selector'
+      ,_height = 250;
 
     /**
      * 任务类型 选择框
@@ -450,11 +456,10 @@
           return;
         }
         console.log(d);
-        let _height = 250;
         //过滤器
         transfer.render({
-          elem: '#path_filter_view'
-          ,id: 'path_filter'
+          elem: '#' + path_filter + '_view'
+          ,id: path_filter
           ,parseData: function(res){
             return {
               "value": res.uuid
@@ -466,6 +471,7 @@
           }
           ,title: ['全部目录', '排除目录']
           ,data: d.data.items
+          ,value: formData !== null && formData.path_filter ? formData.path_filter.split(",") : []
           ,height: _height
           ,text: {
             none: '无数据'
@@ -473,13 +479,13 @@
           }
           ,onchange: function(obj, index){
             var arr = ['左边', '右边'];
-            layer.msg('来自 <strong>'+ arr[index] + '</strong> 的数据：'+ JSON.stringify(obj));
+            console.log('来自 <strong>'+ arr[index] + '</strong> 的数据：',JSON.stringify(obj));
           }
         });
         //选择器
         transfer.render({
-          elem: '#path_selector_view'
-          ,id: 'path_selector'
+          elem: '#' + path_selector + '_view'
+          ,id: path_selector
           ,parseData: function(res){
             return {
               "value": res.uuid
@@ -491,6 +497,7 @@
           }
           ,title: ['全部目录', '选择目录']
           ,data: d.data.items
+          ,value: formData !== null && formData.path_selector ? formData.path_selector.split(",") : []
           ,height: _height
           ,text: {
             none: '无数据'
@@ -498,7 +505,7 @@
           }
           ,onchange: function(obj, index){
             var arr = ['左边', '右边'];
-            layer.msg('来自 <strong>'+ arr[index] + '</strong> 的数据：'+ JSON.stringify(obj));
+            console.log('来自 <strong>'+ arr[index] + '</strong> 的数据：',JSON.stringify(obj));
           }
         });
       });
@@ -753,6 +760,19 @@
       */
     form.render();
 
+    //自定义验证规则
+    form.verify({
+      path_filter: function (value) {
+        let elem = getById(path_filter)
+          ,obj = transfer.getData(path_filter);
+        elem.value = obj ? obj.map(v => {return v.value}).toString() : '';
+      }
+      ,path_selector: function (value) {
+        let elem = getById(path_selector)
+        ,obj = transfer.getData(path_selector);
+        elem.value = obj ? obj.map(v => {return v.value}).toString() : '';
+      }
+    });
     //监听选择：类型
     form.on('select(type)', function(data){
       crontab_sel_action(data.value, 'add');
