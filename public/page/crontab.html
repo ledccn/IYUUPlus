@@ -390,8 +390,14 @@
       $.getJSON('/Api/Config?config_filename=user_sites&action=list', function (d) {
         let getTpl = reseed_sites_tpl.innerHTML
           ,view = getById('reseed_sites_view');
-        if (d.ret !== 200 || d.data.total <= 0) {
+        if (d.ret !== 200) {
           return;
+        }
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置站点，将会为您跳转到站点设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/sites.html';
+          });
         }
         let data = Object.keys(d.data.items).map(function (key){
           return d.data.items[key].name;
@@ -407,8 +413,14 @@
       $.getJSON('/Api/Config?config_filename=clients&action=list', function (d) {
         let getTpl = reseed_clients_tpl.innerHTML
           ,view = getById('reseed_clients_view');
-        if (d.ret !== 200 || d.data.total <= 0) {
+        if (d.ret !== 200) {
           return;
+        }
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置下载器，将会为您跳转到下载器设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/clients.html';
+          });
         }
         laytpl(getTpl).render(d.data.items, function(html) {
           view.innerHTML = html;
@@ -438,13 +450,19 @@
       }
       //获取所有下载器
       $.getJSON('/Api/Config?config_filename=clients&action=list', function (d) {
-        if (d.ret !== 200 || d.data.total <= 0) {
+        if (d.ret !== 200) {
           return;
         }
         let formTpl = form_clients_tpl.innerHTML
           ,toTpl = to_clients_tpl.innerHTML
           ,form_view = getById('form_clients_view')
           ,to_view = getById('to_clients_view');
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置下载器，将会为您跳转到下载器设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/clients.html';
+          });
+        }
         //来源下载器
         laytpl(formTpl).render(d.data.items, function(html) {
           form_view.innerHTML = html;
@@ -459,8 +477,14 @@
       });
       //获取目录
       $.getJSON('/Api/Config?config_filename=folder&action=list', function (d) {
-        if (d.ret !== 200 || d.data.total <= 0) {
+        if (d.ret !== 200) {
           return;
+        }
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置目录，将会为您跳转到目录设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/folder.html';
+          });
         }
         console.log(d);
         //过滤器
