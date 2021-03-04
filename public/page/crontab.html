@@ -450,10 +450,7 @@
           return;
         }
         console.log(d);
-        let _none = '无数据'
-          ,_searchNone = '无匹配数据'
-          ,_folder = '全部目录'
-          ,_height = 250;
+        let _height = 250;
         //过滤器
         transfer.render({
           elem: '#path_filter_view'
@@ -467,12 +464,12 @@
               ,"dir":res.dir
             }
           }
-          ,title: [_folder, '排除目录']
+          ,title: ['全部目录', '排除目录']
           ,data: d.data.items
           ,height: _height
           ,text: {
-            none: _none
-            ,searchNone: _searchNone
+            none: '无数据'
+            ,searchNone: '无匹配数据'
           }
           ,onchange: function(obj, index){
             var arr = ['左边', '右边'];
@@ -492,12 +489,12 @@
               ,"dir":res.dir
             }
           }
-          ,title: [_folder, '选择目录']
+          ,title: ['全部目录', '选择目录']
           ,data: d.data.items
           ,height: _height
           ,text: {
-            none: _none
-            ,searchNone: _searchNone
+            none: '无数据'
+            ,searchNone: '无匹配数据'
           }
           ,onchange: function(obj, index){
             var arr = ['左边', '右边'];

@@ -201,30 +201,28 @@ class AutoReseed
 
         //注册一个会在php中止时执行的函数
         register_shutdown_function(function () use (&$cron_name){
-            self::deletePid(self::$pid_file);
+            self::deletePid();
             $lockFile = domainCrontab::getLockFile($cron_name);
-            self::deletePid($lockFile);
+            is_file($lockFile) and unlink($lockFile);
         });
     }
 
     /**
      * 删除pid文件
-     * @param string $file
      */
-    protected static function deletePid($file = '')
+    protected static function deletePid()
     {
-        self::checkPid($file) and unlink($file);
+        self::checkPid() and unlink(self::$pid_file);
     }
 
     /**
      * 检查pid文件
-     * @param string $file
      * @return bool
      */
-    protected static function checkPid($file = '')
+    protected static function checkPid()
     {
         clearstatcache();
-        return is_file($file);
+        return is_file(self::$pid_file);
     }
 
     /**
