@@ -8,7 +8,7 @@ class Move
 {
     const Delimiter = '{#**#}';
     /**
-     * 根据参数，解析转移做种时运行时配置
+     * 根据参数，解析转移做种的运行时配置
      * @param string $uuid
      * @return array
      */

@@ -399,6 +399,7 @@
             layer.close(index);
             window.location = '/index.html#/page/setting/sites.html';
           });
+          return;
         }
         let data = Object.keys(d.data.items).map(function (key){
           return d.data.items[key].name;
@@ -422,6 +423,7 @@
             layer.close(index);
             window.location = '/index.html#/page/setting/clients.html';
           });
+          return;
         }
         laytpl(getTpl).render(d.data.items, function(html) {
           view.innerHTML = html;
@@ -463,6 +465,7 @@
             layer.close(index);
             window.location = '/index.html#/page/setting/clients.html';
           });
+          return;
         }
         //来源下载器
         laytpl(formTpl).render(d.data.items, function(html) {
