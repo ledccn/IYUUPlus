@@ -146,13 +146,12 @@ class Move
                             return trim($v);
                         }, $item);
                         if ($item[0]) {
-                            $rule[] = [$item[0] => $item[1]];
+                            $rule[$item[0]] = $item[1];
                         }
                     }
                 } else {
                     if (trim($value)) {
-                        $item = [trim($value) => ''];
-                        $rule[] = $item;
+                        $rule[trim($value)] = '';
                     }
                 }
             }
