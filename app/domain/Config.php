@@ -181,6 +181,15 @@ class Config
     }
 
     /**
+     * 计划任务
+     * @return array
+     */
+    public static function getCrontab():array
+    {
+        return Conf::get(self::filename['crontab'], Constant::config_format, []);
+    }
+
+    /**
      * 目录
      * @return array
      */

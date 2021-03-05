@@ -7,7 +7,6 @@ use app\common\exception\BusinessException;
 use app\common\Config as Conf;
 use app\common\Constant;
 use app\domain\Config;
-use app\domain\Crontab;
 /**
  * Class Status
  * @package app\controller
@@ -40,7 +39,7 @@ class Status extends BaseController
     public function welcome(Request $request): Response
     {
         $rs = self::RS;
-        $cron = Crontab::crontabConfig();
+        $cron = Config::getCrontab();
         $user_sites = Config::getUserSites();
         $sites = Config::getSites();
         $clients = Config::getClients();
