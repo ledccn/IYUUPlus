@@ -346,15 +346,15 @@ class AutoReseed
                 $is_url = true;
             }
             // 下载服务器类型
-            $type = self::$links[$rpcKey]['type'];
+            $type = static::$links[$rpcKey]['type'];
             // 判断
             switch ($type) {
                 case 'transmission':
                     $extra_options['paused'] = isset($extra_options['paused']) ? $extra_options['paused'] : true;
                     if ($is_url) {
-                        $result = self::$links[$rpcKey]['rpc']->add($torrent, $save_path, $extra_options);			// URL添加
+                        $result = static::$links[$rpcKey]['rpc']->add($torrent, $save_path, $extra_options);			// URL添加
                     } else {
-                        $result = self::$links[$rpcKey]['rpc']->add_metainfo($torrent, $save_path, $extra_options);	// 元数据添加
+                        $result = static::$links[$rpcKey]['rpc']->add_metainfo($torrent, $save_path, $extra_options);	// 元数据添加
                     }
                     if (isset($result['result']) && $result['result'] == 'success') {
                         $_key = isset($result['arguments']['torrent-added']) ? 'torrent-added' : 'torrent-duplicate';
@@ -366,7 +366,7 @@ class AutoReseed
                     } else {
                         $errmsg = isset($result['result']) ? $result['result'] : '未知错误，请稍后重试！';
                         if (strpos($errmsg, 'http error 404: Not Found') !== false) {
-                            self::sendNotify('404');
+                            static::sendNotify('404');
                         }
                         print "-----RPC添加种子任务，失败 [{$errmsg}]" . PHP_EOL.PHP_EOL;
                     }
@@ -381,13 +381,13 @@ class AutoReseed
                         $extra_options['paused'] = 'true';
                     }
                     // 是否创建根目录
-                    $extra_options['root_folder'] = self::$links[$rpcKey]['root_folder'] ? 'true' : 'false';
+                    $extra_options['root_folder'] = static::$links[$rpcKey]['root_folder'] ? 'true' : 'false';
                     if ($is_url) {
-                        $result = self::$links[$rpcKey]['rpc']->add($torrent, $save_path, $extra_options);			// URL添加
+                        $result = static::$links[$rpcKey]['rpc']->add($torrent, $save_path, $extra_options);			// URL添加
                     } else {
                         $extra_options['name'] = 'torrents';
                         $extra_options['filename'] = time().'.torrent';
-                        $result = self::$links[$rpcKey]['rpc']->add_metainfo($torrent, $save_path, $extra_options);	// 元数据添加
+                        $result = static::$links[$rpcKey]['rpc']->add_metainfo($torrent, $save_path, $extra_options);	// 元数据添加
                     }
                     if ($result === 'Ok.') {
                         print "********RPC添加下载任务成功 [{$result}]".PHP_EOL.PHP_EOL;
