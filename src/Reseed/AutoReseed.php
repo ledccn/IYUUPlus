@@ -437,6 +437,7 @@ class AutoReseed
             $hashString = $hashArray['hashString'];   // 哈希目录字典
             unset($hashArray['hashString']);
             // 签名
+            $sign = [];
             $sign['sign'] = Oauth::getSign();
             $sign['timestamp'] = time();
             $sign['version'] = self::VER;
