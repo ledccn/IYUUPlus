@@ -43,14 +43,16 @@ class Move
             if (!empty($cron['form_clients']) && !empty($cron['to_clients']) && !empty($clients)) {
                 $form = $cron['form_clients'];
                 $to = $cron['to_clients'];
+                //来源下载器 与 目标下载器 不允许相同
+                if ($form != $to) {
+                    $rs['clients'] = array_filter($clients, function ($k) use ($form, $to) {
+                        $haystack = [$form, $to];
+                        return in_array($k, $haystack);
+                    }, ARRAY_FILTER_USE_KEY);
 
-                $rs['clients'] = array_filter($clients, function ($k) use ($form, $to) {
-                    $haystack = [$form, $to];
-                    return in_array($k, $haystack);
-                }, ARRAY_FILTER_USE_KEY);
-
-                $rs['form_clients'] = isset($clients[$form]) ? $clients[$form] : [];
-                $rs['to_clients'] = isset($clients[$to]) ? $clients[$to] : [];
+                    $rs['form_clients'] = isset($clients[$form]) ? $clients[$form] : [];
+                    $rs['to_clients'] = isset($clients[$to]) ? $clients[$to] : [];
+                }
             }
 
             //解析过滤器的目录
