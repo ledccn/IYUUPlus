@@ -145,11 +145,15 @@ class Move
                         $item = array_map(function ($v) {
                             return trim($v);
                         }, $item);
-                        $rule[] = [$item[0] => $item[1]];
+                        if ($item[0]) {
+                            $rule[] = [$item[0] => $item[1]];
+                        }
                     }
                 } else {
-                    $item = [trim($value) => ''];
-                    $rule[] = $item;
+                    if (trim($value)) {
+                        $item = [trim($value) => ''];
+                        $rule[] = $item;
+                    }
                 }
             }
         }
