@@ -72,7 +72,7 @@ class MoveTorrent extends AutoReseed
     {
         //遍历客户端
         foreach (self::$links as $k => $v) {
-            if ($k === self::$conf['form_clients']['uuid']) {
+            if ($k === self::$conf['to_clients']['uuid']) {
                 echo "clients_".$k."是目标转移客户端，避免冲突，已跳过！".PHP_EOL.PHP_EOL;
                 continue;
             }
