@@ -6,7 +6,7 @@
 ```
 docker run -d \
 --name IYUUPlus \
--e cron='0 9 * * 0' \
+-e cron='10 */10 * * *' \
 -v /volume1/IYUU/db:/IYUU/db \
 -p 8787:8787 \
 --restart=always \
@@ -17,7 +17,7 @@ iyuucn/iyuuplus:arm64v8
 ```
 docker run  -d \
 --name IYUUPlus \
--e cron='0 8 * * 0' \
+-e cron='10 */10 * * *' \
 -v /volume1/IYUU/db:/IYUU/db \
 -v /var/lib/transmission/torrents:/torrents \
 -v /var/lib/qbittorrent/.local/share/data/qBittorrent/BT_backup:/BT_backup \
@@ -31,7 +31,7 @@ iyuucn/iyuuplus:arm64v8
 ```
 docker run -d \
 --name IYUUPlus \
--e cron='0 9 * * 0' \
+-e cron='10 */10 * * *' \
 -v /volume1/IYUU/db:/IYUU/db \
 -p 8787:8787 \
 --restart=always \

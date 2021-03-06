@@ -372,7 +372,7 @@ class AutoReseed
                     }
                     break;
                 case 'qBittorrent':
-                    $extra_options['autoTMM'] = 'false';	//关闭自动种子管理
+                    //$extra_options['autoTMM'] = 'false';	//关闭自动种子管理
                     #$extra_options['skip_checking'] = 'true';    //跳校验
                     // 添加任务校验后是否暂停
                     if (isset($extra_options['paused'])) {
