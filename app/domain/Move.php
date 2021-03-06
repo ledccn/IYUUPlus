@@ -6,6 +6,9 @@ use app\common\Constant;
 
 class Move
 {
+    /**
+     * 路径分隔符
+     */
     const Delimiter = '{#**#}';
     /**
      * 根据参数，解析转移做种的运行时配置
@@ -69,9 +72,15 @@ class Move
             if (!empty($cron['path_rule'])) {
                 //第一步：先分隔每一行
                 $path_rule = explode("\n", self::replaceBr($cron['path_rule']));
-
                 //第二步：解析每一行
-                $rs['path_rule'] = self::getPathRule($path_rule);
+                $path_rule = self::getPathRule($path_rule);
+                if (!empty($path_rule)) {
+                    $rs['path_rule'] = $path_rule;
+                } else {
+                    //当路径转移规则为空时，默认路径相等
+                    $rs['path_rule'] = [];
+                    $rs['path_type'] = 0;
+                }
             } else {
                 //当路径转移规则为空时，默认路径相等
                 $rs['path_type'] = 0;
@@ -139,6 +148,11 @@ class Move
         $rule = [];
         if (count($path_rule)) {
             foreach ($path_rule as $key => $value) {
+                //跳过空行
+                if (empty($value)) {
+                    continue;
+                }
+                //检查分隔符
                 if (strpos($value, self::Delimiter) !== false) {
                     $item = explode(self::Delimiter, $value);
                     if (count($item) === 2) {
@@ -146,12 +160,12 @@ class Move
                             return trim($v);
                         }, $item);
                         if ($item[0]) {
-                            $rule[$item[0]] = $item[1];
+                            $rule[$item[0]] = $item[1];     //关联数组
                         }
                     }
                 } else {
                     if (trim($value)) {
-                        $rule[trim($value)] = '';
+                        $rule[trim($value)] = '';   //允许值为空
                     }
                 }
             }
