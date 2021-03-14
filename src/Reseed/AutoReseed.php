@@ -372,7 +372,10 @@ class AutoReseed
                     }
                     break;
                 case 'qBittorrent':
-                    //$extra_options['autoTMM'] = 'false';	//关闭自动种子管理
+                    //如果用户的下载器开启自动种子管理，需要传入这个参数
+                    if (isset(static::$links[$rpcKey]['_config']['autoTMM'])) {
+                        $extra_options['autoTMM'] = 'false';	//关闭自动种子管理
+                    }
                     #$extra_options['skip_checking'] = 'true';    //跳校验
                     // 添加任务校验后是否暂停
                     if (isset($extra_options['paused'])) {
