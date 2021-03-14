@@ -5,7 +5,7 @@ use app\domain\CommandInterface;
 
 /**
  * RSS下载 命令解析
- * Class reseed
+ * Class rss
  * @package app\domain\Command
  */
 class rss implements CommandInterface

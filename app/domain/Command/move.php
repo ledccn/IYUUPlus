@@ -5,7 +5,7 @@ use app\domain\CommandInterface;
 
 /**
  * 转移种子任务命令解析
- * Class reseed
+ * Class move
  * @package app\domain\Command
  */
 class move implements CommandInterface
