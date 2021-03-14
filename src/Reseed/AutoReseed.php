@@ -481,6 +481,7 @@ class AutoReseed
     {
         echo "正在向服务器提交 【".$clientValue['_config']['name']."】 种子哈希……".PHP_EOL;
         $res = self::$curl->post(self::$apiUrl . self::$endpoints['infohash'], $hashArray);
+        cli($res->response);
         $res = json_decode($res->response, true);
         // 写响应日志
         wlog($res, 'Response_'.$clientKey);
