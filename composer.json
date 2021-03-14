@@ -37,7 +37,8 @@
     "ext-mbstring": "*",
     "ext-curl": "*",
     "symfony/process": "^5.2",
-    "ledccn/bittorrentclient": "dev-master"
+    "ledccn/bittorrentclient": "dev-master",
+    "ext-dom": "*"
   },
   "suggest": {
     "ext-event": "For better performance. "
