@@ -233,8 +233,18 @@ class Config
     }
 
     /**
-     * 把旧配置格式转换为新格式 [兼容性处理]
+     * 禁用用户未配置的站点
+     * @param array $sites
+     * @return array
      */
-    public static function format()
-    {}
+    public static function disabledNotConfiguredUserSites(&$sites):array
+    {
+        $user_sites = self::getUserSites();
+        array_walk($sites, function (&$v, $k) use ($user_sites) {
+            if (!array_key_exists($k, $user_sites)) {
+                $v['disabled'] = true;
+            }
+        });
+        return $sites;
+    }
 }

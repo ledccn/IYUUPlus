@@ -3,31 +3,6 @@ use IYUU\Library\IFile;
 use IYUU\Library\Table;
 
 /**
- * 微信推送Server酱
- * @param string $text
- * @param string $desp
- * @return false|string
- */
-function sc($text='', $desp='')
-{
-    global $configALL;
-    $token = $configALL['sc.ftqq.com'];
-    $desp = ($desp=='')?date("Y-m-d H:i:s") :$desp;
-    $postdata = http_build_query(array(
-        'text' => $text,
-        'desp' => $desp
-    ));
-    $opts = array('http' =>	array(
-        'method'  => 'POST',
-        'header'  => 'Content-type: application/x-www-form-urlencoded',
-        'content' => $postdata
-    ));
-    $context  = stream_context_create($opts);
-    $result = file_get_contents('http://sc.ftqq.com/'.$token.'.send', false, $context);
-    return  $result;
-}
-
-/**
  * 微信推送 爱语飞飞
  * @param string $site
  * @param array $torrent 种子数组
@@ -334,22 +309,6 @@ function evenFilter($var)
 }
 
 /**
- * 发布员签名
- * 注意：同时配置iyuu.cn与secret时，优先使用secret。
- * @param $timestamp
- * @return string
- */
-function sign($timestamp)
-{
-    global $configALL;
-    // 爱语飞飞
-    $token = isset($configALL['iyuu.cn']) && $configALL['iyuu.cn'] ? $configALL['iyuu.cn'] : '';
-    // 鉴权
-    $token = isset($configALL['secret']) && $configALL['secret'] ? $configALL['secret'] : $token;
-    return sha1($timestamp . $token);
-}
-
-/**
  * 显示支持的站点列表
  * @param string $dir
  * @param array $filter
@@ -370,7 +329,7 @@ function ShowTableSites($dir = 'Protocols', $filter = array())
     }
     $data = [];
     $i = $j = $k = 0;   //i列、j序号、k行
-    foreach (glob(APP_PATH.$dir.DS.'*.php') as $key => $start_file) {
+    foreach (glob(__DIR__.DS.$dir.DS.'*.php') as $key => $start_file) {
         $start_file = str_replace("\\", "/", $start_file);
         $offset = strripos($start_file, '/');
         if ($offset===false) {
@@ -397,6 +356,10 @@ function ShowTableSites($dir = 'Protocols', $filter = array())
     echo($table->render());
 }
 
+/**
+ * @param $t
+ * @param $msg
+ */
 function sleepIYUU($t, $msg)
 {
     echo $msg . PHP_EOL;

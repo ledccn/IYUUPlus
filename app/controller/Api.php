@@ -7,6 +7,7 @@ use app\common\exception\BusinessException;
 use app\common\Config;
 use app\common\Constant;
 use app\domain\Config as domainConfig;
+use app\domain\Rss as domainRss;
 use app\domain\Users as domainUsers;
 
 /**
@@ -140,7 +141,7 @@ class Api extends BaseController
             throw new BusinessException('您的账号尚未进行用户验证。', 401);
         }
 
-        //过滤用户已有站点
+        //过滤用户已配置站点
         $filter = $request->get('filter');
         if ($filter) {
             domainConfig::disabledUserSites($sites);
@@ -163,5 +164,26 @@ class Api extends BaseController
         $log_file = Config::set($config['log_file'], date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
         $stdout_file = Config::set($config['stdout_file'], date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
         return json(['code' => 1, 'msg' => '清理成功', 'data' => []]);
+    }
+
+    /**
+     * 获取所有RSS支持的站点
+     * @param Request $request
+     * @return Response
+     */
+    public function getAllRssClass(Request $request): Response
+    {
+        $rs = self::RS;
+        $sites = domainRss::getAllRssClass();
+        $sites = domainRss::formatRssSites($sites);
+        //过滤用户未配置站点
+        $filter = $request->get('filter');
+        if ($filter) {
+            domainConfig::disabledNotConfiguredUserSites($sites);
+        }
+
+        $rs['data']['items'] = $sites;
+        $rs['data']['total'] = count($sites);
+        return json($rs);
     }
 }

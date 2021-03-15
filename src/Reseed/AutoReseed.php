@@ -444,6 +444,7 @@ class AutoReseed
             $sign['sign'] = Oauth::getSign();
             $sign['timestamp'] = time();
             $sign['version'] = self::VER;
+            //cli($hashArray);
             // 写请求日志
             wlog($hashArray, 'Request_'.$clientKey);
             self::$wechatMsg['hashCount'] += count($hashString);

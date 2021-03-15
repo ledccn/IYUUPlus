@@ -61,12 +61,15 @@ abstract class AbstractRss
 
     /**
      * 构造方法，配置应用信息
+     * @param bool $init
      */
-    public function __construct()
+    public function __construct($init = true)
     {
-        echo $this->site." 正在初始化RSS配置...". PHP_EOL;
-        $this->init();
-        echo $this->site." RSS解码类实例化，成功！".PHP_EOL;
+        if ($init) {
+            echo $this->site." 正在初始化RSS配置...". PHP_EOL;
+            $this->init();
+            echo $this->site." RSS解码类实例化，成功！".PHP_EOL;
+        }
     }
 
     /**
@@ -124,7 +127,7 @@ abstract class AbstractRss
 
     /**
      * 助手函数
-     * @param $element
+     * @param DOMDocument $element
      * @param string $tagName
      * @param string $attName
      * @return mixed
@@ -144,6 +147,8 @@ abstract class AbstractRss
 
     /**
      * 过滤XML文档中不需要的元素
+     * @param DOMDocument $item
+     * @return mixed
      */
     protected function filterNexusPHP(&$item)
     {

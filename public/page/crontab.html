@@ -161,6 +161,35 @@
   </div>
   {{# } }}
 
+  {{# if (d.type === 'rss') { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">Rss站点</label>
+    <div class="layui-input-block">
+      <div id="rss_sites_view"></div>
+      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 未配置的站点，将会显示为禁用状态。</div>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">下载器</label>
+    <div class="layui-input-block" id="rss_clients_view">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">URL地址</label>
+    <div class="layui-input-block">
+      <input type="text" name="urladdress" placeholder="请输入URL地址" class="layui-input" value="">
+      <tip>未配置URL地址时，将会执行默认。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">筛选规则</label>
+    <div class="layui-input-block">
+      <div id="rss_filter_view"></div>
+      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 满足所选的规则，Rss时才会下载。</div>
+    </div>
+  </div>
+  {{# } }}
+
   {{# if (d.type === 'url') { }}
   <div class="layui-form-item">
     <label class="layui-form-label required">URL地址</label>
@@ -205,6 +234,27 @@
 <script id="to_clients_tpl" type="text/html">
   {{#  layui.each(d, function(index, item){ }}
   <input type="radio" name="to_clients" value="{{item.uuid}}" title="{{ item.name }}">
+  {{#  }); }}
+</script>
+
+<!-- 模板：RSS下载任务 [站点] 单选框 -->
+<script id="rss_sites_tpl" type="text/html">
+  {{#  layui.each(d, function(index, item){ }}
+  <input type="radio" name="site" value="{{item.site}}" title="{{ item.site }}{{ item.nickname && item.site != item.nickname ? ' ' + item.nickname : '' }}" {{ item.disabled ? ' disabled' : '' }}>
+  {{#  }); }}
+</script>
+
+<!-- 模板：RSS下载任务 [下载器] 单选框 -->
+<script id="rss_clients_tpl" type="text/html">
+  {{#  layui.each(d, function(index, item){ }}
+  <input type="radio" name="clients" value="{{item.uuid}}" title="{{ item.name }}">
+  {{#  }); }}
+</script>
+
+<!-- 模板：RSS下载任务 [筛选规则过滤器] 单选框 -->
+<script id="rss_filter_tpl" type="text/html">
+  {{#  layui.each(d, function(index, item){ }}
+  <input type="radio" name="filter" value="{{item.uuid}}" title="{{ item.name }}">
   {{#  }); }}
 </script>
 
@@ -324,10 +374,12 @@
       form.render();
       //联动：任务周期
       crontab_where_sel_action(rule.where);
-      //联动：辅种站点与下载器的复选框
+      //联动：辅种任务
       reseed_sel_action(type, formData);
-      //联动：转移任务下载器的选择
+      //联动：转移任务
       move_sel_action(type, formData);
+      //联动：RSSS下载任务
+      rss_sel_action(type, formData);
     }
 
     /**
@@ -356,7 +408,7 @@
     }
 
     /**
-     * 任务选择框联动，辅种站点与下载器的选择
+     * 任务选择框联动，辅种任务
      * @param {string} type       任务类型
      * @param {object} formData   编辑时表单数据
      */
@@ -435,7 +487,7 @@
     }
 
     /**
-     * 任务选择框联动，转移做种任务下载器的选择
+     * 任务选择框联动，转移做种任务
      * @param {string} type       任务类型
      * @param {object} formData   编辑时表单数据
      */
@@ -547,6 +599,88 @@
     }
 
     /**
+     * 任务选择框联动，RSS下载任务
+     * @param {string} type       任务类型
+     * @param {object} formData   编辑时表单数据
+     */
+    rss_sel_action = function(type = '', formData) {
+      if (type !== 'rss') {
+        return;
+      }
+      let callback = null;
+      if (formData !== null) {
+        console.log(formData);
+        //定义回调
+        callback = function(){
+          form.val("form", formData);
+        };
+      }
+      //RSS支持的所有站点
+      $.getJSON('/Api/getAllRssClass', {filter: true}, function (d) {
+        let getTpl = rss_sites_tpl.innerHTML
+          ,view = getById('rss_sites_view');
+        if (d.ret !== 200) {
+          return;
+        }
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置站点，将会为您跳转到站点设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/sites.html';
+          });
+          return;
+        }
+        laytpl(getTpl).render(d.data.items, function(html) {
+          view.innerHTML = html;
+        });
+        //回调
+        callback !== null && typeof callback === 'function' && callback();
+        form.render('radio');
+      });
+      //RSS使用的下载器
+      $.getJSON('/Api/Config?config_filename=clients&action=list', function (d) {
+        let getTpl = rss_clients_tpl.innerHTML
+          ,view = getById('rss_clients_view');
+        if (d.ret !== 200) {
+          return;
+        }
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置下载器，将会为您跳转到下载器设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/clients.html';
+          });
+          return;
+        }
+        laytpl(getTpl).render(d.data.items, function(html) {
+          view.innerHTML = html;
+        });
+        //回调
+        callback !== null && typeof callback === 'function' && callback();
+        form.render('radio');
+      });
+      //RSS使用的筛选规则过滤器
+      $.getJSON('/Api/Config?config_filename=filter&action=list', function (d) {
+        let getTpl = rss_filter_tpl.innerHTML
+          ,view = getById('rss_filter_view');
+        if (d.ret !== 200) {
+          return;
+        }
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置筛选规则过滤器，将会为您跳转到过滤器设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/filter.html';
+          });
+          return;
+        }
+        laytpl(getTpl).render(d.data.items, function(html) {
+          view.innerHTML = html;
+        });
+        //回调
+        callback !== null && typeof callback === 'function' && callback();
+        form.render('radio');
+      });
+    }
+
+    /**
      * 初始化表格
      */ 
     table.render({
@@ -579,6 +713,9 @@
                 break;
               case 'move':
                 type = '转移任务';
+                break;
+              case 'rss':
+                type = 'Rss下载任务';
                 break;
               case 'download':
                 type = '下载任务';
