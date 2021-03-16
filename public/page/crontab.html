@@ -166,7 +166,7 @@
     <label class="layui-form-label required">Rss站点</label>
     <div class="layui-input-block">
       <div id="rss_sites_view"></div>
-      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 未配置的站点，将会显示为禁用状态。</div>
+      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 未配置的站点，将会显示为禁用状态。<a href="javascript:;" layuimini-href="page/setting/sites.html" target="_self" style="color:#1e9fff">站点设置</a></div>
     </div>
   </div>
   <div class="layui-form-item">
@@ -175,9 +175,16 @@
     </div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label">URL地址</label>
+    <label class="layui-form-label">数据目录</label>
     <div class="layui-input-block">
-      <input type="text" name="urladdress" placeholder="请输入URL地址" class="layui-input" value="">
+      <input type="text" name="downloadsDir" placeholder="请输入数据目录" class="layui-input">
+      <tip><span class="layui-badge">优先级：高</span>下载器的数据目录。如果您暂时用不到下载功能，此处可以留空。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">RSS订阅地址</label>
+    <div class="layui-input-block">
+      <input type="text" name="urladdress" placeholder="请输入RSS订阅地址" class="layui-input" value="">
       <tip>未配置URL地址时，将会执行默认。</tip>
     </div>
   </div>
