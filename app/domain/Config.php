@@ -217,6 +217,25 @@ class Config
     }
 
     /**
+     * 过滤器
+     * @return array
+     */
+    public static function getFilter():array
+    {
+        return Conf::get(self::filename['filter'], Constant::config_format, []);
+    }
+
+    /**
+     * 根据uuid获取计划任务配置
+     * @param string $uuid
+     * @return array
+     */
+    public static function getCronByUUID(string $uuid = ''):array
+    {
+        $cron = self::getCrontab();
+        return array_key_exists($uuid, $cron) ? $cron[$uuid] : [];
+    }
+    /**
      * 禁用用户已经配置过的站点
      * @param array $sites
      * @return array

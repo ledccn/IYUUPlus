@@ -4,7 +4,9 @@ namespace app\controller;
 use support\Request;
 use support\Response;
 use app\domain\Crontab;
+use app\domain\Move as domainMove;
 use app\domain\Reseed as domainReseed;
+use app\domain\Rss as domainRss;
 
 /**
  * Class Task
@@ -13,9 +15,21 @@ use app\domain\Reseed as domainReseed;
  */
 class Task extends BaseController
 {
+    /**
+     * 根据参数，解析转移任务配置
+     * @param Request $request
+     * @return Response
+     */
+    public function moveConfig(Request $request): Response
+    {
+        $rs = self::RS;
+        $uuid = $request->get('uuid');
+        $rs['data'] = domainMove::configParser($uuid);
+        return json($rs);
+    }
 
     /**
-     * 根据参数，解析辅种的站点和下载器
+     * 根据参数，解析辅种任务配置
      * @param Request $request
      * @return Response
      */
@@ -24,6 +38,19 @@ class Task extends BaseController
         $rs = self::RS;
         $uuid = $request->get('uuid');
         $rs['data'] = domainReseed::configParser($uuid);
+        return json($rs);
+    }
+
+    /**
+     * 根据参数，解析RSS下载任务配置
+     * @param Request $request
+     * @return Response
+     */
+    public function rssConfig(Request $request): Response
+    {
+        $rs = self::RS;
+        $uuid = $request->get('uuid');
+        $rs['data'] = domainRss::configParser($uuid);
         return json($rs);
     }
 
@@ -42,7 +69,7 @@ class Task extends BaseController
     }
 
     /**
-     * 执行计划任务
+     * 手动执行计划任务
      * @param Request $request
      * @return Response
      */

@@ -11,7 +11,7 @@ use IYUU\Library\IFile;
  * @access private 常驻内存运行，禁止执行器调用
  * @package app\domain
  */
-class Reseed
+class Reseed implements ConfigParserInterface
 {
     /**
      * 根据参数，解析辅种的站点和下载器
@@ -27,9 +27,7 @@ class Reseed
         if (empty($uuid)) {
             return $rs;
         }
-        $cronFilename = Config::filename['crontab'];
-        $cron = Conf::get($cronFilename, Constant::config_format, []);
-        $cron = array_key_exists($uuid, $cron) ? $cron[$uuid] : [];
+        $cron = Config::getCronByUUID($uuid);
         //检查使能
         if (isset($cron['switch']) && $cron['switch'] === 'on') {
             //IYUU密钥

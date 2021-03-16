@@ -1,10 +1,7 @@
 <?php
 namespace app\domain;
 
-use app\common\Config as Conf;
-use app\common\Constant;
-
-class Move
+class Move implements ConfigParserInterface
 {
     /**
      * 路径分隔符
@@ -32,9 +29,7 @@ class Move
         if (empty($uuid)) {
             return $rs;
         }
-        $cronFilename = Config::filename['crontab'];
-        $cron = Conf::get($cronFilename, Constant::config_format, []);
-        $cron = array_key_exists($uuid, $cron) ? $cron[$uuid] : [];
+        $cron = Config::getCronByUUID($uuid);
         //检查使能
         if (isset($cron['switch']) && $cron['switch'] === 'on') {
             //IYUU密钥

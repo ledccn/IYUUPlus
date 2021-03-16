@@ -1,10 +1,7 @@
 <?php
 namespace app\domain;
 
-use app\common\Config as Conf;
-use app\common\Constant;
-use IYUU\Rss\AbstractRss;
-class Rss
+class Rss implements ConfigParserInterface
 {
     /**
      * 根据参数解析RSS下载的运行时配置
@@ -13,11 +10,65 @@ class Rss
      */
     public static function configParser($uuid = ''):array
     {
-        return [];
+        $rs = [
+            'site'   => [],
+            'sites'   => [],
+            'clients' => [],
+            'filter'  => [],
+            'urladdress' => '',
+        ];
+        if (empty($uuid)) {
+            return $rs;
+        }
+        $cron = Config::getCronByUUID($uuid);
+        //检查使能
+        if (isset($cron['switch']) && $cron['switch'] === 'on') {
+            //IYUU密钥
+            $iyuu = Config::getIyuu();
+            $rs['iyuu.cn'] = $iyuu['iyuu.cn'];
+
+            //默认
+            $default = Config::getDefault();
+            $rs['default'] = $default;
+
+            //解析用户的站点配置
+            $site = 'site';
+            $userSites = Config::getUserSites();
+            if (!empty($cron[$site]) && !empty($userSites)) {
+                $key = $cron[$site];
+                $rs['site'] = array_key_exists($key, $userSites) ? $userSites[$key] : [];
+            }
+
+            //解析站点域名
+            $sites = Config::getSites();
+            if (!empty($cron[$site]) && !empty($sites)) {
+                $key = $cron[$site];
+                $rs['sites'] = array_key_exists($key, $sites) ? $sites[$key] : [];
+            }
+
+            //解析下载器
+            $clients = Config::getClients();
+            if (!empty($cron['clients']) && !empty($clients)) {
+                $key = $cron['clients'];
+                $rs['clients'] = array_key_exists($key, $clients) ? $clients[$key] : [];
+            }
+
+            //解析筛选规则的过滤器
+            $filter = Config::getFilter();
+            if (!empty($cron['filter']) && !empty($filter)) {
+                $key = $cron['filter'];
+                $rs['filter'] = array_key_exists($key, $filter) ? $filter[$key] : [];
+            }
+
+            //解析URL地址
+            $rs['urladdress'] = empty($cron['urladdress']) ? '' : $cron['urladdress'];
+        }
+        return $rs;
     }
 
     /**
      * 获取所有RSS支持的站点名称
+     * @descr 步骤：1.获取Rss目录下的全部类文件名； 2.实例化类为对象； 3.获取对象的成员变量site
      * @return array
      */
     public static function getAllRssClass():array
