@@ -118,7 +118,7 @@ abstract class AbstractRss
             die('解析计划任务失败：当前下载器可能已经删除，请编辑RSS下载任务，重选下载器。'.PHP_EOL);
         }
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
-        cli(self::$conf);
+        //cli(self::$conf);
         $siteName = self::$conf['site']['name'];
         $filename = isset(self::SITENAME_TO_FILENAME_MAP[$siteName]) ? self::SITENAME_TO_FILENAME_MAP[$siteName] : $siteName;
         return $filename;
@@ -128,10 +128,11 @@ abstract class AbstractRss
      * 构造方法，配置应用信息
      * @param bool $init
      */
-    public function __construct($init = true)
+    final public function __construct($init = true)
     {
         if ($init) {
             echo $this->site." 正在初始化RSS配置...". PHP_EOL;
+            cli(self::$conf);
             $this->_initialize();
             $this->init();
             echo $this->site." RSS解码类实例化，成功！".PHP_EOL;
@@ -141,7 +142,7 @@ abstract class AbstractRss
     /**
      * 初始化 第一步
      */
-    protected function _initialize()
+    final protected function _initialize()
     {
         //常规配置
         $default = empty(static::$conf['default']) ? [] : static::$conf['default'];

@@ -21,7 +21,7 @@ if (count($argv) < 2) {
 // php脚本文件
 $start_file = $argv[0];
 // 参数1：任务标志
-$uuid  = strtolower(trim($argv[1]));
+$uuid  = trim($argv[1]);
 
 // 通用部分
 $obj = AbstractRss::getInstance($uuid);
