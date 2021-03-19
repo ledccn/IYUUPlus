@@ -4,9 +4,10 @@
  */
 namespace IYUU\Rss;
 
-use Curl\Curl;
 use DOMDocument;
+use Curl\Curl;
 use IYUU\Library\Rpc;
+use app\domain\Rss as domainRss;
 
 abstract class AbstractRss
 {
@@ -44,6 +45,7 @@ abstract class AbstractRss
     const TIMEOUT = 600;
     /**
      * curl
+     * @var Curl
      */
     public $curl = null;
     /**
@@ -60,6 +62,69 @@ abstract class AbstractRss
     public $passkey = '';
 
     /**
+     * 运行时解析的配置
+     * @var array
+     */
+    protected static $conf = [];
+
+    /**
+     * 站点名转换为文件名，所使用的映射表
+     */
+    const SITENAME_TO_FILENAME_MAP = [
+        '1ptba' => 'ptba',
+        '52pt'  => 'site52pt',
+        'm-team'=> 'mteam',
+        'hd-torrents'=> 'hdtorrents',
+    ];
+
+    /**
+     * 实例化
+     * @param string $uuid      任务标识
+     * @return mixed 返回站点的rss解码实例
+     */
+    public static function getInstance($uuid)
+    {
+        $filename = self::getCliInput($uuid);
+        // 转小写
+        $filename = strtolower($filename);
+        $file = __DIR__ . DIRECTORY_SEPARATOR .$filename.'.php';
+        if (!is_file($file)) {
+            die($file.' 文件不存在');
+        }
+        $className = 'IYUU\Rss\\'.$filename;
+        if (class_exists($className)) {
+            echo $filename." RSS解码类正在实例化！".PHP_EOL;
+            return new $className();
+        } else {
+            die($filename.' RSS解码类不存在');
+        }
+    }
+
+    /**
+     * 解析命令行参数 【静态方法】
+     * @param string $uuid 任务标识
+     * @return string 文件名
+     */
+    protected static function getCliInput($uuid)
+    {
+        self::$conf = domainRss::configParser($uuid);
+        if (empty(self::$conf['site'])) {
+            die('解析计划任务失败：用户未配置的站点。'.PHP_EOL);
+        }
+        if (empty(self::$conf['sites'])) {
+            die('解析计划任务失败：用户配置的站点，当前不受支持。'.PHP_EOL);
+        }
+        if (empty(self::$conf['clients'])) {
+            die('解析计划任务失败：当前下载器可能已经删除，请编辑RSS下载任务，重选下载器。'.PHP_EOL);
+        }
+        echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
+        cli(self::$conf);
+        $siteName = self::$conf['site']['name'];
+        $filename = isset(self::SITENAME_TO_FILENAME_MAP[$siteName]) ? self::SITENAME_TO_FILENAME_MAP[$siteName] : $siteName;
+        return $filename;
+    }
+
+    /**
      * 构造方法，配置应用信息
      * @param bool $init
      */
@@ -67,55 +132,27 @@ abstract class AbstractRss
     {
         if ($init) {
             echo $this->site." 正在初始化RSS配置...". PHP_EOL;
+            $this->_initialize();
             $this->init();
             echo $this->site." RSS解码类实例化，成功！".PHP_EOL;
         }
     }
 
     /**
-     * 实例化
-     * @param string $site      站点名字
-     * @return mixed 返回站点的rss解码实例
+     * 初始化 第一步
      */
-    public static function getInstance($site)
+    protected function _initialize()
     {
-        // 转小写
-        $name = strtolower($site);
-        $file = __DIR__ . DIRECTORY_SEPARATOR .$name.'.php';
-        if (!is_file($file)) {
-            die($file.' 文件不存在');
-        }
-        $className = 'IYUU\Rss\\'.$name;
-        if (class_exists($className)) {
-            echo $name." RSS解码类正在实例化！".PHP_EOL;
-            return new $className();
-        } else {
-            die($name.' RSS解码类不存在');
-        }
-    }
+        //常规配置
+        $default = empty(static::$conf['default']) ? [] : static::$conf['default'];
+        $this->userAgent = isset($default['ua']) && $default['ua'] ? $default['ua'] : $this->userAgent;
 
-    /**
-     * 初始化配置
-     */
-    protected function init()
-    {
-        global $argv;
-        global $configALL;
-        if (!isset($configALL[$this->site])) {
-            die('config.php缺少'.$this->site.'站点配置，实例化RSS解码类失败'.PHP_EOL);
-        }
-        $config = $configALL[$this->site];
-        $this->cookies = isset($config['cookie']) && $config['cookie'] ? $config['cookie'] : '';
-        $this->userAgent = isset($configALL['default']['userAgent']) && $configALL['default']['userAgent'] ? $configALL['default']['userAgent'] : $this->userAgent;
-        $this->passkey = isset($config['passkey']) && $config['passkey'] ? $config['passkey'] : '';
-        if (empty($this->passkey)) {
-            die($this->site.' 没有配置密钥，初始化错误。'.PHP_EOL);
-        }
-        if (!isset($configALL['sitesALL'][$this->site])) {
-            die($this->site.' 缺少JSON文件，实例化RSS解码类失败'.PHP_EOL);
-        }
-        $this->domain = $configALL['sitesALL'][$this->site]['base_url'];
-        $this->host = str_replace("{}", $this->domain, $this->host);
+        //云端下发
+        $sites = static::$conf['sites'];
+        $protocol = isset($sites['is_https']) && ($sites['is_https'] === 0) ? 'http://' : 'https://';
+        $this->domain = $sites['base_url'];
+        $this->host = $protocol . $this->domain . '/';   // 示例：https://baidu.com/
+
         // 初始化curl
         $this->curl = new Curl();
         $this->curl->setOpt(CURLOPT_SSL_VERIFYPEER, false); // 禁止验证对等证书
@@ -123,6 +160,20 @@ abstract class AbstractRss
         $this->curl->setOpt(CURLOPT_CONNECTTIMEOUT, self::CONNECTTIMEOUT);  // 超时
         $this->curl->setOpt(CURLOPT_TIMEOUT, self::TIMEOUT);                // 超时
         $this->curl->setUserAgent($this->userAgent);
+    }
+
+    /**
+     * 初始化 第二步
+     */
+    protected function init()
+    {
+        //站点配置
+        $config = static::$conf['site'];
+        $this->cookies = isset($config['cookie']) && $config['cookie'] ? $config['cookie'] : '';
+        $this->passkey = isset($config['passkey']) && $config['passkey'] ? $config['passkey'] : '';
+        if (empty($this->passkey)) {
+            die($this->site.' 没有配置密钥，初始化错误。'.PHP_EOL);
+        }
     }
 
     /**

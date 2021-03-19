@@ -9,7 +9,7 @@ use DOMDocument;
 use DOMXpath;
 use IYUU\Library\Rpc;
 
-class pterclub extends AbstractRss
+class pter extends AbstractRss
 {
     /**
      * 站点标志
