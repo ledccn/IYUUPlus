@@ -257,13 +257,13 @@ abstract class AbstractRss
 
     /**
      * 公共方法：实现rss订阅下载
-     * @param string    $url
      * @return void
      */
-    public function run($url = '')
+    public function run()
     {
         echo "正在初始化RPC链接...". PHP_EOL;
         Rpc::init($this->site, $this->method);
+        $url = '';
         $html = $this->get($url);
         #p($html);
         $this->checkCallback($html);
@@ -289,12 +289,25 @@ abstract class AbstractRss
     }
 
     /**
-     * 抽象方法，在类中实现
      * 请求url，获取html页面
-     * @param string        $url
-     * @return array
+     * @param string    $url
+     * @return string
      */
-    abstract public function get($url = '');
+    public function get($url = '')
+    {
+        if ($url == '') {
+            $url = $this->rss_page;
+        }
+        $url = str_replace("{}", $this->passkey, $url);
+        echo $this->site." 正在请求RSS... {$url}". PHP_EOL;
+        $res = $this->curl->get($this->host . $url);
+        if ($res->http_status_code == 200) {
+            echo "RSS获取信息，成功！ \n";
+            return $res->response;
+        }
+        echo "RSS获取信息失败，请重试！ \n";
+        return null;
+    }
 
     /**
      * 抽象方法，在类中实现

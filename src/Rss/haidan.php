@@ -16,27 +16,6 @@ class haidan extends AbstractRss
      * @var string
      */
     public $site = 'haidan';
-    /**
-     * 抽象方法，在类中实现
-     * 请求url，获取html页面
-     * @param string    $url
-     * @return string
-     */
-    public function get($url = '')
-    {
-        if ($url == '') {
-            $url = $this->rss_page;
-        }
-        $url = str_replace("{}", $this->passkey, $url);
-        echo "正在请求RSS... {$url}". PHP_EOL;
-        $res = $this->curl->get($this->host.$url);
-        if ($res->http_status_code == 200) {
-            echo "RSS获取信息，成功！ \n";
-            return $res->response;
-        }
-        echo "RSS获取信息失败，请重试！ \n";
-        return null;
-    }
 
     /**
      * 抽象方法，在类中实现
