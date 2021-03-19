@@ -8,8 +8,15 @@ use IYUU\Client\AbstractClient;
 
 class Rpc
 {
+    // 站点标识
+    public static $site = '';
     // 下载种子的请求类型 GET POST
     public static $method = 'GET';
+    /**
+     * 运行时解析的配置
+     * @var array
+     */
+    protected static $conf = [];
     // RPC连接池
     public static $links = array();
     /**
@@ -27,7 +34,7 @@ class Rpc
     /**
      * 客户端配置
      */
-    public static $clients = '';
+    public static $clients = [];
     /**
      * 监控目录
      */
@@ -40,8 +47,6 @@ class Rpc
      * 工作模式
      */
     public static $workingMode = '';
-    // 站点标识
-    public static $site = '';
     /**
      * 负载均衡 控制变量
      */
@@ -55,15 +60,15 @@ class Rpc
      * 初始化
      * @param string $site
      * @param string $method
+     * @param array  $conf
      */
-    public static function init($site = '', $method = 'GET')
+    public static function init($site, $method, $conf)
     {
-        global $configALL;
-
         self::$site = $site;
         self::$method = strtoupper($method);
+        self::$conf = $conf;
+        $config = static::$conf['site'];
 
-        $config = $configALL[$site];
         self::$cookies = $config['cookie'];
         self::$userAgent = isset($config['userAgent']) && $config['userAgent'] ? $config['userAgent'] : $configALL['default']['userAgent'];
         self::$clients = isset($config['clients']) && $config['clients'] ? $config['clients'] : $configALL['default']['clients'];

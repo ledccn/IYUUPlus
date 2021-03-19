@@ -60,8 +60,8 @@ class Rss implements ConfigParserInterface
                 $rs['filter'] = array_key_exists($key, $filter) ? $filter[$key] : [];
             }
 
-            //解析URL地址
-            $rs['urladdress'] = empty($cron['urladdress']) ? '' : $cron['urladdress'];
+            //其他参数
+            $rs = array_merge($cron, $rs);
         }
         return $rs;
     }

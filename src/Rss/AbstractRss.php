@@ -263,7 +263,7 @@ abstract class AbstractRss
     public function run()
     {
         echo "正在初始化RPC链接...". PHP_EOL;
-        Rpc::init($this->site, $this->method);
+        Rpc::init($this->site, $this->method, self::$conf);
         $url = '';
         $html = $this->get($url);
         #p($html);
@@ -273,20 +273,6 @@ abstract class AbstractRss
         #p($data);exit;
         Rpc::call($data);
         exit(0);
-    }
-
-    /**
-     * 回调函数
-     * @param string $html
-     */
-    public function checkCallback($html = '')
-    {
-        if (strpos((string)$html, 'invalid passkey') !== false) {
-            die('passkey填写错误，请重新填写！');
-        }
-        if (is_null($html)) {
-            exit(1);
-        }
     }
 
     /**
@@ -308,6 +294,20 @@ abstract class AbstractRss
         }
         echo "RSS获取信息失败，请重试！ \n";
         return null;
+    }
+
+    /**
+     * 回调函数
+     * @param string $html
+     */
+    public function checkCallback($html = '')
+    {
+        if (strpos((string)$html, 'invalid passkey') !== false) {
+            die('passkey填写错误，请重新填写！');
+        }
+        if (is_null($html)) {
+            exit(1);
+        }
     }
 
     /**
