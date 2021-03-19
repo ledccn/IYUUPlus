@@ -8,5 +8,5 @@ namespace app\domain;
  */
 interface ConfigParserInterface
 {
-    public static function configParser(array $param):array;
+    public static function configParser(array $uuid):array;
 }
