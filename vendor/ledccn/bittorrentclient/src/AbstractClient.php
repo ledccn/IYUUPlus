@@ -1,6 +1,6 @@
 <?php
 /**
- * 下载服务器抽象类
+ * BitTorrent下载服务器抽象类
  * Created by PhpStorm
  * User: David <367013672@qq.com>
  * Date: 2020-1-11
@@ -22,18 +22,19 @@ abstract class AbstractClient
     protected $username = '';
 
     /**
-     * 密码
+     * 下载服务器密码
      * @var string
      */
     protected $password = '';
     /**
-     * 调试开关
+     * 下载服务器调试开关
      * @var bool
      */
     public $debug = false;
 
     /**
-     * 公共方法：创建客户端实例
+     * 创建客户端实例
+     * @access public
      * @param array $config
      * array(
      *  'type'  => '',
@@ -63,7 +64,7 @@ abstract class AbstractClient
     }
 
     /**
-     * 初始化必须的参数
+     * 初始化下载服务器参数
      * @descr 子类调用
      * @param array $config
      */
@@ -86,7 +87,7 @@ abstract class AbstractClient
      * @param mixed $value 变量值
      * @return boolean/string 格式化后的变量
      */
-    public function booleanParse($value)
+    protected function booleanParse($value)
     {
         $rs = $value;
 
@@ -104,24 +105,59 @@ abstract class AbstractClient
     }
 
     /**
-     * 查询Bittorrent客户端状态
+     * 判断传入的种子参数是否为url下载链接
+     * @param string $torrent   种子的url或元数据
+     * @return bool
+     */
+    protected function is_url($torrent):bool
+    {
+        return (strpos($torrent, 'http://')===0) || (strpos($torrent, 'https://')===0) || (strpos($torrent, 'magnet:?xt=urn:btih:')===0);
+    }
+
+    /**
+     * 向下载服务器添加种子
+     * @param string $torrent 种子的url或元数据
+     * @param string $save_path 保存路径
+     * @param array $extra_options 附加参数
+     * @return array
+     */
+    public function add_torrent($torrent, $save_path = '', $extra_options = array())
+    {
+        if ($this->is_url($torrent)) {
+            $result = $this->add($torrent, $save_path, $extra_options);			    // URL添加
+        } else {
+            $result = $this->add_metainfo($torrent, $save_path, $extra_options);	// 元数据添加
+        }
+
+        return $this->response($result);
+    }
+
+    /**
+     * 解析结果
+     * @param mixed $result
+     * @return array
+     */
+    abstract protected function response($result);
+
+    /**
+     * 查询下载服务器状态
      * @return string
      */
     abstract public function status();
 
     /**
-     * 获取所有种子的列表
-     * @param array $move
+     * 从下载服务器获取所有种子的列表
+     * @param array $torrents
      * @return array(
      * 'hash'       => string json,
      * 'sha1'       => string,
      * 'hashString '=> array
      * )
      */
-    abstract public function all(&$move = array());
+    abstract public function all(&$torrents = array());
 
     /**
-     * 添加种子连接
+     * 向下载服务器添加种子连接
      * @param string $torrent_url
      * @param string $save_path
      * @param array $extra_options
@@ -129,7 +165,7 @@ abstract class AbstractClient
     abstract public function add($torrent_url, $save_path = '', $extra_options = array());
 
     /**
-     * 添加种子原数据
+     * 向下载服务器添加种子源数据
      * @param string $torrent_metainfo
      * @param string $save_path
      * @param array $extra_options
@@ -137,8 +173,8 @@ abstract class AbstractClient
     abstract public function add_metainfo($torrent_metainfo, $save_path = '', $extra_options = array());
 
     /**
-     * 删除种子
-     * @param $torrent
+     * 删除下载服务器中的种子
+     * @param mixed $torrent
      * @param bool $deleteFiles
      */
     abstract public function delete($torrent, $deleteFiles = false);

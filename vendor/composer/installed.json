@@ -129,12 +129,12 @@
         "source": {
             "type": "git",
             "url": "https://github.com/ledccn/BittorrentClient.git",
-            "reference": "d8302133ee50f5bc2f4e95531562cd54dcee6b50"
+            "reference": "c25d6248a4c9dbb2f6b23e2d0416bf1d95be440f"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/ledccn/BittorrentClient/zipball/d8302133ee50f5bc2f4e95531562cd54dcee6b50",
-            "reference": "d8302133ee50f5bc2f4e95531562cd54dcee6b50",
+            "url": "https://api.github.com/repos/ledccn/BittorrentClient/zipball/c25d6248a4c9dbb2f6b23e2d0416bf1d95be440f",
+            "reference": "c25d6248a4c9dbb2f6b23e2d0416bf1d95be440f",
             "shasum": "",
             "mirrors": [
                 {
@@ -150,7 +150,7 @@
             "ext-mbstring": "*",
             "php": "^5.6 | ^7.0"
         },
-        "time": "2021-01-13T05:14:10+00:00",
+        "time": "2021-03-20T23:39:22+00:00",
         "type": "library",
         "installation-source": "source",
         "autoload": {
@@ -171,6 +171,7 @@
         "description": "实现对下载服务器管理的代码库",
         "homepage": "https://github.com/ledccn/BittorrentClient",
         "keywords": [
+            "iyuu",
             "qbittorrent",
             "transmission"
         ]

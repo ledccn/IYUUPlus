@@ -2,7 +2,7 @@
     "name": "ledccn/bittorrentclient",
     "description": "实现对下载服务器管理的代码库",
     "type": "library",
-    "keywords": ["transmission", "qBittorrent"],
+    "keywords": ["transmission", "qBittorrent", "IYUU"],
     "homepage": "https://github.com/ledccn/BittorrentClient",
     "license": "GPL-3.0-or-later",
     "authors": [

@@ -980,11 +980,39 @@ class transmission extends AbstractClient
         // 去重 应该从文件读入，防止重复提交
         $sha1 = sha1($json);
         // 组装返回数据
+        $hashArray = [];
         $hashArray['hash'] = $json;
         $hashArray['sha1'] = $sha1;
         // 变换数组：hashString为键名、目录为键值
         $hashArray['hashString'] = array_column($res, "downloadDir", 'hashString');
         $torrentList = array_column($res, null, 'hashString');
         return $hashArray;
+    }
+
+    /**
+     * 抽象方法，子类实现
+     * 解析结果
+     * @param mixed $result
+     * @return array
+     */
+    public function response($result)
+    {
+        $rs = [
+            'result' => 'success',      //success or fail
+            'data'   => [],
+        ];
+
+        if (isset($result['result']) && $result['result'] == 'success') {
+            $_key = isset($result['arguments']['torrent-added']) ? 'torrent-added' : 'torrent-duplicate';
+            $id = $result['arguments'][$_key]['id'];
+            $name = $result['arguments'][$_key]['name'];
+            echo "名字：" .$name . PHP_EOL;
+            echo "********RPC添加下载任务成功 [" .$result['result']. "] (id=" .$id. ")".PHP_EOL.PHP_EOL;
+        } else {
+            $rs['result'] = empty($result['result']) ? '未知错误，请稍后重试！' : $result['result'];
+            echo "-----RPC添加种子任务，失败 [".$rs['result']."]" . PHP_EOL.PHP_EOL;
+        }
+
+        return $rs;
     }
 }
