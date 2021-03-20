@@ -17,8 +17,7 @@ class Rpc
      * @var array
      */
     protected static $conf = [];
-    // RPC连接池
-    public static $links = array();
+
     /**
      * cookie
      */
@@ -26,19 +25,11 @@ class Rpc
     /**
      * 浏览器 User-Agent
      */
-    public static $userAgent = '';
-    /**
-     * passkey
-     */
-    public static $passkey = '';
+    public static $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36';
     /**
      * 客户端配置
      */
     public static $clients = [];
-    /**
-     * 监控目录
-     */
-    public static $watch = '';
     /**
      * 种子存放路径
      */
@@ -48,9 +39,13 @@ class Rpc
      */
     public static $workingMode = '';
     /**
-     * 负载均衡 控制变量
+     * 监控目录
      */
-    public static $RPC_Key = 0;
+    public static $watch = '';
+    /**
+     * RPC连接池
+     */
+    public static $links = array();
     /**
      * 退出状态码
      */
@@ -60,25 +55,28 @@ class Rpc
      * 初始化
      * @param string $site
      * @param string $method
-     * @param array  $conf
+     * @param array  $config
      */
-    public static function init($site, $method, $conf)
+    public static function init($site, $method, $config)
     {
         self::$site = $site;
         self::$method = strtoupper($method);
-        self::$conf = $conf;
-        $config = static::$conf['site'];
+        self::$conf = $config;    //所有配置
 
-        self::$cookies = $config['cookie'];
-        self::$userAgent = isset($config['userAgent']) && $config['userAgent'] ? $config['userAgent'] : $configALL['default']['userAgent'];
-        self::$clients = isset($config['clients']) && $config['clients'] ? $config['clients'] : $configALL['default']['clients'];
-        self::$workingMode = isset($config['workingMode']) && $config['workingMode'] ? $config['workingMode'] : 0;
-        $watch = isset($config['watch']) && $config['watch'] ? $config['watch'] : $configALL['default']['watch'];
+        $userSite = $config['site'];
+        self::$cookies = isset($userSite['cookie']) && $userSite['cookie'] ? $userSite['cookie'] : '';
+
+        $default = empty($config['default']) ? [] : $config['default'];
+        self::$userAgent = isset($default['ua']) && $default['ua'] ? $default['ua'] : self::$userAgent;
+
+        self::$clients = $config['clients'];
+        self::$torrentDir = TORRENT_PATH  . DS . $site;
+        self::$workingMode = isset($config['workingMode']) ? intval($config['workingMode']) : 0;
+        $watch = isset($config['watch']) && $config['watch'] ? $config['watch'] : self::$torrentDir;
         self::$watch = rtrim($watch, '/') . DS;
-        self::$torrentDir = TORRENT_PATH . $site . DS;
+
         // 建立目录
         IFile::mkdir(self::$torrentDir);
-        
         self::links();
     }
 
@@ -89,39 +87,24 @@ class Rpc
      */
     public static function links()
     {
-        if (self::$workingMode === 1 && empty(self::$links)) {
-            foreach (self::$clients as $k => $v) {
-                // 跳过未配置的客户端
-                if (empty($v['username']) || empty($v['password'])) {
-                    unset(self::$clients[$k]);
-                    echo "clients_".$k." 用户名或密码未配置，已跳过 \n\n";
-                    continue;
-                }
-                try {
-                    switch ($v['type']) {
-                        case 'transmission':
-                            $client = new TransmissionRPC($v['host'], $v['username'], $v['password']);
-                            break;
-                        case 'qBittorrent':
-                            $client = new qBittorrent($v['host'], $v['username'], $v['password']);
-                            break;
-                        case 'uTorrent':
-                            $client = new uTorrent($v['host'], $v['username'], $v['password']);
-                            break;
-                        default:
-                            echo '[ERROR] '.$v['type'];
-                            exit(1);
-                            break;
-                    }
-                    self::$links[$k]['rpc'] = $client;
-                    self::$links[$k]['type'] = $v['type'];
-                    self::$links[$k]['downloadDir'] = isset($v['downloadDir']) && $v['downloadDir'] ? $v['downloadDir'] : '';
-                    $result = $client->status();
-                    print $v['type'].'：'.$v['host']." Rpc连接 [{$result}] \n";
-                } catch (Exception $e) {
-                    echo '[ERROR] ' . $e->getMessage() . PHP_EOL;
-                    exit(1);
-                }
+        if (self::$workingMode === 1) {
+            // 跳过未配置的客户端
+            if (empty(self::$clients['username']) || empty(self::$clients['password'])) {
+                static::$links = array();
+                echo "clients_".self::$clients['name']." 用户名或密码未配置，已跳过！".PHP_EOL.PHP_EOL;
+                return false;
+            }
+            try {
+                // 传入配置，创建客户端实例
+                $client = AbstractClient::create(self::$clients);
+                static::$links['rpc'] = $client;
+                static::$links['_config'] = self::$clients;
+                static::$links['type'] = self::$clients['type'];
+                static::$links['root_folder'] = isset(self::$clients['root_folder']) ? self::$clients['root_folder'] : 1;
+                $result = $client->status();
+                print self::$clients['type'].'：'.self::$clients['host']." Rpc连接 [{$result}]".PHP_EOL;
+            } catch (\Exception $e) {
+                die('[连接错误] '. self::$clients['host'] . ' ' . $e->getMessage() . PHP_EOL);
             }
         }
         return true;
@@ -131,6 +114,7 @@ class Rpc
      * @brief 添加下载任务
      * @param string $torrent 种子元数据
      * @param string $save_path 保存路径
+     * @param array $extra_options
      * @return bool
      */
     public static function add($torrent, $save_path = '', $extra_options = array())
@@ -152,22 +136,18 @@ class Rpc
                     if ((strpos($torrent, 'http://')===0) || (strpos($torrent, 'https://')===0) || (strpos($torrent, 'magnet:?xt=urn:btih:')===0)) {
                         $is_url = true;
                     }
-                    // 负载均衡
-                    $rpcKey = self::$RPC_Key;
-                    echo '选中：负载均衡'.$rpcKey."\n";
-                    self::rpcSelect();
                     // 调试
                     #p($result);
                     // 下载服务器类型 判断
-                    $type = self::$links[$rpcKey]['type'];
+                    $type = self::$links['type'];
                     switch ($type) {
                         case 'transmission':
                             if ($is_url) {
                                 echo 'add';
-                                $result = self::$links[$rpcKey]['rpc']->add($torrent, self::$links[$rpcKey]['downloadDir'], $extra_options);			// 种子URL添加下载任务
+                                $result = self::$links['rpc']->add($torrent, self::$links['downloadDir'], $extra_options);			// 种子URL添加下载任务
                             } else {
                                 echo 'add_metainfo';
-                                $result = self::$links[$rpcKey]['rpc']->add_metainfo($torrent, self::$links[$rpcKey]['downloadDir'], $extra_options);	// 种子文件添加下载任务
+                                $result = self::$links['rpc']->add_metainfo($torrent, self::$links['downloadDir'], $extra_options);	// 种子文件添加下载任务
                             }
                             $id = $name = '';
                             if (isset($result->arguments->torrent_duplicate)) {
@@ -182,17 +162,17 @@ class Rpc
                             } else {
                                 print "********RPC添加下载任务成功 [{$result->result}] (id=$id) \n\n";
                                 // 新添加的任务，开始
-                                self::$links[$rpcKey]['rpc']->start($id);
+                                self::$links['rpc']->start($id);
                                 return true;
                             }
                             break;
                         case 'qBittorrent':
                             if ($is_url) {
                                 echo 'add';
-                                $result = self::$links[$rpcKey]['rpc']->add($torrent, self::$links[$rpcKey]['downloadDir'], $extra_options);			// 种子URL添加下载任务
+                                $result = self::$links['rpc']->add($torrent, self::$links['downloadDir'], $extra_options);			// 种子URL添加下载任务
                             } else {
                                 echo 'add_metainfo';
-                                $result = self::$links[$rpcKey]['rpc']->add_metainfo($torrent, self::$links[$rpcKey]['downloadDir'], $extra_options);	// 种子文件添加下载任务
+                                $result = self::$links['rpc']->add_metainfo($torrent, self::$links['downloadDir'], $extra_options);	// 种子文件添加下载任务
                             }
                             if ($result === 'Ok.') {
                                 print "********RPC添加下载任务成功 [{$result}] \n\n";
@@ -205,13 +185,9 @@ class Rpc
                             echo '[ERROR] '.$type;
                             break;
                     }
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     die('[ERROR] ' . $e->getMessage() . PHP_EOL);
                 }
-                break;
-            case 2:
-                echo "\n\n";
-                # 暂未开放
                 break;
             default:
                 echo "\n\n";
@@ -220,23 +196,6 @@ class Rpc
         return false;
     }
 
-    /**
-     * 负载均衡 选择算法
-     *
-     * @param
-     * @return
-     */
-    public static function rpcSelect()
-    {
-        $clientsConut = count(self::$clients);
-        if ($clientsConut > 1) {
-            if ($clientsConut > (self::$RPC_Key+1)) {
-                self::$RPC_Key++;
-            } else {
-                self::$RPC_Key = 0;
-            }
-        }
-    }
     /**
      * @brief 种子处理函数
      * @param array $data 种子数组
@@ -263,7 +222,7 @@ class Rpc
             [percentage] => 100%
             [owner] => 匿名
         )
-     * @return
+     * @return mixed
      */
     public static function call($data = array())
     {
