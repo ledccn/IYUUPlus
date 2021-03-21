@@ -224,7 +224,7 @@ class Rpc
                 continue;
             }
             //优先级最高：过滤器数据目录
-            $downloadsDir = '';
+            $downloadsDir = !empty($filter['downloadsDir']) ? $filter['downloadsDir'] : self::$downloadsDir;
             //种子不存在
             echo '正在下载新种子... '.$value['download'].PHP_EOL;
             // 创建文件、下载种子以二进制写入
@@ -263,13 +263,13 @@ class Rpc
                         // 下载服务器类型
                         switch ($type) {
                             case 'transmission':
-                                $ret = static::$links['rpc']->add_torrent($content, self::$downloadsDir, $extra_options);
+                                $ret = static::$links['rpc']->add_torrent($content, $downloadsDir, $extra_options);
                                 break;
                             case 'qBittorrent':
                                 $extra_options['name'] = 'torrents';
                                 $extra_options['filename'] = $filename;
                                 $extra_options['autoTMM'] = 'false';	//关闭自动种子管理
-                                $ret = static::$links['rpc']->add_torrent($content, self::$downloadsDir, $extra_options);
+                                $ret = static::$links['rpc']->add_torrent($content, $downloadsDir, $extra_options);
                                 break;
                             default:
                                 break;
