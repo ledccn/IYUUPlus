@@ -170,12 +170,19 @@
     </div>
   </div>
   <div class="layui-form-item">
+    <label class="layui-form-label">RSS订阅地址</label>
+    <div class="layui-input-block">
+      <input type="text" name="urladdress" placeholder="请输入RSS订阅地址" class="layui-input" value="">
+      <tip>未配置URL地址时，将会执行默认。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
     <label class="layui-form-label required">下载器</label>
     <div class="layui-input-block" id="rss_clients_view">
     </div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label">下载器模式</label>
+    <label class="layui-form-label">下载模式</label>
     <div class="layui-input-block">
       <input type="checkbox" name="workingMode" lay-skin="switch" lay-text="Watch模式|Rpc模式" lay-filter="workingMode" id="workingMode">
       <tip>Watch模式：仅往下载器设置的watch监控目录内写入种子文件；Rpc模式：可以远程访问下载器的API接口，POST种子元数据。</tip>
@@ -188,13 +195,7 @@
       <tip><span class="layui-badge">优先级：中</span>下载器的数据目录。如果您暂时用不到下载功能，此处可以留空。</tip>
     </div>
   </div>
-  <div class="layui-form-item">
-    <label class="layui-form-label">RSS订阅地址</label>
-    <div class="layui-input-block">
-      <input type="text" name="urladdress" placeholder="请输入RSS订阅地址" class="layui-input" value="">
-      <tip>未配置URL地址时，将会执行默认。</tip>
-    </div>
-  </div>
+  
   <div class="layui-form-item">
     <label class="layui-form-label required">筛选规则</label>
     <div class="layui-input-block">
