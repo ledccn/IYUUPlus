@@ -1,6 +1,7 @@
 <?php
 /**
  * Rpc操作类
+ * 把RSS解码与添加下载任务解耦
  */
 namespace IYUU\Library;
 
@@ -9,9 +10,9 @@ use IYUU\Client\AbstractClient;
 class Rpc
 {
     // 站点标识
-    public static $site = '';
+    protected static $site = '';
     // 下载种子的请求类型 GET POST
-    public static $method = 'GET';
+    protected static $method = 'GET';
     /**
      * 运行时解析的配置
      * @var array
@@ -20,31 +21,35 @@ class Rpc
     /**
      * cookie
      */
-    public static $cookies = '';
+    protected static $cookies = '';
     /**
      * 浏览器 User-Agent
      */
-    public static $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36';
+    protected static $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36';
     /**
      * 客户端配置
      */
-    public static $clients = [];
-    /**
-     * 种子存放路径
-     */
-    public static $torrentDir = '';
+    protected static $clients = [];
     /**
      * 工作模式
      */
-    public static $workingMode = '';
+    protected static $workingMode = '';
     /**
-     * 监控目录
+     * 种子存放路径   (斜杠结尾)
      */
-    public static $watch = '';
+    protected static $torrentDir = '';
     /**
-     * RPC连接池
+     * 监控目录      (斜杠结尾)
      */
-    public static $links = array();
+    protected static $watch = '';
+    /**
+     * 数据目录
+     */
+    protected static $downloadsDir = '';
+    /**
+     * RPC连接
+     */
+    protected static $links = array();
     /**
      * 退出状态码
      */
@@ -58,28 +63,45 @@ class Rpc
      */
     public static function init($site, $method, $config)
     {
+        //初始化站点、下载种子请求类型、所有配置
         self::$site = $site;
         self::$method = strtoupper($method);
         self::$conf = $config;    //所有配置
 
+        //初始化cookie
         $userSite = $config['site'];
         self::$cookies = isset($userSite['cookie']) && $userSite['cookie'] ? $userSite['cookie'] : '';
 
+        //初始化UserAgent
         $default = empty($config['default']) ? [] : $config['default'];
         self::$userAgent = isset($default['ua']) && $default['ua'] ? $default['ua'] : self::$userAgent;
 
+        //初始化客户端
         self::$clients = $config['clients'];
-        self::$torrentDir = TORRENT_PATH  . DS . $site . DS;
+
+        //初始化工作模式
         self::$workingMode = isset($config['workingMode']) ? 0 : 1;
 
-        $watch = isset(self::$clients['watch']) && self::$clients['watch'] ? self::$clients['watch'] : self::$torrentDir;
+        //初始化下载种子的存放目录
+        self::$torrentDir = TORRENT_PATH  . DS . $site . DS;
+
+        //初始化watch目录
         if (empty(self::$clients['watch'])) {
+            //watch监控目录未设置，设置为RPC下载模式
             self::$workingMode = 1;
         }
+        $watch = isset(self::$clients['watch']) && self::$clients['watch'] ? self::$clients['watch'] : self::$torrentDir;
         self::$watch = rtrim($watch, '/') . DS;
 
-        // 建立目录
+        //初始化数据目录
+        if (self::$workingMode) {
+            //优先级：计划任务数据目录 > 下载器数据目录
+            self::$downloadsDir = !empty(self::$conf['downloadsDir']) ? self::$conf['downloadsDir'] : (!empty(self::$clients['downloadsDir']) ? self::$clients['downloadsDir'] : '');
+        }
+
+        //建立下载种子的存放目录
         IFile::mkdir(self::$torrentDir);
+        //连接下载器
         self::links();
     }
 
@@ -93,6 +115,7 @@ class Rpc
             // 跳过未配置的客户端
             if (empty(self::$clients['username']) || empty(self::$clients['password'])) {
                 static::$links = array();
+                //watch监控目录未设置，用户名密码未设置，直接报错
                 if (empty(self::$clients['watch'])) {
                     die("clients_".self::$clients['name']." 用户名或密码未配置，下载器的watch监控目录未配置！！".PHP_EOL.PHP_EOL);
                 }
@@ -173,12 +196,10 @@ class Rpc
                 echo "-----HR种子，已忽略！".PHP_EOL.PHP_EOL;
                 continue;
             }
-            // 下载任务的可选参数
-            $extra_options = array();
             // 保存的文件名
             $filename = $value['id'] . '.torrent';
             // 默认watch工作模式，复制到此目录
-            $to = self::$watch . $filename;
+            $torrentFileTo = self::$watch . $filename;
             // 种子完整存放路径
             $torrentFile = self::$torrentDir . $filename;
             if (is_file($torrentFile)) {
@@ -199,22 +220,18 @@ class Rpc
                 echo "-----" .$isFilter. PHP_EOL.PHP_EOL;
                 continue;
             }
+            //优先级最高：过滤器数据目录
+            $downloadsDir = '';
             //种子不存在
             echo '正在下载新种子... '.$value['download'].PHP_EOL;
             // 创建文件、下载种子以二进制写入
-            $content = '';
             $content = download($value['download'], self::$cookies, self::$userAgent, self::$method);
+            #cli($content);
             if (strpos($content, '第一次下载提示') !== false) {
                 die('当前站点触发第一次下载提示，请手动下载1个种子，然后更新cookie！'.PHP_EOL);
             }
-            #p($content);
-            // 文件句柄
-            $resource = fopen($torrentFile, "wb");
             // 成功：返回写入字节数，失败返回false
-            $worldsnum = fwrite($resource, $content);
-            // 关闭
-            fclose($resource);
-            // 判断
+            $worldsnum = file_put_contents($torrentFile, $content);
             if (is_bool($worldsnum)) {
                 print "种子下载失败！！！".PHP_EOL.PHP_EOL;
                 IFile::unlink($torrentFile);
@@ -222,30 +239,34 @@ class Rpc
             } else {
                 print "成功下载种子" . $filename . '，共计：' . $worldsnum . "字节".PHP_EOL;
                 sleep(mt_rand(2, 10));
-                $ret = false;
+                $ret = null;
                 switch ((int)self::$workingMode) {
-                    case 0:		//watch模式
+                    case 0:		//watch下载模式
                         // 复制到watch目录
-                        copy($torrentFile, $to);
-                        if (is_file($to)) {
+                        if (dirname($torrentFile) !== dirname($torrentFileTo)) {
+                            copy($torrentFile, $torrentFileTo);
+                        }
+                        if (is_file($torrentFileTo)) {
                             print "********watch模式，下载任务添加成功.".PHP_EOL.PHP_EOL;
                             $ret = true;
                         } else {
                             print "-----watch模式，下载任务添加失败!!!".PHP_EOL.PHP_EOL;
                         }
                         break;
-                    case 1:		//Rpc模式
+                    case 1:		//Rpc下载模式
+                        // 下载任务的可选参数
+                        $extra_options = array();
                         $type = self::$links['type'];
                         // 下载服务器类型
                         switch ($type) {
                             case 'transmission':
-                                $ret = static::$links['rpc']->add_torrent($content, $to, $extra_options);
+                                $ret = static::$links['rpc']->add_torrent($content, self::$downloadsDir, $extra_options);
                                 break;
                             case 'qBittorrent':
                                 $extra_options['name'] = 'torrents';
                                 $extra_options['filename'] = $filename;
                                 $extra_options['autoTMM'] = 'false';	//关闭自动种子管理
-                                $ret = static::$links['rpc']->add_torrent($content, $to, $extra_options);
+                                $ret = static::$links['rpc']->add_torrent($content, self::$downloadsDir, $extra_options);
                                 break;
                             default:
                                 break;

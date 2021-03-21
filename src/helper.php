@@ -153,7 +153,7 @@ function getFilesize($num)
 
 /**
  * @brief 种子过滤器
- * @param string $site 站点标识
+ * @param array $filter 站点标识
  * @param array  $torrent 种子数组
  * 	Array
     (
@@ -180,24 +180,17 @@ function getFilesize($num)
     )
  * @return bool 或 string 	false不过滤
  */
-function filter($site = '', $torrent = array())
+function filter($filter = [], $torrent = array())
 {
-    global $configALL;
-    $config = $configALL[$site];
-    $filter = array();
-    // 读取配置
-    if (isset($configALL['default']['filter']) || isset($config['filter'])) {
-        $filter = isset($config['filter']) && $config['filter'] ? $config['filter'] : $configALL['default']['filter'];
-    } else {
+    if (empty($filter)) {
         return false;
     }
     $filename = $torrent['filename'];
 
-    // 兼容性
+    // 大小过滤
     if (empty($torrent['size'])) {
         return false;
     }
-    // 大小过滤
     $size = convertToMB($torrent['size']);
     $min = isset($filter['size']['min']) ? convertToMB($filter['size']['min']) : 0;
     $max = isset($filter['size']['max']) ? convertToMB($filter['size']['max']) : 2097152;	//默认 2097152MB = 2TB
@@ -205,11 +198,10 @@ function filter($site = '', $torrent = array())
         return $filename. ' ' .$size. 'MB，被大小过滤';
     }
 
-    // 兼容性
+    // 种子数过滤
     if (empty($torrent['seeders'])) {
         return false;
     }
-    // 种子数过滤
     $seeders = $torrent['seeders'];
     $min = isset($filter['seeders']['min']) ? $filter['seeders']['min'] : 1;	//默认 1
     $max = isset($filter['seeders']['max']) ? $filter['seeders']['max'] : 3;	//默认 3
@@ -217,11 +209,10 @@ function filter($site = '', $torrent = array())
         return $filename. ' 当前做种' .$seeders. '人，被过滤';
     }
 
-    // 兼容性
+    // 下载数过滤
     if (empty($torrent['leechers'])) {
         return false;
     }
-    // 下载数过滤
     $leechers = $torrent['leechers'];
     $min = isset($filter['leechers']['min']) ? $filter['leechers']['min'] : 0;		//默认
     $max = isset($filter['leechers']['max']) ? $filter['leechers']['max'] : 30000;	//默认
@@ -229,11 +220,10 @@ function filter($site = '', $torrent = array())
         return $filename. ' 当前下载' .$leechers. '人，被过滤';
     }
 
-    // 兼容性
+    // 完成数过滤
     if (empty($torrent['completed'])) {
         return false;
     }
-    // 完成数过滤
     $completed = $torrent['completed'];
     $min = isset($filter['completed']['min']) ? $filter['completed']['min'] : 0;		//默认
     $max = isset($filter['completed']['max']) ? $filter['completed']['max'] : 30000;	//默认
@@ -241,6 +231,7 @@ function filter($site = '', $torrent = array())
         return $filename. ' 已完成数' .$completed. '人，被过滤';
     }
 
+    // 满足上述所有条件，不过滤
     return false;
 }
 
