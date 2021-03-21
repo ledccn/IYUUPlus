@@ -99,8 +99,11 @@ class Rpc
             self::$downloadsDir = !empty(self::$conf['downloadsDir']) ? self::$conf['downloadsDir'] : (!empty(self::$clients['downloadsDir']) ? self::$clients['downloadsDir'] : '');
         }
 
+        //建立watch监控目录
+        IFile::mkdir(self::$watch);
         //建立下载种子的存放目录
         IFile::mkdir(self::$torrentDir);
+
         //连接下载器
         self::links();
     }
