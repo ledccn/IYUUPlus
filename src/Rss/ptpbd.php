@@ -1,5 +1,4 @@
 <?php
-
 namespace IYUU\Rss;
 
 use DOMDocument;

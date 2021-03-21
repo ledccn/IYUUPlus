@@ -4,8 +4,6 @@
  */
 namespace IYUU\Rss;
 
-use DOMDocument;
-
 class pttime extends AbstractRss
 {
     /**
