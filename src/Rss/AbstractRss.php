@@ -264,8 +264,7 @@ abstract class AbstractRss
     {
         echo "正在初始化RPC链接...". PHP_EOL;
         Rpc::init($this->site, $this->method, self::$conf);
-        $url = '';
-        $html = $this->get($url);
+        $html = $this->get();
         #p($html);
         $this->checkCallback($html);
         $data = $this->decode($html);
@@ -277,17 +276,19 @@ abstract class AbstractRss
 
     /**
      * 请求url，获取html页面
-     * @param string    $url
      * @return string
      */
-    public function get($url = '')
+    public function get()
     {
-        if ($url == '') {
+        if (!empty(static::$conf['urladdress'])) {
+            $url = static::$conf['urladdress'];
+        } else {
             $url = $this->rss_page;
         }
         $url = str_replace("{}", $this->passkey, $url);
         echo $this->site." 正在请求RSS... {$url}". PHP_EOL;
-        $res = $this->curl->get($this->host . $url);
+        $url = (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) ? $url : $this->host . $url;
+        $res = $this->curl->get($url);
         if ($res->http_status_code == 200) {
             echo "RSS获取信息，成功！ \n";
             return $res->response;

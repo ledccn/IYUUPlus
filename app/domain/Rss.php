@@ -15,7 +15,6 @@ class Rss implements ConfigParserInterface
             'sites'   => [],
             'clients' => [],
             'filter'  => [],
-            'urladdress' => '',
         ];
         if (empty($uuid)) {
             return $rs;
