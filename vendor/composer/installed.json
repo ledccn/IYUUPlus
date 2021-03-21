@@ -129,12 +129,12 @@
         "source": {
             "type": "git",
             "url": "https://github.com/ledccn/BittorrentClient.git",
-            "reference": "c25d6248a4c9dbb2f6b23e2d0416bf1d95be440f"
+            "reference": "7162332e4219c0a6a6d0c5940e50be27b3bde456"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/ledccn/BittorrentClient/zipball/c25d6248a4c9dbb2f6b23e2d0416bf1d95be440f",
-            "reference": "c25d6248a4c9dbb2f6b23e2d0416bf1d95be440f",
+            "url": "https://api.github.com/repos/ledccn/BittorrentClient/zipball/7162332e4219c0a6a6d0c5940e50be27b3bde456",
+            "reference": "7162332e4219c0a6a6d0c5940e50be27b3bde456",
             "shasum": "",
             "mirrors": [
                 {
@@ -150,7 +150,7 @@
             "ext-mbstring": "*",
             "php": "^5.6 | ^7.0"
         },
-        "time": "2021-03-20T23:39:22+00:00",
+        "time": "2021-03-21T00:11:04+00:00",
         "type": "library",
         "installation-source": "source",
         "autoload": {

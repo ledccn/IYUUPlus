@@ -110,7 +110,7 @@ class Rpc
                 $result = $client->status();
                 print self::$clients['type'].'：'.self::$clients['host']." Rpc连接 [{$result}]".PHP_EOL;
             } catch (\Exception $e) {
-                die('[连接错误] '. self::$clients['host'] . ' ' . $e->getMessage() . PHP_EOL);
+                die(__FILE__ . ' LINE:' . __LINE__ . '[连接错误] '. self::$clients['host'] . ' ' . $e->getMessage() . PHP_EOL);
             }
         }
         return true;

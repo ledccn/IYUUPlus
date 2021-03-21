@@ -1008,6 +1008,10 @@ class transmission extends AbstractClient
             $name = $result['arguments'][$_key]['name'];
             echo "名字：" .$name . PHP_EOL;
             echo "********RPC添加下载任务成功 [" .$result['result']. "] (id=" .$id. ")".PHP_EOL.PHP_EOL;
+            $rs['data'] = [
+                'id'    => $id,
+                'name'  => $name
+            ];
         } else {
             $rs['result'] = empty($result['result']) ? '未知错误，请稍后重试！' : $result['result'];
             echo "-----RPC添加种子任务，失败 [".$rs['result']."]" . PHP_EOL.PHP_EOL;
