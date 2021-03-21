@@ -103,7 +103,7 @@ abstract class AbstractRss
     /**
      * 解析命令行参数 【静态方法】
      * @param string $uuid 任务标识
-     * @return string 文件名
+     * @return string 类文件名
      */
     protected static function getCliInput($uuid)
     {
@@ -120,8 +120,7 @@ abstract class AbstractRss
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
         //cli(self::$conf);
         $siteName = self::$conf['site']['name'];
-        $filename = isset(self::SITENAME_TO_FILENAME_MAP[$siteName]) ? self::SITENAME_TO_FILENAME_MAP[$siteName] : $siteName;
-        return $filename;
+        return isset(self::SITENAME_TO_FILENAME_MAP[$siteName]) ? self::SITENAME_TO_FILENAME_MAP[$siteName] : $siteName;
     }
 
     /**

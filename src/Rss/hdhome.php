@@ -4,11 +4,6 @@
  */
 namespace IYUU\Rss;
 
-use Curl\Curl;
-use DOMDocument;
-use DOMXpath;
-use IYUU\Library\Rpc;
-
 class hdhome extends AbstractRss
 {
     /**
@@ -19,6 +14,19 @@ class hdhome extends AbstractRss
 
     public static $official = array('HDHome','HDH','HDHTV','HDHPad','HDHWEB');
 
+    /**
+     * 初始化 第二步
+     */
+    public function init()
+    {
+        //站点配置
+        $config = static::$conf['site'];
+        $this->cookies = isset($config['cookie']) && $config['cookie'] ? $config['cookie'] : '';
+        $this->passkey = isset($config['downHash']) && $config['downHash'] ? $config['downHash'] : '';
+        if (empty($this->passkey)) {
+            die($this->site.' 没有配置密钥，初始化错误。'.PHP_EOL);
+        }
+    }
     /**
      * 抽象方法，在类中实现
      * 解码html为种子数组

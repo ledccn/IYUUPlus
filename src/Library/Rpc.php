@@ -33,7 +33,7 @@ class Rpc
     /**
      * 工作模式
      */
-    protected static $workingMode = '';
+    protected static $workingMode = 0;
     /**
      * 种子存放路径   (斜杠结尾)
      */
