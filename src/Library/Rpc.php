@@ -17,7 +17,6 @@ class Rpc
      * @var array
      */
     protected static $conf = [];
-
     /**
      * cookie
      */
@@ -70,9 +69,13 @@ class Rpc
         self::$userAgent = isset($default['ua']) && $default['ua'] ? $default['ua'] : self::$userAgent;
 
         self::$clients = $config['clients'];
-        self::$torrentDir = TORRENT_PATH  . DS . $site;
-        self::$workingMode = isset($config['workingMode']) ? intval($config['workingMode']) : 0;
-        $watch = isset($config['watch']) && $config['watch'] ? $config['watch'] : self::$torrentDir;
+        self::$torrentDir = TORRENT_PATH  . DS . $site . DS;
+        self::$workingMode = isset($config['workingMode']) ? 0 : 1;
+
+        $watch = isset(self::$clients['watch']) && self::$clients['watch'] ? self::$clients['watch'] : self::$torrentDir;
+        if (empty(self::$clients['watch'])) {
+            self::$workingMode = 1;
+        }
         self::$watch = rtrim($watch, '/') . DS;
 
         // 建立目录
@@ -82,7 +85,6 @@ class Rpc
 
     /**
      * 连接远端RPC服务器
-     *
      * @return bool
      */
     public static function links()
@@ -91,7 +93,11 @@ class Rpc
             // 跳过未配置的客户端
             if (empty(self::$clients['username']) || empty(self::$clients['password'])) {
                 static::$links = array();
-                echo "clients_".self::$clients['name']." 用户名或密码未配置，已跳过！".PHP_EOL.PHP_EOL;
+                if (empty(self::$clients['watch'])) {
+                    die("clients_".self::$clients['name']." 用户名或密码未配置，下载器的watch监控目录未配置！！".PHP_EOL.PHP_EOL);
+                }
+                echo "clients_".self::$clients['name']." 用户名或密码未配置，切换为watch模式！".PHP_EOL.PHP_EOL;
+                self::$workingMode = 0;
                 return false;
             }
             try {
@@ -108,92 +114,6 @@ class Rpc
             }
         }
         return true;
-    }
-
-    /**
-     * @brief 添加下载任务
-     * @param string $torrent 种子元数据
-     * @param string $save_path 保存路径
-     * @param array $extra_options
-     * @return bool
-     */
-    public static function add($torrent, $save_path = '', $extra_options = array())
-    {
-        switch ((int)self::$workingMode) {
-            case 0:		// watch默认工作模式
-                // 复制到watch目录
-                copy($torrent, $save_path);
-                if (is_file($save_path)) {
-                    print "********watch模式，下载任务添加成功 \n\n";
-                    return true;
-                } else {
-                    print "-----watch模式，下载任务添加失败!!! \n\n";
-                }
-                break;
-            case 1:		//负载均衡模式
-                try {
-                    $is_url = false;
-                    if ((strpos($torrent, 'http://')===0) || (strpos($torrent, 'https://')===0) || (strpos($torrent, 'magnet:?xt=urn:btih:')===0)) {
-                        $is_url = true;
-                    }
-                    // 调试
-                    #p($result);
-                    // 下载服务器类型 判断
-                    $type = self::$links['type'];
-                    switch ($type) {
-                        case 'transmission':
-                            if ($is_url) {
-                                echo 'add';
-                                $result = self::$links['rpc']->add($torrent, self::$links['downloadDir'], $extra_options);			// 种子URL添加下载任务
-                            } else {
-                                echo 'add_metainfo';
-                                $result = self::$links['rpc']->add_metainfo($torrent, self::$links['downloadDir'], $extra_options);	// 种子文件添加下载任务
-                            }
-                            $id = $name = '';
-                            if (isset($result->arguments->torrent_duplicate)) {
-                                $id = $result->arguments->torrent_duplicate->id;
-                                $name = $result->arguments->torrent_duplicate->name;
-                            } elseif (isset($result->arguments->torrent_added)) {
-                                $id = $result->arguments->torrent_added->id;
-                                $name = $result->arguments->torrent_added->name;
-                            }
-                            if (!$id) {
-                                print "-----RPC添加种子任务，失败 [{$result->result}] \n\n";
-                            } else {
-                                print "********RPC添加下载任务成功 [{$result->result}] (id=$id) \n\n";
-                                // 新添加的任务，开始
-                                self::$links['rpc']->start($id);
-                                return true;
-                            }
-                            break;
-                        case 'qBittorrent':
-                            if ($is_url) {
-                                echo 'add';
-                                $result = self::$links['rpc']->add($torrent, self::$links['downloadDir'], $extra_options);			// 种子URL添加下载任务
-                            } else {
-                                echo 'add_metainfo';
-                                $result = self::$links['rpc']->add_metainfo($torrent, self::$links['downloadDir'], $extra_options);	// 种子文件添加下载任务
-                            }
-                            if ($result === 'Ok.') {
-                                print "********RPC添加下载任务成功 [{$result}] \n\n";
-                                return true;
-                            } else {
-                                print "-----RPC添加种子任务，失败 [{$result}] \n\n";
-                            }
-                            break;
-                        default:
-                            echo '[ERROR] '.$type;
-                            break;
-                    }
-                } catch (\Exception $e) {
-                    die('[ERROR] ' . $e->getMessage() . PHP_EOL);
-                }
-                break;
-            default:
-                echo "\n\n";
-                break;
-        }
-        return false;
     }
 
     /**
@@ -242,15 +162,15 @@ class Rpc
 
         foreach ($data as $key => $value) {
             // 控制台打印
-            echo '主标题：'.$value['h1']."\n";
-            echo '副标题：'.$value['title']."\n";
-            echo '详情页：'.$value['details']."\n";
+            echo '主标题：'.$value['h1'].PHP_EOL;
+            echo '副标题：'.$value['title'].PHP_EOL;
+            echo '详情页：'.$value['details'].PHP_EOL;
             if ($value['type'] != 0) {
-                echo "-----非免费，已忽略！ \n\n";
+                echo "-----非免费，已忽略！".PHP_EOL.PHP_EOL;
                 continue;
             }
             if (isset($value['hr']) && ($value['hr'] == 1)) {
-                echo "-----HR种子，已忽略！ \n\n";
+                echo "-----HR种子，已忽略！".PHP_EOL.PHP_EOL;
                 continue;
             }
             // 下载任务的可选参数
@@ -265,7 +185,7 @@ class Rpc
                 $fileSize = filesize($torrentFile);		//失败会返回false 或 0（0代表上次下载失败）
                 if (!empty($fileSize)) {
                     //种子已经存在
-                    echo '-----存在旧种子：'.$filename."\n\n";
+                    echo '-----存在旧种子：'.$filename.PHP_EOL.PHP_EOL;
                     continue;
                 }
                 // 删除下载错误的文件
@@ -273,13 +193,14 @@ class Rpc
             }
             
             // 调用过滤函数
-            $isFilter = filter(self::$site, $value);
+            $filter = empty(self::$conf['filter']) ? [] : self::$conf['filter'];
+            $isFilter = filter($filter, $value);
             if (is_string($isFilter)) {
-                echo "-----" .$isFilter. "\n\n";
+                echo "-----" .$isFilter. PHP_EOL.PHP_EOL;
                 continue;
             }
             //种子不存在
-            echo '正在下载新种子... '.$value['download']." \n";
+            echo '正在下载新种子... '.$value['download'].PHP_EOL;
             // 创建文件、下载种子以二进制写入
             $content = '';
             $content = download($value['download'], self::$cookies, self::$userAgent, self::$method);
@@ -295,39 +216,42 @@ class Rpc
             fclose($resource);
             // 判断
             if (is_bool($worldsnum)) {
-                print "种子下载失败！！！ \n\n";
+                print "种子下载失败！！！".PHP_EOL.PHP_EOL;
                 IFile::unlink($torrentFile);
                 continue;
             } else {
-                print "成功下载种子" . $filename . '，共计：' . $worldsnum . "字节 \n";
+                print "成功下载种子" . $filename . '，共计：' . $worldsnum . "字节".PHP_EOL;
                 sleep(mt_rand(2, 10));
                 $ret = false;
-                $rpcKey = self::$RPC_Key;
                 switch ((int)self::$workingMode) {
-                    case 0:		//默认工作模式
-                        $ret = self::add($torrentFile, $to);
+                    case 0:		//watch模式
+                        // 复制到watch目录
+                        copy($torrentFile, $to);
+                        if (is_file($to)) {
+                            print "********watch模式，下载任务添加成功.".PHP_EOL.PHP_EOL;
+                            $ret = true;
+                        } else {
+                            print "-----watch模式，下载任务添加失败!!!".PHP_EOL.PHP_EOL;
+                        }
                         break;
-                    case 1:		//负载均衡模式
-                        $type = self::$links[$rpcKey]['type'];
+                    case 1:		//Rpc模式
+                        $type = self::$links['type'];
                         // 下载服务器类型
                         switch ($type) {
                             case 'transmission':
-                                # code...
+                                $ret = static::$links['rpc']->add_torrent($content, $to, $extra_options);
                                 break;
                             case 'qBittorrent':
                                 $extra_options['name'] = 'torrents';
                                 $extra_options['filename'] = $filename;
                                 $extra_options['autoTMM'] = 'false';	//关闭自动种子管理
+                                $ret = static::$links['rpc']->add_torrent($content, $to, $extra_options);
                                 break;
                             default:
-                                # code...
                                 break;
                         }
-                        // 种子文件添加下载任务
-                        $ret = self::add($content, $to, $extra_options);
                         break;
                     default:
-                        echo "\n\n";
                         break;
                 }
             }
