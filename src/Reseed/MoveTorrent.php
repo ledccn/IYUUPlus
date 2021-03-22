@@ -201,45 +201,6 @@ class MoveTorrent extends AutoReseed
     }
 
     /**
-     * 实际路径与相对路径之间互相转换
-     * @param string $path
-     * @return string | null        string转换成功
-     */
-    private static function pathReplace($path = '')
-    {
-        $type = intval(self::$conf['path_type']);
-        $pathArray = self::$conf['path_rule'];
-        $path = rtrim($path, DIRECTORY_SEPARATOR);      // 提高Windows转移兼容性
-        switch ($type) {
-            case 1:         // 减
-                foreach ($pathArray as $key => $val) {
-                    if (strpos($path, $key)===0) {
-                        return substr($path, strlen($key));
-                    }
-                }
-                break;
-            case 2:         // 加
-                foreach ($pathArray as $key => $val) {
-                    if (strpos($path, $key)===0) {      // 没用$path == $key判断，是为了提高兼容性
-                        return $val . $path;
-                    }
-                }
-                break;
-            case 3:         // 替换
-                foreach ($pathArray as $key => $val) {
-                    if (strpos($path, $key)===0) {      // 没用$path == $key判断，是为了提高兼容性
-                        return $val . substr($path, strlen($key));
-                    }
-                }
-                break;
-            default:        // 不变
-                return $path;
-                break;
-        }
-        return null;
-    }
-
-    /**
      * 处理转移种子时所设置的过滤器、选择器
      * @param string $path
      * @return bool   true 过滤 | false 不过滤
@@ -297,6 +258,45 @@ class MoveTorrent extends AutoReseed
             }
         }
         return false;
+    }
+
+    /**
+     * 实际路径与相对路径之间互相转换
+     * @param string $path
+     * @return string | null        string转换成功
+     */
+    private static function pathReplace($path = '')
+    {
+        $type = intval(self::$conf['path_type']);
+        $pathArray = self::$conf['path_rule'];
+        $path = rtrim($path, DIRECTORY_SEPARATOR);      // 提高Windows转移兼容性
+        switch ($type) {
+            case 1:         // 减
+                foreach ($pathArray as $key => $val) {
+                    if (strpos($path, $key)===0) {
+                        return substr($path, strlen($key));
+                    }
+                }
+                break;
+            case 2:         // 加
+                foreach ($pathArray as $key => $val) {
+                    if (strpos($path, $key)===0) {      // 没用$path == $key判断，是为了提高兼容性
+                        return $val . $path;
+                    }
+                }
+                break;
+            case 3:         // 替换
+                foreach ($pathArray as $key => $val) {
+                    if (strpos($path, $key)===0) {      // 没用$path == $key判断，是为了提高兼容性
+                        return $val . substr($path, strlen($key));
+                    }
+                }
+                break;
+            default:        // 不变
+                return $path;
+                break;
+        }
+        return null;
     }
 
     /**
