@@ -69,9 +69,9 @@ class ICheck
 
     /**
      *  解析运行环境
-     * @param int $currentOs
+     * @param string $currentOs
      */
-    public static function analysis($currentOs)
+    public static function analysis(string $currentOs)
     {
         //检查版本
         if(version_compare(PHP_VERSION, "7.2.0", "<"))

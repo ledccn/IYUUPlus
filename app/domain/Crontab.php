@@ -103,7 +103,7 @@ class Crontab
      * @param string $uuid      uuid或文件名
      * @return bool
      */
-    public static function deleteHock(string $uuid)
+    public static function deleteHock(string $uuid):bool
     {
         if (empty($uuid)) {
             return false;
@@ -217,7 +217,7 @@ class Crontab
      * @param string $suffix    扩展名
      * @return string           文件的完整路径
      */
-    public static function getFilePath($filename = '', $dir = 'cron_dir', $suffix = '.crontab')
+    public static function getFilePath($filename = '', $dir = 'cron_dir', $suffix = '.crontab'):string
     {
         clearstatcache();
         $_dir = cron_path() . DIRECTORY_SEPARATOR . $dir;
@@ -231,7 +231,7 @@ class Crontab
      * @param string $filename
      * @return string
      */
-    public static function getLockFile($filename = '')
+    public static function getLockFile($filename = ''):string
     {
         return self::getFilePath($filename, self::lock_dir, self::lock_suffix);
     }
@@ -241,7 +241,7 @@ class Crontab
      * @param string $filename
      * @return string
      */
-    public static function getPidFile($filename = '')
+    public static function getPidFile($filename = ''):string
     {
         return self::getFilePath($filename, self::pid_dir, self::pid_suffix);
     }
@@ -251,7 +251,7 @@ class Crontab
      * @param string $filename
      * @return string
      */
-    public static function getLogFile($filename = '')
+    public static function getLogFile($filename = ''):string
     {
         return self::getFilePath($filename, self::log_dir, '.log');
     }
@@ -281,8 +281,7 @@ class Crontab
     public static function readLogs(string $uuid = ''):string
     {
         $logFile = self::getLogFile($uuid);
-        $log = Conf::get($logFile, 'raw', '', true);
-        return $log;
+        return Conf::get($logFile, 'raw', '', true);
     }
 
     /**
@@ -294,7 +293,7 @@ class Crontab
     {
         $logFile = self::getLogFile($uuid);
         $ret = Conf::set($logFile, date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
-        return is_bool($ret) ? $ret : ($ret >= 10 ? true : false);
+        return is_bool($ret) ? $ret : ($ret >= 10);
     }
 
     /**

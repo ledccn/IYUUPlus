@@ -29,7 +29,7 @@ class BaseController
      * @param Request $request
      * @return Response
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $url = domainUsers::isLogin($request) ? '/index.html' : '/page/login.html';
         return redirect($url);
