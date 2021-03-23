@@ -103,6 +103,7 @@ function download($url, $cookies='', $useragent='', $method = 'GET')
 function convertToMB($from)
 {
     $number=substr($from, 0, -2);
+    $number = $number + 0;
     switch (strtoupper(substr($from, -2))) {
         case "KB":
             return $number/1024;
@@ -238,6 +239,8 @@ function filter($filter = [], $torrent = array())
             $pattern = '/'.$filter['regex'].'/';
             if (!preg_match($pattern, $subject, $matchs)) {
                 return $filename. ' 未匹配到正则表达式[ '. $filter['regex']. ' ]，被过滤';
+            } else {
+                echo '匹配到正则表达式：[ '. $filter['regex'] .' ]'. PHP_EOL;
             }
         }
 
@@ -277,7 +280,7 @@ function filter($filter = [], $torrent = array())
                         if ($mode === 'AND' && $count < count($keywords)) {
                             return $msg.'未匹配：[ '. join($no, ' ,') .' ]，被过滤';
                         } else {
-                            echo $msg.'匹配到关键字：[ '. join($yes, ' ,') .' ]'. PHP_EOL.PHP_EOL;
+                            echo $msg.'匹配到关键字：[ '. join($yes, ' ,') .' ]'. PHP_EOL;
                         }
                     } else {
                         return '未匹配到关键字：[ '. join($keywords, ' ,') .' ]，被过滤';
@@ -288,7 +291,7 @@ function filter($filter = [], $torrent = array())
                 if (stripos($subject, $keyword) === false) {
                     return '未匹配到关键字：[ '. $keyword .' ]，被过滤';
                 } else {
-                    echo '匹配到关键字：[ '. $keyword .' ]'. PHP_EOL.PHP_EOL;
+                    echo '匹配到关键字：[ '. $keyword .' ]'. PHP_EOL;
                 }
             }
         }
