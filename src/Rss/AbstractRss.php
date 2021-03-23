@@ -286,13 +286,13 @@ abstract class AbstractRss
         }
         $url = str_replace("{}", $this->passkey, $url);
         echo $this->site." 正在请求RSS... {$url}". PHP_EOL;
-        $url = (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) ? $url : $this->host . $url;
+        $url = (stripos($url, 'http://') === 0 || stripos($url, 'https://') === 0) ? $url : $this->host . $url;
         $res = $this->curl->get($url);
         if ($res->http_status_code == 200) {
-            echo "RSS获取信息，成功！ \n";
+            echo "RSS获取信息，成功！". PHP_EOL;
             return $res->response;
         }
-        echo "RSS获取信息失败，请重试！ \n";
+        echo "RSS获取信息失败，请重试！". PHP_EOL;
         return null;
     }
 

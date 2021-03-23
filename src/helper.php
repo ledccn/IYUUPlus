@@ -188,47 +188,110 @@ function filter($filter = [], $torrent = array())
     $filename = $torrent['filename'];
 
     // 大小过滤
-    if (empty($torrent['size'])) {
-        return false;
-    }
-    $size = convertToMB($torrent['size']);
-    $min = isset($filter['size']['min']) ? convertToMB($filter['size']['min']) : 0;
-    $max = isset($filter['size']['max']) ? convertToMB($filter['size']['max']) : 2097152;	//默认 2097152MB = 2TB
-    if ($min > $size || $size > $max) {
-        return $filename. ' ' .$size. 'MB，被大小过滤';
+    if (!empty($torrent['size'])) {
+        $size = convertToMB($torrent['size']);
+        $min = isset($filter['size']['min']) ? convertToMB($filter['size']['min']) : 0;
+        $max = isset($filter['size']['max']) ? convertToMB($filter['size']['max']) : 2097152;	//默认 2097152MB = 2TB
+        if ($size < $min || $size > $max) {
+            return $filename. ' ' .$size. 'MB，被大小过滤';
+        }
     }
 
     // 种子数过滤
-    if (empty($torrent['seeders'])) {
-        return false;
-    }
-    $seeders = $torrent['seeders'];
-    $min = isset($filter['seeders']['min']) ? $filter['seeders']['min'] : 1;	//默认 1
-    $max = isset($filter['seeders']['max']) ? $filter['seeders']['max'] : 3;	//默认 3
-    if ($min > $seeders || $seeders > $max) {
-        return $filename. ' 当前做种' .$seeders. '人，被过滤';
+    if (!empty($torrent['seeders'])) {
+        $seeders = $torrent['seeders'];
+        $min = isset($filter['seeders']['min']) ? $filter['seeders']['min'] : 1;	//默认 1
+        $max = isset($filter['seeders']['max']) ? $filter['seeders']['max'] : 3;	//默认 3
+        if ($seeders < $min || $seeders > $max) {
+            return $filename. ' 当前做种' .$seeders. '人，被过滤';
+        }
     }
 
     // 下载数过滤
-    if (empty($torrent['leechers'])) {
-        return false;
-    }
-    $leechers = $torrent['leechers'];
-    $min = isset($filter['leechers']['min']) ? $filter['leechers']['min'] : 0;		//默认
-    $max = isset($filter['leechers']['max']) ? $filter['leechers']['max'] : 30000;	//默认
-    if ($min > $leechers || $leechers > $max) {
-        return $filename. ' 当前下载' .$leechers. '人，被过滤';
+    if (!empty($torrent['leechers'])) {
+        $leechers = $torrent['leechers'];
+        $min = isset($filter['leechers']['min']) ? $filter['leechers']['min'] : 0;		//默认
+        $max = isset($filter['leechers']['max']) ? $filter['leechers']['max'] : 30000;	//默认
+        if ($leechers < $min || $leechers > $max) {
+            return $filename. ' 当前下载' .$leechers. '人，被过滤';
+        }
     }
 
     // 完成数过滤
-    if (empty($torrent['completed'])) {
-        return false;
+    if (!empty($torrent['completed'])) {
+        $completed = $torrent['completed'];
+        $min = isset($filter['completed']['min']) ? $filter['completed']['min'] : 0;		//默认
+        $max = isset($filter['completed']['max']) ? $filter['completed']['max'] : 30000;	//默认
+        if ($completed < $min || $completed > $max) {
+            return $filename. ' 已完成数' .$completed. '人，被过滤';
+        }
     }
-    $completed = $torrent['completed'];
-    $min = isset($filter['completed']['min']) ? $filter['completed']['min'] : 0;		//默认
-    $max = isset($filter['completed']['max']) ? $filter['completed']['max'] : 30000;	//默认
-    if ($min > $completed || $completed > $max) {
-        return $filename. ' 已完成数' .$completed. '人，被过滤';
+
+    // 标题副标题过滤
+    if (!empty($torrent['h1']) || !empty($torrent['title'])) {
+        $h1 = !empty($torrent['h1']) ? $torrent['h1'] : '';
+        $title = !empty($torrent['title']) ? $torrent['title'] : '';
+        $subject = $h1 . $title;
+
+        // 正则表达式过滤
+        if (!empty($filter['regex'])) {
+            $pattern = '/'.$filter['regex'].'/';
+            if (!preg_match($pattern, $subject, $matchs)) {
+                return $filename. ' 未匹配到正则表达式[ '. $filter['regex']. ' ]，被过滤';
+            }
+        }
+
+        // 关键字匹配
+        if (!empty($filter['keyword'])) {
+            $keyword = trim($filter['keyword']);
+            $mode = isset($filter['keyword_mode']) ? 'AND' : 'OR';
+            // NO1:查找特征
+            if (stripos($keyword, ',') !== false) {
+                // 匹配数组
+                // NO2:分隔
+                $keywords = explode(',', $keyword);
+                // NO3:移除空白字符和预定义字符
+                array_walk($keywords, function (&$v, $k){
+                    $v = trim($v);
+                });
+                // NO4:过滤空
+                $keywords = array_filter($keywords, function ($v, $k) {
+                    return !empty($v);
+                }, ARRAY_FILTER_USE_BOTH);
+                // 非空才匹配
+                if (count($keywords)) {
+                    $count = 0;
+                    $yes = [];
+                    $no = [];
+                    foreach ($keywords as $item) {
+                        if (stripos($subject, $item) !== false) {
+                            $count++;
+                            $yes[] = $item;
+                        } else {
+                            $no[] = $item;
+                        }
+                    }
+                    // 匹配后判断
+                    if ($count) {
+                        $msg = count($keywords).'个关键字：[ '. join($keywords, ' ,') .' ]， 匹配到'.$count.'个；';
+                        if ($mode === 'AND' && $count < count($keywords)) {
+                            return $msg.'未匹配：[ '. join($no, ' ,') .' ]，被过滤';
+                        } else {
+                            echo $msg.'匹配到关键字：[ '. join($yes, ' ,') .' ]'. PHP_EOL.PHP_EOL;
+                        }
+                    } else {
+                        return '未匹配到关键字：[ '. join($keywords, ' ,') .' ]，被过滤';
+                    }
+                }
+            } else {
+                // 匹配字符串
+                if (stripos($subject, $keyword) === false) {
+                    return '未匹配到关键字：[ '. $keyword .' ]，被过滤';
+                } else {
+                    echo '匹配到关键字：[ '. $keyword .' ]'. PHP_EOL.PHP_EOL;
+                }
+            }
+        }
     }
 
     // 满足上述所有条件，不过滤
