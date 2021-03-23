@@ -276,14 +276,14 @@ function filter($filter = [], $torrent = array())
                     }
                     // 匹配后判断
                     if ($count) {
-                        $msg = count($keywords).'个关键字：[ '. join($keywords, ' ,') .' ]， 匹配到'.$count.'个；';
+                        $msg = count($keywords).'个关键字：[ '. join(' ,' ,$keywords) .' ]， 匹配到'.$count.'个；';
                         if ($mode === 'AND' && $count < count($keywords)) {
-                            return $msg.'未匹配：[ '. join($no, ' ,') .' ]，被过滤';
+                            return $msg.'未匹配：[ '. join(' ,', $no) .' ]，被过滤';
                         } else {
-                            echo $msg.'匹配到关键字：[ '. join($yes, ' ,') .' ]'. PHP_EOL;
+                            echo $msg.'匹配到关键字：[ '. join(' ,',$yes) .' ]'. PHP_EOL;
                         }
                     } else {
-                        return '未匹配到关键字：[ '. join($keywords, ' ,') .' ]，被过滤';
+                        return '未匹配到关键字：[ '. join(' ,', $keywords) .' ]，被过滤';
                     }
                 }
             } else {
