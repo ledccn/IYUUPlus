@@ -236,8 +236,8 @@ function filter($filter = [], $torrent = array())
 
         // 正则表达式过滤
         if (!empty($filter['regex'])) {
-            $pattern = '/'.$filter['regex'].'/';
-            if (!preg_match($pattern, $subject, $matchs)) {
+            $pattern = '/'.$filter['regex'].'/i';
+            if (!preg_match($pattern, $subject, $matches)) {
                 return $filename. ' 未匹配到正则表达式[ '. $filter['regex']. ' ]，被过滤';
             } else {
                 echo '匹配到正则表达式：[ '. $filter['regex'] .' ]'. PHP_EOL;
