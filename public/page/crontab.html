@@ -719,7 +719,7 @@
       ,cols: [[
         {field: 'name', title: '任务名称', width:180, align: "center", sort: true, fixed: 'left'}
         ,{field: 'uuid', title: 'UUID', width:80, align: "center", hide: true}
-        ,{field: 'type', title: '任务类型', width:150, align: "center", sort: true
+        ,{field: 'type', title: '任务类型', width:130, align: "center", sort: true
           ,templet: function(d){
             let type = '';
             switch (d.type) {
@@ -766,7 +766,7 @@
             return d.where ? '<span class="layui-badge layui-bg-orange">' + d.crontab + '</span>' : '';
           }
         }
-        ,{field: 'urladdress', title: 'URL地址', minWidth: 130, align: "center", sort: true
+        ,{field: 'urladdress', title: 'URL地址', width: 150, align: "center", sort: true
           ,templet: function(d){
             return d.urladdress || '';
           }
