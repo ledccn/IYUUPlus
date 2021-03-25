@@ -133,27 +133,26 @@
       ,sites_sel: 'sites_sel'
       ,sites_total: 'sites_total'
       ,site_field_view: 'site_field_view'
-      ,site_field_rule: {
-        cookie: {name: 'cookie', visible: true, required: false, desc: '', verify: '', reqtext: ''}
-        ,passkey: {name: 'passkey', visible: true, required: true, desc: '', verify: 'required', reqtext: ''}
-        ,id: false
-        ,limitRule: false
-        ,urlJoin: {visible: false, required: false, id: 'url_join', field: {https: true, ipv4: true, ipv6: true}}
-        ,urlReplace: {visible: false, required: false, id: 'url_replace', field: {}}
-        ,downHash: {name: 'downHash', visible: false, required: true, desc: '', verify: '', reqtext: ''}
-      }
+      ,url_join: 'url_join'
     };
     //localStorage.setItem('site_field_rule',JSON.stringify(API));
-    sessionStorage.setItem('site_field_rule',JSON.stringify(API.site_field_rule));
+    //sessionStorage.setItem('site_field_rule',JSON.stringify(API));
 
     /**
      * 站点选择框
      */
     sites_sel_action = function(site = '', site_field_view = null) {
-      site_field_view = site_field_view || API.site_field_view;
-      let rule = JSON.parse(sessionStorage.getItem('site_field_rule'))
+      let rule = {
+          cookie: {name: 'cookie', visible: true, required: false, desc: '', verify: '', reqtext: ''}
+          ,passkey: {name: 'passkey', visible: true, required: true, desc: '', verify: 'required', reqtext: ''}
+          ,id: false
+          ,limitRule: false
+          ,urlJoin: {visible: false, required: false, id: 'url_join', field: {https: true, ipv4: true, ipv6: true}}
+          ,urlReplace: {visible: false, required: false, id: 'url_replace', field: {}}
+          ,downHash: {name: 'downHash', visible: false, required: true, desc: '', verify: '', reqtext: ''}
+        }
         ,getTpl = site_field_tpl.innerHTML
-        ,view = document.getElementById(site_field_view);
+        ,view = document.getElementById(API.site_field_view);
 
       view.innerHTML = '';
       if (site === '') {
@@ -182,6 +181,7 @@
           rule.id = true;
           break;
         //其他参数
+        case 'leaguehd':
         case 'm-team':
           rule.urlJoin.visible = true;
           break;
@@ -195,6 +195,8 @@
           rule.cookie.verify = 'required';
           rule.passkey.required = false;
           rule.passkey.verify = '';
+          rule.downHash.visible = true;
+          rule.downHash.desc = 'RSS订阅页面 passkey= 后面的字符串。';
           break;
         case 'hdchina':
         case 'hdsky':
@@ -203,6 +205,10 @@
           rule.passkey.required = false;
           rule.passkey.verify = '';
           rule.limitRule = true;
+          break;
+        case 'ttg':
+          rule.downHash.visible = true;
+          rule.downHash.desc = 'RSS订阅页面 putrssde.php?par=后面的字符串，注意结尾==不可遗漏。';
           break;
         //默认规则
         default:
@@ -353,7 +359,7 @@
     /**
      * 监听复选框：附加参数
      */
-    form.on('checkbox('+ API.site_field_rule.urlJoin.id +')', function(data){
+    form.on('checkbox('+ API.url_join +')', function(data){
       console.log(data.elem); //得到checkbox原始DOM对象
       console.log(data.elem.checked); //是否被选中，true或者false
       console.log(data.value); //复选框value值，也可以通过data.elem.value得到
