@@ -8,3 +8,5 @@
 *.bat
 *.log
 .env
+/._.DS_Store
+/.DS_Store

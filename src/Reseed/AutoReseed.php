@@ -77,13 +77,13 @@ class AutoReseed
      * @var array
      */
     public static $endpoints = array(
-        'login'   => '/user/login',
-        'sites'   => '/api/sites',
-        'infohash'=> '/api/infohash',
-        'hash'    => '/api/hash',
-        'notify'  => '/api/notify',
-        'recommendSites' => '/Api/GetRecommendSites',
-        'getSign'   => '/Api/GetSign'
+        'login'   => '/App.Api.Bind',
+        'sites'   => '/App.Api.Sites',
+        'infohash'=> '/App.Api.Infohash',
+        'hash'    => '/App.Api.Hash',
+        'notify'  => '/App.Api.Notify',
+        'recommendSites' => '/App.Api.GetRecommendSites',
+        'getSign'   => '/App.Api.GetSign'
     );
     /**
      * @var null | Curl
