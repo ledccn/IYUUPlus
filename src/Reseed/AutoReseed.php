@@ -68,6 +68,11 @@ class AutoReseed
      */
     public static $cacheMove = TORRENT_PATH . DIRECTORY_SEPARATOR . 'cachemove' . DIRECTORY_SEPARATOR;
     /**
+     * 错误通知缓存目录
+     * @var string
+     */
+    public static $cacheNotify = TORRENT_PATH . DIRECTORY_SEPARATOR . 'cacheNotify' . DIRECTORY_SEPARATOR;
+    /**
      * API接口配置
      * @var string
      */
@@ -142,6 +147,7 @@ class AutoReseed
         IFile::mkdir(self::$cacheDir);
         IFile::mkdir(self::$cacheHash);
         IFile::mkdir(self::$cacheMove);
+        IFile::mkdir(self::$cacheNotify);
         // 连接全局客户端
         self::links();
     }
@@ -1015,6 +1021,17 @@ class AutoReseed
     private static function sendNotify($error = '')
     {
         self::$errNotify['error'] = $error;
+
+        // 存在错误通知缓存，直接返回（减少请求次数）
+        $errNotifyCacheFile = self::errNotifyCacheFile(self::$errNotify['sid'], self::$errNotify['torrent_id']);
+        if (is_file($errNotifyCacheFile)) {
+            echo '感谢您的参与，失效种子已经成功汇报过！！'.PHP_EOL;
+            return true;
+        }
+
+        // 创建错误通知缓存
+        file_put_contents($errNotifyCacheFile, json_encode(self::$errNotify, JSON_UNESCAPED_UNICODE));
+
         $notify = http_build_query(self::$errNotify);
         self::$errNotify = array(
             'sign' => '',
@@ -1029,6 +1046,18 @@ class AutoReseed
             echo '感谢您的参与，失效种子上报成功！！'.PHP_EOL;
         }
         return true;
+    }
+
+    /**
+     * 拼接错误通知缓存的文件路径
+     * @param int $site_id
+     * @param int $torrent_id
+     * @return string
+     */
+    private static function errNotifyCacheFile($site_id = 0, $torrent_id = 0)
+    {
+        $filename = $site_id . '_' . $torrent_id . '.txt';
+        return self::$cacheNotify . $filename;
     }
 
     /**

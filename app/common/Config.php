@@ -80,7 +80,7 @@ class Config
                     $d = @unserialize(file_get_contents($file_name, false, null));
                     break;
                 case 'json':
-                    $d = json_decode(file_get_contents($file_name, false, null), JSON_UNESCAPED_UNICODE);
+                    $d = json_decode(file_get_contents($file_name, false, null), true);
                     break;
                 case 'array':
                     $d = include $file_name;
