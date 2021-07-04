@@ -462,7 +462,7 @@ class AutoReseed
                 self::$curl->setOpt(CURLOPT_TIMEOUT, $timeout);
                 $hashJson = $hashArray['hash'];
                 $infoHash = json_decode($hashJson, true);     // Json转数组
-                $hash = array_chunk($infoHash, 5000);       // 分隔数组
+                $hash = array_chunk($infoHash, 200);       // 分隔数组
                 foreach ($hash as $info_hash) {
                     $hashArray = [];
                     sort($info_hash);
