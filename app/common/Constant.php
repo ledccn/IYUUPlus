@@ -21,7 +21,8 @@ class Constant
         'infohash'=> '/App.Api.Infohash',
         'hash'    => '/App.Api.Hash',
         'notify'  => '/App.Api.Notify',
-        'recommend'  =>  '/Api/GetRecommendSites'
+        'recommend'  =>  '/Api/GetRecommendSites',
+        'getSign'   => '/App.Api.GetSign',
     ];
 
     /**

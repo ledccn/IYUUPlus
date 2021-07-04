@@ -5,6 +5,7 @@ use Curl\Curl;
 use IYUU\Client\AbstractClient;
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
+use app\common\Constant;
 use app\domain\Reseed as domainReseed;
 use app\domain\Crontab as domainCrontab;
 
@@ -72,24 +73,6 @@ class AutoReseed
      * @var string
      */
     public static $cacheNotify = TORRENT_PATH . DIRECTORY_SEPARATOR . 'cacheNotify' . DIRECTORY_SEPARATOR;
-    /**
-     * API接口配置
-     * @var string
-     */
-    public static $apiUrl = 'http://api.iyuu.cn';
-    /**
-     * API接入点
-     * @var array
-     */
-    public static $endpoints = array(
-        'login'   => '/App.Api.Bind',
-        'sites'   => '/App.Api.Sites',
-        'infohash'=> '/App.Api.Infohash',
-        'hash'    => '/App.Api.Hash',
-        'notify'  => '/App.Api.Notify',
-        'recommendSites' => '/App.Api.GetRecommendSites',
-        'getSign'   => '/App.Api.GetSign'
-    );
     /**
      * @var null | Curl
      */
@@ -233,13 +216,13 @@ class AutoReseed
     protected static function Oauth()
     {
         $recommend_sites = [];
-        $ret = self::$curl->get(self::$apiUrl . self::$endpoints['recommendSites']);
+        $ret = self::$curl->get(Constant::API_BASE.Constant::API['recommend']);
         $ret = json_decode($ret->response, true);
         if (isset($ret['ret']) && $ret['ret'] === 200 && isset($ret['data']['recommend']) && is_array($ret['data']['recommend'])) {
             $recommend_sites = $ret['data']['recommend'];
             self::$recommend = array_column($recommend_sites, 'site');  // init
         }
-        Oauth::login(self::$apiUrl . self::$endpoints['login'], $recommend_sites);
+        Oauth::login(Constant::API_BASE.Constant::API['login'], $recommend_sites);
     }
 
     /**
@@ -259,7 +242,7 @@ class AutoReseed
         array_walk($list, function ($v, $k) {
             echo microtime(true). $v . PHP_EOL;
         });
-        $url = sprintf('%s?sign=%s&version=%s',self::$apiUrl.self::$endpoints['sites'], Oauth::getSign(), self::VER);
+        $url = sprintf('%s?sign=%s&version=%s',Constant::API_BASE.Constant::API['sites'], Oauth::getSign(), self::VER);
         $res = self::$curl->get($url);
         $rs = json_decode($res->response, true);
         $sites = empty($rs['data']['sites']) ? [] : $rs['data']['sites'];
@@ -487,7 +470,7 @@ class AutoReseed
     private static function requestApi($hashString, $hashArray, $clientKey, $clientValue)
     {
         echo "正在向服务器提交 【".$clientValue['_config']['name']."】 种子哈希……".PHP_EOL;
-        $res = self::$curl->post(self::$apiUrl . self::$endpoints['infohash'], $hashArray);
+        $res = self::$curl->post(Constant::API_BASE.Constant::API['infohash'], $hashArray);
         cli($res->response);
         $res = json_decode($res->response, true);
         // 写响应日志
@@ -966,7 +949,7 @@ class AutoReseed
             'site'      => $site,
             'uid'       => isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0,
         ];
-        $res = self::$curl->get(self::$apiUrl . self::$endpoints['getSign'], $data);
+        $res = self::$curl->get(Constant::API_BASE . Constant::API['getSign'], $data);
         $ret = json_decode($res->response, true);
         $signString = '';
         if (isset($ret['ret']) && $ret['ret'] === 200) {
@@ -1040,7 +1023,7 @@ class AutoReseed
             'torrent_id'=> 0,
             'error'   => '',
         );
-        $res = self::$curl->get(self::$apiUrl.self::$endpoints['notify'].'?'.$notify);
+        $res = self::$curl->get(Constant::API_BASE . Constant::API['notify'] . '?' . $notify);
         $res = json_decode($res->response, true);
         if (isset($res['data']['success']) && $res['data']['success']) {
             echo '感谢您的参与，失效种子上报成功！！'.PHP_EOL;
