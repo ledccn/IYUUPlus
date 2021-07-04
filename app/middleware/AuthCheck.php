@@ -16,11 +16,12 @@ class AuthCheck implements MiddlewareInterface
     {
         $session = $request->session();
         $action = $request->action;
-        $skip = in_array($action, ['Login', 'checkLogin', 'BindToken']);    // 严格区分大小写
-        if (!$skip && !$session->get(Constant::Session_Token_Key)) {
-            // 拦截条件：token不存在 & 非登录操作
-            return redirect('/page/login.html');
+        $skip = in_array($action, Constant::Skip_AuthCheck);    // 严格区分大小写
+        if ($skip || $session->get(Constant::Session_Token_Key)) {
+            // 不拦截：账号登录、检查登录、绑定token、存在Session等
+            return $next($request);
         }
-        return $next($request);
+        // 拦截条件：token不存在Session未登录 & 非指定的操作
+        return redirect('/page/login.html');
     }
 }

@@ -22,7 +22,7 @@ class Users
     public static function isLogin(Request $request):bool
     {
         $session = $request->session();
-        $has = $session->has('token');
+        $has = $session->has(Constant::Session_Token_Key);
         return $has ? true : false;
     }
 
@@ -40,7 +40,7 @@ class Users
         $url = sprintf('%s%s?sign=%s&version=%s', $api_url, $api_action, $token, IYUU_VERSION());
         $res = $curl->get($url);
         $rs = json_decode($res->response, true);
-        if ($rs['ret'] === 200 && isset($rs['data']['sites']) && is_array($rs['data']['sites'])) {
+        if (isset($rs['ret']) && ($rs['ret'] === 200) && isset($rs['data']['sites']) && is_array($rs['data']['sites'])) {
             $sites = array_column($rs['data']['sites'], null, 'site');
             Config::set('sites', $sites, Constant::config_format);
             Config::set('iyuu', ['iyuu.cn' => $token], Constant::config_format);
@@ -48,7 +48,7 @@ class Users
             $session = $request->session();
             $session->set(Constant::Session_Token_Key, $token);
         } else {
-            if (($rs['ret'] === 403) && isset($rs['data']['recommend']) && is_array($rs['data']['recommend'])) {
+            if (isset($rs['ret']) && ($rs['ret'] === 403) && isset($rs['data']['recommend']) && is_array($rs['data']['recommend'])) {
                 //用户未绑定合作站点
                 $recommend = $rs['data']['recommend'];
                 Config::set('recommend', $recommend, Constant::config_format);

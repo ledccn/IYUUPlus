@@ -3,14 +3,24 @@ namespace app\common;
 
 /**
  * 全局常量定义
- * @access private 常驻内存运行，禁止执行器调用
  */
 class Constant
 {
     const UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36';
 
-    //用户登录后用来保存IYUU token的Session键名
+    /**
+     * 用户登录后用来保存IYUU token的Session键名
+     * @var string
+     */
     const Session_Token_Key = 'token';
+
+    /**
+     * 允许跳过AuthCheck中间件拦截的动作 (严格区分大小写)
+     * 注意：此配置影响到app\middleware\AuthCheck中间件
+     * @var array
+     */
+    const Skip_AuthCheck = ['Login', 'checkLogin', 'BindToken'];
+
     /**
      * API定义
      */
@@ -54,8 +64,4 @@ class Constant
         'data'  =>  [],
         'msg'   =>  ''
     ];
-
-    /**
-     * 全局错误码
-     */
 }
