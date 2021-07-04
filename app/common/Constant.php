@@ -16,11 +16,11 @@ class Constant
      */
     const API_BASE = 'http://api.iyuu.cn';
     const API = [
-        'login'   => '/user/login',
-        'sites'   => '/api/sites',
-        'infohash'=> '/api/infohash',
-        'hash'    => '/api/hash',
-        'notify'  => '/api/notify',
+        'login'   => '/App.Api.Bind',
+        'sites'   => '/App.Api.Sites',
+        'infohash'=> '/App.Api.Infohash',
+        'hash'    => '/App.Api.Hash',
+        'notify'  => '/App.Api.Notify',
         'recommend'  =>  '/Api/GetRecommendSites'
     ];
 
