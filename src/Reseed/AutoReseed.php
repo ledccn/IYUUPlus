@@ -852,10 +852,19 @@ class AutoReseed
     {
         // 注入合作站种子的URL规则
         $url = self::getRecommendTorrentUrl($site, $url);
-        // 进行补全
-        if (!empty(self::$_sites[$site]['passkey']) && empty(self::$_sites[$site]['url_replace'])) {
-            self::$_sites[$site]['url_replace'] = array('{passkey}' => trim(self::$_sites[$site]['passkey']));
+        // 注入替换规则
+        $sid = self::$sites[$site]['id'];
+        $reseed_check = self::$sites[$sid]['reseed_check'];
+        if ($reseed_check && is_array($reseed_check)) {
+            $replace = [];
+            foreach ($reseed_check as $value) {
+                $value = ($value === 'uid' ? 'id' : $value);   // 兼容性处理
+                $key = '{' . $value .'}';
+                $replace[$key] = empty(self::$_sites[$site][$value]) ? '' : self::$_sites[$site][$value];
+            }
+            self::$_sites[$site]['url_replace'] = $replace;
         }
+
         // 通用操作：替换
         if (!empty(self::$_sites[$site]['url_replace'])) {
             $url = strtr($url, self::$_sites[$site]['url_replace']);

@@ -69,6 +69,22 @@
     </div>
   </div>
   {{# } }}
+  {{# if (d.torrent_pass.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.torrent_pass.required ? 'required' : '' }}">torrent_pass</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.torrent_pass.name}}" {{ d.torrent_pass.verify ? 'lay-verify="'+d.torrent_pass.verify+'"' : '' }} lay-reqtext="{{d.torrent_pass.name}}不能为空" placeholder="请输入{{d.torrent_pass.name}}" class="layui-input">
+    </div>
+  </div>
+  {{# } }}
+  {{# if (d.authkey.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.authkey.required ? 'required' : '' }}">authkey</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.authkey.name}}" {{ d.authkey.verify ? 'lay-verify="'+d.authkey.verify+'"' : '' }} lay-reqtext="{{d.authkey.name}}不能为空" placeholder="请输入{{d.authkey.name}}" class="layui-input">
+    </div>
+  </div>
+  {{# } }}
   {{# if (d.id === true) { }}
   <div class="layui-form-item">
     <label class="layui-form-label required">用户UID</label>
@@ -145,6 +161,8 @@
       let rule = {
           cookie: {name: 'cookie', visible: true, required: false, desc: '', verify: '', reqtext: ''}
           ,passkey: {name: 'passkey', visible: true, required: true, desc: '', verify: 'required', reqtext: ''}
+          ,torrent_pass: {name: 'torrent_pass', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
+          ,authkey: {name: 'authkey', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,id: false
           ,limitRule: false
           ,urlJoin: {visible: false, required: false, id: 'url_join', field: {https: true, ipv4: true, ipv6: true}}
@@ -209,6 +227,12 @@
         case 'ttg':
           rule.downHash.visible = true;
           rule.downHash.desc = 'RSS订阅页面 putrssde.php?par=后面的字符串，注意结尾==不可遗漏。';
+          break;
+        case 'greatposterwall':
+        case 'dicmusic':
+          rule.passkey.visible = false;
+          rule.torrent_pass.visible = true;
+          rule.authkey.visible = true;
           break;
         //默认规则
         default:
