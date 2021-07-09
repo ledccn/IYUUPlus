@@ -851,18 +851,20 @@ class AutoReseed
      */
     private static function getTorrentUrl($site = '', $sid = 0, $url = '')
     {
-        // 注入合作站种子的URL规则
-        $url = self::getRecommendTorrentUrl($site, $url);
         // 注入替换规则
-        $reseed_check = self::$sites[$sid]['reseed_check'];
-        if ($reseed_check && is_array($reseed_check)) {
-            $replace = [];
-            foreach ($reseed_check as $value) {
-                $value = ($value === 'uid' ? 'id' : $value);   // 兼容性处理
-                $key = '{' . $value .'}';
-                $replace[$key] = empty(self::$_sites[$site][$value]) ? '' : self::$_sites[$site][$value];
+        if (in_array($site, self::$recommend)) {
+            $url = self::getRecommendTorrentUrl($site, $url);
+        } else {
+            $reseed_check = self::$sites[$sid]['reseed_check'];
+            if ($reseed_check && is_array($reseed_check)) {
+                $replace = [];
+                foreach ($reseed_check as $value) {
+                    $value = ($value === 'uid' ? 'id' : $value);   // 兼容性处理
+                    $key = '{' . $value .'}';
+                    $replace[$key] = empty(self::$_sites[$site][$value]) ? '' : self::$_sites[$site][$value];
+                }
+                self::$_sites[$site]['url_replace'] = $replace;
             }
-            self::$_sites[$site]['url_replace'] = $replace;
         }
 
         // 通用操作：替换
@@ -888,18 +890,12 @@ class AutoReseed
         if (in_array($site, self::$recommend)) {
             $now = time();
             $uid = isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0;
-            $pk = isset(self::$_sites[$site]['passkey']) ? trim(self::$_sites[$site]['passkey']) : $now;
-            $hash = md5($pk);
+            $passkey = isset(self::$_sites[$site]['passkey']) ? trim(self::$_sites[$site]['passkey']) : $now;
+            $hash = md5($passkey);
 
             $signString = self::getDownloadTorrentSign($site);  // 检查签名有效期，如果过期获取新的签名
+
             switch ($site) {
-                case 'pthome':
-                case 'hdhome':
-                case 'hddolby':
-                    if (isset(self::$_sites[$site]['downHash']) && self::$_sites[$site]['downHash']) {
-                        $hash = self::$_sites[$site]['downHash'];    // 直接提交专用下载hash
-                    }
-                    break;
                 case 'ourbits':
                     // 兼容旧版本的IYUU
                     if ($uid) {
@@ -910,15 +906,15 @@ class AutoReseed
                     break;
             }
 
-            // 注入替换规则
+            // 注入推荐站点的替换规则
             $replace = [
                 '{uid}' => $uid,
                 '{hash}'=> $hash,
-                '{passkey}' => $pk,
+                '{passkey}' => $passkey,
             ];
             self::$_sites[$site]['url_replace'] = $replace;
 
-            // 注入拼接规则
+            // 注入推荐站点的拼接规则
             if (empty(self::$_sites[$site]['url_join'])) {
                 self::$_sites[$site]['runtime_url_join'] = [];      //保存用户配置规则
                 self::$_sites[$site]['url_join'] = array($signString);
