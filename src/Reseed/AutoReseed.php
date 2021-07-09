@@ -671,7 +671,7 @@ class AutoReseed
                     }
                     $downloadUrl = $_url;
                 } else {
-                    $url = self::getTorrentUrl($siteName, $_url);
+                    $url = self::getTorrentUrl($siteName, $sid, $_url);
                     $downloadUrl = $url;
                 }
 
@@ -844,16 +844,16 @@ class AutoReseed
 
     /**
      * 获取站点种子的URL
-     * @param string $site
-     * @param string $url
+     * @param string $site      站点名称
+     * @param int $sid          站点ID
+     * @param string $url       未替换前的url
      * @return string           带host的完整种子下载连接
      */
-    private static function getTorrentUrl($site = '', $url = '')
+    private static function getTorrentUrl($site = '', $sid = 0, $url = '')
     {
         // 注入合作站种子的URL规则
         $url = self::getRecommendTorrentUrl($site, $url);
         // 注入替换规则
-        $sid = self::$sites[$site]['id'];
         $reseed_check = self::$sites[$sid]['reseed_check'];
         if ($reseed_check && is_array($reseed_check)) {
             $replace = [];
