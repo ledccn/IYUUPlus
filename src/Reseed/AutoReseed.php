@@ -889,13 +889,20 @@ class AutoReseed
     {
         if (in_array($site, self::$recommend)) {
             $now = time();
-            $uid = isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0;
-            $passkey = isset(self::$_sites[$site]['passkey']) ? trim(self::$_sites[$site]['passkey']) : $now;
+            $uid = !empty(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0;
+            $passkey = !empty(self::$_sites[$site]['passkey']) ? trim(self::$_sites[$site]['passkey']) : $now;
             $hash = md5($passkey);
 
             $signString = self::getDownloadTorrentSign($site);  // 检查签名有效期，如果过期获取新的签名
 
             switch ($site) {
+                case 'pthome':
+                case 'hdhome':
+                case 'hddolby':
+                    if (!empty(self::$_sites[$site]['downHash'])) {
+                        $hash = self::$_sites[$site]['downHash'];    // 直接提交专用下载hash
+                    }
+                    break;
                 case 'ourbits':
                     // 兼容旧版本的IYUU
                     if ($uid) {
@@ -949,7 +956,6 @@ class AutoReseed
         // 请求IYUU获取签名
         $data = [
             'sign' => self::$conf['iyuu.cn'],
-            'timestamp' => time(),
             'version'   => self::VER,
             'site'      => $site,
             'uid'       => isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0,
