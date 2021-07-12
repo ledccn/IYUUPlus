@@ -107,3 +107,23 @@ function run_exec($cmd = '')
         pclose(popen($cmd, 'r'));
     }
 }
+
+/**
+ * 转换成易读的容量格式(包含小数)
+ * @param int $bytes            字节
+ * @param string $delimiter     分隔符 [&nbsp; | <br />]
+ * @param int $decimals         保留小数点
+ * @return string
+ */
+function dataSize(int $bytes, string $delimiter = '', int $decimals = 2):string
+{
+    $type = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    $i = 0;
+    while($bytes >= 1024)
+    {
+        $bytes /= 1024;
+        $i++;
+    }
+
+    return number_format($bytes, $decimals) . $delimiter . $type[$i];
+}

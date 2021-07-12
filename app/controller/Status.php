@@ -48,7 +48,10 @@ class Status extends BaseController
         //读取git信息
         $updated_at = get_current_git_filemtime() . (get_current_git_commit() ?  ' (' . get_current_git_commit() . ')' : '');
         $updated_at = strlen($updated_at) > 10 ? $updated_at : '点此查看';
-
+        // 磁盘容量、可用容量
+        $disk_total_space = disk_total_space(db_path());
+        $disk_free_space  = disk_free_space(db_path());
+        $disk_total = \sprintf('可用：%s（总容量：%s）', \dataSize($disk_free_space), \dataSize($disk_total_space));
         $rs['data'] = [
             'cron_total'    => count($cron),
             'sites_total'   => count($user_sites),
@@ -61,6 +64,7 @@ class Status extends BaseController
             'PHP_VERSION'   => PHP_VERSION,
             'PHP_BINARY'    => PHP_BINARY,
             'RUNTIME_PATH'  => runtime_path(),
+            'disk_total'    => $disk_total,
         ];
         return json($rs);
     }

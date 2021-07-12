@@ -229,6 +229,10 @@
                               <td id="RUNTIME_PATH"></td>
                             </tr>
                             <tr>
+                                <td>系统磁盘</td>
+                                <td id="disk_total"></td>
+                            </tr>
+                            <tr>
                                 <td>主要特色</td>
                                 <td>零门槛 / 响应式 / 清爽 / 极简</td>
                             </tr>
@@ -301,10 +305,11 @@
   {{#  }); }}
 </script>
 <script>
-layui.use(['layer','echarts'], function () {
+layui.use(['layer','echarts','element'], function () {
   let $ = layui.jquery,
       layer = layui.layer,
-      echarts = layui.echarts;
+      echarts = layui.echarts,
+      element = layui.element;
 
   //init页面信息
   $.getJSON('/Status/welcome', function (d) {
