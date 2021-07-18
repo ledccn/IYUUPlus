@@ -7,7 +7,7 @@ namespace IYUU\Rss;
 use DOMDocument;
 use Curl\Curl;
 use IYUU\Library\Rpc;
-use app\domain\Rss as domainRss;
+use app\domain\ConfigParser\Rss as domainRss;
 
 abstract class AbstractRss
 {
@@ -107,7 +107,7 @@ abstract class AbstractRss
      */
     protected static function getCliInput($uuid)
     {
-        self::$conf = domainRss::configParser($uuid);
+        self::$conf = domainRss::parser($uuid);
         if (empty(self::$conf['site'])) {
             die('解析计划任务失败：用户未配置的站点。'.PHP_EOL);
         }

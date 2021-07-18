@@ -45,7 +45,10 @@ class Handler extends ExceptionHandler
             'data'  =>  [],
             'msg'   =>  $error
         ];
-        $this->_debug && $rs['traces'] = (string)$exception;
+
+        if ($this->_debug) {
+            $rs['traces'] = (string)$exception;
+        }
         return new Response(200, $header, json_encode($rs, JSON_UNESCAPED_UNICODE));
     }
 }

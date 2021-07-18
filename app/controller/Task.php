@@ -4,9 +4,9 @@ namespace app\controller;
 use support\Request;
 use support\Response;
 use app\domain\Crontab;
-use app\domain\Move as domainMove;
-use app\domain\Reseed as domainReseed;
-use app\domain\Rss as domainRss;
+use app\domain\ConfigParser\Move as domainMove;
+use app\domain\ConfigParser\Reseed as domainReseed;
+use app\domain\ConfigParser\Rss as domainRss;
 
 /**
  * Class Task
@@ -24,7 +24,7 @@ class Task extends BaseController
     {
         $rs = self::RS;
         $uuid = $request->get('uuid');
-        $rs['data'] = domainMove::configParser($uuid);
+        $rs['data'] = domainMove::parser($uuid);
         return json($rs);
     }
 
@@ -37,7 +37,7 @@ class Task extends BaseController
     {
         $rs = self::RS;
         $uuid = $request->get('uuid');
-        $rs['data'] = domainReseed::configParser($uuid);
+        $rs['data'] = domainReseed::parser($uuid);
         return json($rs);
     }
 
@@ -50,7 +50,7 @@ class Task extends BaseController
     {
         $rs = self::RS;
         $uuid = $request->get('uuid');
-        $rs['data'] = domainRss::configParser($uuid);
+        $rs['data'] = domainRss::parser($uuid);
         return json($rs);
     }
 
@@ -65,7 +65,7 @@ class Task extends BaseController
         $uuid = $request->get('uuid');
         $switch = $request->get('switch');
         //TODO...
-        return json(domainReseed::configParser($uuid));
+        return json(domainReseed::parser($uuid));
     }
 
     /**
@@ -93,7 +93,7 @@ class Task extends BaseController
         $rs = self::RS;
         $uuid = $request->get('uuid');
         //TODO...
-        return json(domainReseed::configParser($uuid));
+        return json(domainReseed::parser($uuid));
     }
 
     /**

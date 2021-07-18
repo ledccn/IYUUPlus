@@ -1,7 +1,7 @@
 <?php
 namespace IYUU\Reseed;
 
-use app\domain\Move as domainMove;
+use app\domain\ConfigParser\Move as domainMove;
 use app\domain\Crontab as domainCrontab;
 
 class MoveTorrent extends AutoReseed
@@ -48,7 +48,7 @@ class MoveTorrent extends AutoReseed
         global $argv;
         $cron_name = isset($argv[1]) ? $argv[1] : null;
         is_null($cron_name) and die('缺少命令行参数。');
-        self::$conf = domainMove::configParser($cron_name);
+        self::$conf = domainMove::parser($cron_name);
         // 用户选择的下载器
         self::$clients = self::$conf['clients'];
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;

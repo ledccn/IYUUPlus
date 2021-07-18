@@ -7,7 +7,7 @@ use app\common\exception\BusinessException;
 use app\common\Config;
 use app\common\Constant;
 use app\domain\Config as domainConfig;
-use app\domain\Rss as domainRss;
+use app\domain\ConfigParser\Rss as domainRss;
 use app\domain\Users as domainUsers;
 
 /**

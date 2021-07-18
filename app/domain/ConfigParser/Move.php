@@ -1,5 +1,8 @@
 <?php
-namespace app\domain;
+namespace app\domain\ConfigParser;
+
+use app\domain\ConfigParserInterface;
+use app\domain\Config;
 
 class Move implements ConfigParserInterface
 {
@@ -12,7 +15,7 @@ class Move implements ConfigParserInterface
      * @param string $uuid
      * @return array
      */
-    public static function configParser($uuid = ''):array
+    public static function parser($uuid = ''):array
     {
         $rs = [
             'clients'       => [],

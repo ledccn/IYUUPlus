@@ -6,7 +6,7 @@ use IYUU\Client\AbstractClient;
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
 use app\common\Constant;
-use app\domain\Reseed as domainReseed;
+use app\domain\ConfigParser\Reseed as domainReseed;
 use app\domain\Crontab as domainCrontab;
 
 /**
@@ -144,7 +144,7 @@ class AutoReseed
         global $argv;
         $cron_name = isset($argv[1]) ? $argv[1] : null;
         is_null($cron_name) and die('缺少命令行参数。');
-        self::$conf = domainReseed::configParser($cron_name);
+        self::$conf = domainReseed::parser($cron_name);
         if (empty(self::$conf['sites']) || empty(self::$conf['clients'])) {
             die('解析计划任务失败：站点或客户端为空！可能当前任务已被停止或删除！'.PHP_EOL);
         }

@@ -1,8 +1,8 @@
 <?php
-namespace app\domain;
+namespace app\domain\ConfigParser;
 
-use app\common\Config as Conf;
-use app\common\Constant;
+use app\domain\ConfigParserInterface;
+use app\domain\Config;
 use IYUU\Library\IFile;
 
 /**
@@ -18,7 +18,7 @@ class Reseed implements ConfigParserInterface
      * @param string $uuid
      * @return array
      */
-    public static function configParser($uuid = ''):array
+    public static function parser($uuid = ''):array
     {
         $rs = [
             'sites'   => [],
