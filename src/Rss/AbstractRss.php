@@ -105,7 +105,7 @@ abstract class AbstractRss
      * @param string $uuid 任务标识
      * @return string 类文件名
      */
-    protected static function getCliInput($uuid)
+    private static function getCliInput($uuid)
     {
         self::$conf = domainRss::parser($uuid);
         if (empty(self::$conf['site'])) {
@@ -125,17 +125,14 @@ abstract class AbstractRss
 
     /**
      * 构造方法，配置应用信息
-     * @param bool $init
      */
-    final public function __construct($init = true)
+    final public function __construct()
     {
-        if ($init) {
-            echo $this->site." 正在初始化RSS配置...". PHP_EOL;
-            cli(self::$conf);
-            $this->_initialize();
-            $this->init();
-            echo $this->site." RSS解码类实例化，成功！".PHP_EOL;
-        }
+        echo $this->site." 正在初始化RSS配置...". PHP_EOL;
+        cli(self::$conf);
+        $this->_initialize();
+        $this->init();
+        echo $this->site." RSS解码类实例化，成功！".PHP_EOL;
     }
 
     /**
@@ -163,7 +160,7 @@ abstract class AbstractRss
     }
 
     /**
-     * 初始化 第二步
+     * 初始化 第二步，子类可以重写此方法
      */
     protected function init()
     {
@@ -177,31 +174,11 @@ abstract class AbstractRss
     }
 
     /**
-     * 助手函数
-     * @param DOMDocument $element
-     * @param string $tagName
-     * @param string $attName
-     * @return mixed
-     */
-    protected function getXml($element, $tagName='', $attName='')
-    {
-        if (empty($attName)) {
-            return $element->getElementsByTagName($tagName);
-        }
-        $tag = $element->getElementsByTagName($tagName)->item(0);
-        if ($tag->hasAttributes()) {
-            return $tag->getAttribute($attName);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * 过滤XML文档中不需要的元素
+     * 过滤XML文档中不需要的元素，子类可以重写此方法
      * @param DOMDocument $item
-     * @return mixed
+     * @return DOMDocument | \DOMNode
      */
-    protected function filterNexusPHP(&$item)
+    protected function filterNexusPHP($item)
     {
         $node = $item->getElementsByTagName('description')->item(0);
         if ($node != null) {
@@ -211,7 +188,7 @@ abstract class AbstractRss
     }
 
     /**
-     * NexusPHP通用RSS解码
+     * NexusPHP通用RSS解码，子类可以重写此方法
      * @param string $html
      * @return array
      */
@@ -223,7 +200,7 @@ abstract class AbstractRss
             $xml->loadXML($html);
             $elements = $xml->getElementsByTagName('item');
             foreach ($elements as $item) {
-                $this->filterNexusPHP($item);
+                $item = $this->filterNexusPHP($item);
                 $link = $item->getElementsByTagName('enclosure')->item(0) != null ? $item->getElementsByTagName('enclosure')->item(0)->getAttribute('url') : $item->getElementsByTagName('link')->item(0)->nodeValue;
                 $guid = $item->getElementsByTagName('guid')->item(0) != null ? $item->getElementsByTagName('guid')->item(0)->nodeValue : md5($link);
                 $details = $item->getElementsByTagName('link')->item(0)->nodeValue;
@@ -251,12 +228,12 @@ abstract class AbstractRss
             }
             return $items;
         } catch (\Exception $e) {
-            die('[AbstractRss NexusPHP ERROR] ' . $e->getMessage() . PHP_EOL);
+            die(__METHOD__ . '[ERROR] ' . $e->getMessage() . PHP_EOL);
         }
     }
 
     /**
-     * 公共方法：实现rss订阅下载
+     * 公共方法：实现rss订阅下载，子类可以重写此方法
      * @return void
      */
     public function run()
@@ -274,7 +251,7 @@ abstract class AbstractRss
     }
 
     /**
-     * 请求url，获取html页面
+     * 请求url，获取html页面，子类可以重写此方法
      * @return string
      */
     public function get()
@@ -297,7 +274,7 @@ abstract class AbstractRss
     }
 
     /**
-     * 回调函数
+     * 回调函数，子类可以重写此方法
      * @param string $html
      */
     public function checkCallback($html = '')
@@ -311,7 +288,7 @@ abstract class AbstractRss
     }
 
     /**
-     * 抽象方法，在类中实现
+     * 抽象方法，在子类中实现
      * 解码html为种子数组
      * @param string $html
      * @return array
