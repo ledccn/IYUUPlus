@@ -296,6 +296,23 @@ class Crontab
     }
 
     /**
+     * 清理所有计划任务的日志
+     * @return int
+     */
+    public static function clearAllLogs():int
+    {
+        $cron = Config::getCrontab();
+        $count = 0;
+        array_walk($cron, function ($v, $uuid) use (&$count) {
+            if (static::clearLogs($uuid)) {
+                $count++;
+            }
+        });
+
+        return $count;
+    }
+
+    /**
      * 异步执行命令
      * @descr 原理为php的程序执行函数后台执行
      * @param string $cmd

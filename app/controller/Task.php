@@ -129,6 +129,20 @@ class Task extends BaseController
     }
 
     /**
+     * 清理所有计划任务的日志
+     * @param Request $request
+     * @return Response
+     */
+    public function clearAllLogs(Request $request): Response
+    {
+        $rs = self::RS;
+        $rs['data'] = [
+            'success' => Crontab::clearAllLogs()
+        ];
+        return json($rs);
+    }
+
+    /**
      * 清理任务缓存
      * @param Request $request
      * @return Response
