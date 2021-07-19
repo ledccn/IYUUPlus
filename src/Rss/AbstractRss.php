@@ -182,7 +182,7 @@ abstract class AbstractRss
     {
         $node = $item->getElementsByTagName('description')->item(0);
         if ($node != null) {
-            return $item->removeChild($node);
+            $item->removeChild($node);
         }
         return $item;
     }
