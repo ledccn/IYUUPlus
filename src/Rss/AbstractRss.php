@@ -91,7 +91,7 @@ abstract class AbstractRss
         if (!is_file($file)) {
             die($file.' 文件不存在');
         }
-        $className = 'IYUU\Rss\\'.$filename;
+        $className = 'IYUU\\Rss\\'.$filename;
         if (class_exists($className)) {
             echo $filename." RSS解码类正在实例化！".PHP_EOL;
             return new $className();
@@ -125,14 +125,17 @@ abstract class AbstractRss
 
     /**
      * 构造方法，配置应用信息
+     * @param bool $init    是否初始化（domainRss获取全部站点名时候，需要到）
      */
-    final public function __construct()
+    final public function __construct($init = true)
     {
-        echo $this->site." 正在初始化RSS配置...". PHP_EOL;
-        cli(self::$conf);
-        $this->_initialize();
-        $this->init();
-        echo $this->site." RSS解码类实例化，成功！".PHP_EOL;
+        if ($init) {
+            echo $this->site." 正在初始化RSS配置...". PHP_EOL;
+            cli(self::$conf);
+            $this->_initialize();
+            $this->init();
+            echo $this->site." RSS解码类实例化，成功！".PHP_EOL;
+        }
     }
 
     /**

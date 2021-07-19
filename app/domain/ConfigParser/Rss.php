@@ -86,7 +86,7 @@ class Rss implements ConfigParserInterface
             }
             $classname = "IYUU\\Rss\\".$filename;
             if (class_exists($classname)) {
-                $obj = new $classname();
+                $obj = new $classname(false);
                 $data[] = $obj->site;
             }
         }
