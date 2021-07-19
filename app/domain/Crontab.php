@@ -321,6 +321,9 @@ class Crontab
     public static function execute($cmd = '', $uuid = '')
     {
         $logFile = self::getLogFile($uuid);
+        // 清理上次的日志
+        self::clearLogs($uuid);
+        // 运行命令
         if(DIRECTORY_SEPARATOR === '\\')
         {
             pclose(popen('start /B '.$cmd.' >> '.$logFile, 'r'));
