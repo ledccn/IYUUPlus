@@ -315,12 +315,12 @@ class Crontab
     /**
      * 异步执行命令
      * @descr 原理为php的程序执行函数后台执行
-     * @param string $cmd
-     * @param string $logFile
+     * @param string $cmd       任务执行的命令
+     * @param string $uuid      任务的UUID，通常作为唯一的日志文件名
      */
-    public static function execute($cmd = '', $logFile = '')
+    public static function execute($cmd = '', $uuid = '')
     {
-        $logFile = self::getLogFile($logFile);
+        $logFile = self::getLogFile($uuid);
         if(DIRECTORY_SEPARATOR === '\\')
         {
             pclose(popen('start /B '.$cmd.' >> '.$logFile, 'r'));
