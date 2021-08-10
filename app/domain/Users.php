@@ -40,6 +40,7 @@ class Users
         $api_url = Constant::API_BASE;
         $api_action = Constant::API['sites'];
         $url = sprintf('%s%s?sign=%s&version=%s', $api_url, $api_action, $token, IYUU_VERSION());
+        file_put_contents(db_path().'/_url.json',print_r($url, true));
         $res = $curl->get($url);
         $rs = json_decode($res->response, true);
         file_put_contents(db_path().'/_response.json',print_r($res->response, true));
