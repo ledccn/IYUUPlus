@@ -42,6 +42,8 @@ class Users
         $url = sprintf('%s%s?sign=%s&version=%s', $api_url, $api_action, $token, IYUU_VERSION());
         $res = $curl->get($url);
         $rs = json_decode($res->response, true);
+        file_put_contents(db_path().'/_response.json',print_r($res->response, true));
+        file_put_contents(db_path().'/_api.json',print_r($rs, true));
         if (isset($rs['ret']) && ($rs['ret'] === 200) && isset($rs['data']['sites']) && is_array($rs['data']['sites'])) {
             $sites = array_column($rs['data']['sites'], null, 'site');
             Conf::set('sites', $sites, Constant::config_format);

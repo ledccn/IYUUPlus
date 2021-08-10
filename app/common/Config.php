@@ -33,6 +33,9 @@ class Config
         clearstatcache();
         $file_name = $absolutePath ? $filename : static::createFilePath($filename, $type);
 
+        if (!is_writable(dirname($file_name))) {
+            return false;
+        }
         if (file_exists($file_name)) {
             chmod($file_name, 0777);
         } else {
