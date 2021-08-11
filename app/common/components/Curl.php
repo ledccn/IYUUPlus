@@ -38,6 +38,9 @@ class Curl
                 self::$_instance->reset();
             }
         }
+        // 设置不检查证书
+        self::$_instance->setOpt(CURLOPT_SSL_VERIFYPEER, false);
+        #self::$_instance->setOpt(CURLOPT_SSL_VERIFYHOST, false);
 
         // 设置UserAgent
         self::$_instance->setUserAgent(Constant::UserAgent);
