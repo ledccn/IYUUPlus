@@ -110,12 +110,12 @@ function run_exec($cmd = '')
 
 /**
  * 转换成易读的容量格式(包含小数)
- * @param int $bytes            字节
+ * @param int|float $bytes            字节
  * @param string $delimiter     分隔符 [&nbsp; | <br />]
  * @param int $decimals         保留小数点
  * @return string
  */
-function dataSize(int $bytes, string $delimiter = '', int $decimals = 2):string
+function dataSize($bytes, string $delimiter = '', int $decimals = 2):string
 {
     $type = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
     $i = 0;
