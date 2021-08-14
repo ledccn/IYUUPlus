@@ -55,16 +55,24 @@ function get_current_git_filemtime($branch = 'master'):string
 function ff($text = '', $desp = '')
 {
     $token = env('IYUU', '');
-    $desp = ($desp=='')?date("Y-m-d H:i:s") :$desp;
-    $postdata = http_build_query(array(
+    $desp = ($desp == '') ? date("Y-m-d H:i:s") : $desp;
+    $postdata = array(
         'text' => $text,
         'desp' => $desp
-    ));
-    $opts = array('http' =>	array(
-        'method'  => 'POST',
-        'header'  => 'Content-type: application/x-www-form-urlencoded',
-        'content' => $postdata
-    ));
+    );
+
+    $opts = array(
+        'http' => array(
+            'method'  => 'POST',
+            'header'  => 'Content-type: application/x-www-form-urlencoded',
+            'content' => http_build_query($postdata)
+        ),
+        // 解决SSL证书验证失败的问题
+        'ssl' => array(
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+        )
+    );
     $context  = stream_context_create($opts);
     $result = file_get_contents('http://iyuu.cn/'.$token.'.send', false, $context);
     return $result;
