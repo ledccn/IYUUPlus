@@ -73,7 +73,7 @@ class Curl
     /**
      * POST请求
      * @param string $url
-     * @param array $data   数据
+     * @param array|object|string $data   数据
      * @param bool $asJson  是否Json
      * @param bool $reset   是否重置Curl(默认true)
      * @return ICurl
@@ -92,7 +92,7 @@ class Curl
     /**
      * 简易POST
      * @param string $url
-     * @param $data
+     * @param array|object|string $data
      * @return false|string
      */
     public static function http_post(string $url, $data)
@@ -101,7 +101,7 @@ class Curl
             'http' => array(
                 'method'  => 'POST',
                 'header'  => 'Content-type: ' . static::CONTENT_TYPE_DEFAULT,
-                'content' => http_build_query($data),
+                'content' => (is_array($data) || is_object($data)) ? http_build_query($data) : $data,
                 'timeout' => 5
             ),
             // 解决SSL证书验证失败的问题
