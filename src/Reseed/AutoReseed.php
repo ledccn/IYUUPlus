@@ -816,7 +816,7 @@ class AutoReseed
             $limitRule = self::$_sites[$siteName]['limitRule'];
             if (isset($limitRule['count']) && isset($limitRule['sleep'])) {
                 if ($limitRule['count'] <= 0) {
-                    echo '-------当前站点辅种数量已满足规则，保障账号安全已跳过：'.$_url.PHP_EOL.PHP_EOL;
+                    echo '-------每次运行辅种的时候，超过流控限制，会在下次运行辅种的时候，继续添加辅种。当前站点辅种数量已满足规则，保障账号安全已跳过：'.$_url.PHP_EOL.PHP_EOL;
                     self::$wechatMsg['reseedPass']++;
                     return false;
                 } else {

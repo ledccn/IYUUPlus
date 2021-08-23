@@ -114,7 +114,9 @@
       <div class="layui-input-inline">
         <input type="number" name="limitRule[sleep]" lay-verify="required" placeholder="间隔时间" autocomplete="off" class="layui-input" value="20">
       </div>
+      <div class="layui-form-mid layui-word-aux">每运行一次最多添加{单次辅种数}个种子，每添加一个种子需等待{间隔时间}秒。为账号安全，每次运行辅种的时候，超过流控限制，会在下次运行辅种的时候，继续添加辅种。</div>
     </div>
+    
   </div>
   {{# } }}
   {{# if (d.urlJoin.visible === true) { }}
