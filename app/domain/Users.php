@@ -46,11 +46,10 @@ class Users
         if (empty($res->response) || empty($rs) || !is_array($rs)) {
             $rs = Constant::RS;
             $rs['ret'] = 500;
-            $rs['msg'] = '无法访问api.iyuu.cn接口，请检查本地网络；或重新创建容器，网络模式改为HOST模式。';
+            $rs['msg'] = "无法访问{$api_url}接口，请检查本地网络；或重新创建容器，网络模式改为HOST模式。";
             return $rs;
         }
         file_put_contents(db_path().'/_response.json',print_r($res->response, true));
-        file_put_contents(db_path().'/_api.json',print_r($rs, true));
         if (isset($rs['ret']) && ($rs['ret'] === 200) && isset($rs['data']['sites']) && is_array($rs['data']['sites'])) {
             $sites = array_column($rs['data']['sites'], null, 'site');
             Conf::set('sites', $sites, Constant::config_format);
@@ -92,6 +91,12 @@ class Users
         ];
         $res = $curl->get($url, $data);
         $rs = json_decode($res->response, true);
+        if (empty($res->response) || empty($rs) || !is_array($rs)) {
+            $rs = Constant::RS;
+            $rs['ret'] = 500;
+            $rs['msg'] = "无法访问{$url}接口，请检查本地网络；或重新创建容器，网络模式改为HOST模式。";
+            return $rs;
+        }
         if (isset($rs['ret']) && ($rs['ret'] === 200) && isset($rs['data']['success']) && $rs['data']['success']) {
             //绑定成功
             return self::checkToken($token, $request);
