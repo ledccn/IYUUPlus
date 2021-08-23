@@ -43,6 +43,12 @@ class Users
         file_put_contents(db_path().'/_url.json',print_r($url, true));
         $res = $curl->get($url);
         $rs = json_decode($res->response, true);
+        if (empty($res->response) || empty($rs) || !is_array($rs)) {
+            $rs = Constant::RS;
+            $rs['ret'] = 500;
+            $rs['msg'] = '无法访问api.iyuu.cn接口，请检查本地网络；或重新创建容器，网络模式改为HOST模式。';
+            return $rs;
+        }
         file_put_contents(db_path().'/_response.json',print_r($res->response, true));
         file_put_contents(db_path().'/_api.json',print_r($rs, true));
         if (isset($rs['ret']) && ($rs['ret'] === 200) && isset($rs['data']['sites']) && is_array($rs['data']['sites'])) {
