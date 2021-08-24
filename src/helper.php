@@ -97,7 +97,7 @@ function download($url, $cookies='', $useragent='', $method = 'GET')
 
 /**
  * @brief 文件大小格式化为MB
- * @param string $from 文件大小
+ * @param string $from 文件大小(如：100GB)
  * @return int 单位MB
  */
 function convertToMB($from)
@@ -325,20 +325,6 @@ function wlog($data='', $name = '', $path = '')
     $worldsnum = @fwrite($pointer, $show_data);
     @fclose($pointer);
     return $worldsnum;
-}
-
-//PHP stdClass Object转array
-function object_array($array)
-{
-    if (is_object($array)) {
-        $array = (array)$array;
-    }
-    if (is_array($array)) {
-        foreach ($array as $key=>$value) {
-            $array[$key] = object_array($value);
-        }
-    }
-    return $array;
 }
 
 /**
