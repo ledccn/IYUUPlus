@@ -17,35 +17,15 @@ class ptpbd extends AbstractRss
      * @var string
      */
     public $rss_page = '';
+
     /**
      * 抽象方法，在类中实现
      * 请求url，获取html页面
-     * @param string $url
      * @return string|null
      */
-    public function get($url = '')
+    public function get()
     {
-        // 1. 入口参数为准
-        if ($url == '') {
-            $url = $this->rss_page;
-        }
-
-        // 2. 读取配置
-        if ($rss_page = self::$conf['urladdress'] ?? '') {
-            $url = $rss_page;
-        }
-        if (empty($url)) {
-            die('缺少 rss.page 配置');
-        }
-
-        echo $this->site." 正在请求RSS... {$url}". PHP_EOL;
-        $res = $this->curl->get($this->host . $url);
-        if ($res->http_status_code == 200) {
-            echo "RSS获取信息，成功！ \n";
-            return $res->response;
-        }
-        echo "RSS获取信息失败，请重试！ \n";
-        return null;
+        return parent::get();
     }
 
     /**

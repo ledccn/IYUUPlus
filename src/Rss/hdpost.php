@@ -34,14 +34,17 @@ class hdpost extends AbstractRss
     public function get($url = '')
     {
         // 1. 入口参数为准
-        if ($url == '') {
+        if (!empty(static::$conf['urladdress'])) {
+            $url = static::$conf['urladdress'];
+        } else {
             $url = $this->rss_page;
         }
 
         // 2. 替换
         $url = str_replace("{passkey}", $this->passkey, $url);
         echo $this->site." 正在请求RSS... {$url}". PHP_EOL;
-        $res = $this->curl->get($this->host . $url);
+        $url = (stripos($url, 'http://') === 0 || stripos($url, 'https://') === 0) ? $url : $this->host . $url;
+        $res = $this->curl->get($url);
         if ($res->http_status_code == 200) {
             echo "RSS获取信息，成功！ \n";
             return $res->response;

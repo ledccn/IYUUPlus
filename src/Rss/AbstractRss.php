@@ -6,6 +6,7 @@ namespace IYUU\Rss;
 
 use DOMDocument;
 use Curl\Curl;
+use DOMNode;
 use IYUU\Library\Rpc;
 use app\domain\ConfigParser\Rss as domainRss;
 
@@ -145,7 +146,7 @@ abstract class AbstractRss
     {
         //常规配置
         $default = empty(static::$conf['default']) ? [] : static::$conf['default'];
-        $this->userAgent = isset($default['ua']) && $default['ua'] ? $default['ua'] : $this->userAgent;
+        $this->userAgent = !empty($default['ua']) ? $default['ua'] : $this->userAgent;
 
         //云端下发
         $sites = static::$conf['sites'];
@@ -156,7 +157,7 @@ abstract class AbstractRss
         // 初始化curl
         $this->curl = new Curl();
         $this->curl->setOpt(CURLOPT_SSL_VERIFYPEER, false); // 禁止验证对等证书
-        $this->curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);     // 检查证书
+        //$this->curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);     // 检查证书
         $this->curl->setOpt(CURLOPT_CONNECTTIMEOUT, self::CONNECTTIMEOUT);  // 超时
         $this->curl->setOpt(CURLOPT_TIMEOUT, self::TIMEOUT);                // 超时
         $this->curl->setUserAgent($this->userAgent);
@@ -169,8 +170,8 @@ abstract class AbstractRss
     {
         //站点配置
         $config = static::$conf['site'];
-        $this->cookies = isset($config['cookie']) && $config['cookie'] ? $config['cookie'] : '';
-        $this->passkey = isset($config['passkey']) && $config['passkey'] ? $config['passkey'] : '';
+        $this->cookies = !empty($config['cookie']) ? $config['cookie'] : '';
+        $this->passkey = !empty($config['passkey']) ? $config['passkey'] : '';
         if (empty($this->passkey)) {
             die($this->site.' 没有配置密钥，初始化错误。'.PHP_EOL);
         }
@@ -179,7 +180,7 @@ abstract class AbstractRss
     /**
      * 过滤XML文档中不需要的元素，子类可以重写此方法
      * @param DOMDocument $item
-     * @return DOMDocument | \DOMNode
+     * @return DOMDocument | DOMNode
      */
     protected function filterNexusPHP($item)
     {
@@ -263,6 +264,9 @@ abstract class AbstractRss
             $url = static::$conf['urladdress'];
         } else {
             $url = $this->rss_page;
+        }
+        if (empty($url)) {
+            die('缺少 rss.page 配置');
         }
         $url = str_replace("{}", $this->passkey, $url);
         echo $this->site." 正在请求RSS... {$url}". PHP_EOL;

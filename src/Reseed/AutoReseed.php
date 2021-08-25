@@ -542,7 +542,7 @@ class AutoReseed
                     $reseedPass = false;    // 标志：跳过辅种
 
                     $cookie = trim(self::$_sites[$siteName]['cookie']);
-                    $userAgent = self::$conf['default']['ua'];
+                    $userAgent = empty(self::$conf['default']['ua']) ? Constant::UserAgent : self::$conf['default']['ua'];
                     switch ($siteName) {
                         case 'hdchina':
                             // 请求详情页
