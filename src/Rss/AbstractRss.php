@@ -221,7 +221,7 @@ abstract class AbstractRss
                 $torrent['filename'] = $id.'.torrent';
                 $torrent['type'] = 0;   // 免费0
                 $torrent['time'] = date("Y-m-d H:i:s", $time);
-                $torrent['size'] = getFilesize($length);
+                $torrent['size'] = dataSize($length);
                 $torrent['length'] = $length;
                 $torrent['guid'] = $guid;
                 $items[] = $torrent;

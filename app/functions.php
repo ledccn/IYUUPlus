@@ -135,33 +135,3 @@ function dataSize($bytes, string $delimiter = '', int $decimals = 2):string
 
     return number_format($bytes, $decimals) . $delimiter . $type[$i];
 }
-
-/**
- * 大写 PP 调试函数(CLI使用)
- * @param mixed $data
- * @param bool $echo
- * @return string
- */
-function PP($data, bool $echo = false)
-{
-    $hr = PHP_EOL.'******************************'.\date('Y-m-d H:i:s').PHP_EOL;
-    $str = $hr;
-    switch (true) {
-        case is_bool($data):
-            $show_data = $data ? 'true' : 'false';
-            break;
-        case is_null($data):
-            $show_data = 'null';
-            break;
-        default:
-            $show_data = print_r($data, true);
-            break;
-    }
-    $str .= $show_data;
-    $str .= $hr;
-    if ($echo) {
-        echo $str;
-        return '';
-    }
-    return $str;
-}

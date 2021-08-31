@@ -6,6 +6,7 @@ use Exception;
 use IYUU\Client\AbstractClient;
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
+use app\common\components\Curl as ICurl;
 use app\common\Constant;
 use app\domain\ConfigParser\Reseed as domainReseed;
 use app\domain\Crontab as domainCrontab;
@@ -1090,17 +1091,10 @@ class AutoReseed
     {
         $token = static::$conf['iyuu.cn'];
         $desp = empty($desp) ? date("Y-m-d H:i:s") : $desp;
-        $postdata = http_build_query(array(
+        $data = array(
             'text' => $text,
             'desp' => $desp
-        ));
-        $opts = array('http' =>	array(
-            'method'  => 'POST',
-            'header'  => 'Content-type: application/x-www-form-urlencoded',
-            'content' => $postdata
-        ));
-        $context  = stream_context_create($opts);
-        $result = file_get_contents('https://iyuu.cn/'.$token.'.send', false, $context);
-        return  $result;
+        );
+        return ICurl::http_post('https://iyuu.cn/'.$token.'.send', $data);
     }
 }

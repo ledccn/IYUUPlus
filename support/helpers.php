@@ -276,7 +276,7 @@ function cpu_count() {
  * CLI打印调试
  * @param $data
  * @param bool $echo
- * @return string|null
+ * @return string
  */
 function cli($data, $echo = true)
 {
@@ -292,7 +292,7 @@ function cli($data, $echo = true)
     $str .= PHP_EOL.'----------------------------------------memory_get_usage:'.memory_get_usage(true).PHP_EOL.PHP_EOL;
     if ($echo) {
         echo $str;
-        return null;
+        return '';
     }
     return $str;
 }

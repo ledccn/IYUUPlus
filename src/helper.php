@@ -69,29 +69,30 @@ function download($url, $cookies='', $useragent='', $method = 'GET')
         "Content-Type:application/x-www-form-urlencoded",
         'User-Agent: '.$useragent);
     $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
     if ($method === 'POST') {
         curl_setopt($ch, CURLOPT_POST, true);
     }
     if (stripos($url, 'https://') === 0) {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_SSLVERSION, 1);
+        //curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        //curl_setopt($ch, CURLOPT_SSLVERSION, 1);
     }
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-    curl_setopt($ch, CURLOPT_COOKIE, $cookies);
-    curl_setopt($ch, CURLOPT_URL, $url);
+    if (!empty($cookies)) {
+        curl_setopt($ch, CURLOPT_COOKIE, $cookies);
+    }
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
     curl_setopt($ch, CURLOPT_TIMEOUT, 600);
+    // 2021年7月2日02:04:22
+    #curl_setopt($ch, CURLOPT_HEADER, false);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);    // 自动跳转，跟随请求Location
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 2);         // 递归次数
+
     $data = curl_exec($ch);
     $status = curl_getinfo($ch);
     curl_close($ch);
-    if (isset($status['http_code']) && $status['http_code'] == 200) {
-        return $data;
-    }
-    if (isset($status['http_code']) && $status['http_code'] == 302) {
-        return download($status['redirect_url'], $cookies, $useragent);
-    }
     return $data;
 }
 
@@ -118,38 +119,6 @@ function convertToMB($from)
         default:
             return $from;
     }
-}
-
-/**
- * 字节数Byte转换为KB、MB、GB、TB
- * @param $num
- * @return string
- */
-function getFilesize($num)
-{
-    $p = 0;
-    $format='bytes';
-    if ($num>0 && $num<1024) {
-        return number_format($num).' '.$format;
-    }
-    if ($num>=1024 && $num<pow(1024, 2)) {
-        $p = 1;
-        $format = 'KB';
-    }
-    if ($num>=pow(1024, 2) && $num<pow(1024, 3)) {
-        $p = 2;
-        $format = 'MB';
-    }
-    if ($num>=pow(1024, 3) && $num<pow(1024, 4)) {
-        $p = 3;
-        $format = 'GB';
-    }
-    if ($num>=pow(1024, 4) && $num<pow(1024, 5)) {
-        $p = 3;
-        $format = 'TB';
-    }
-    $num /= pow(1024, $p);
-    return number_format($num, 2).$format;
 }
 
 /**
@@ -336,8 +305,8 @@ function ShowTableSites($dir = 'Protocols', $filter = array())
 {
     // 过滤的文件
     switch ($dir) {
-        case 'Protocols':
-            $filter = ['axxxx','decodeBase'];
+        case 'Spiders':
+            $filter = ['SitesBase'];
             break;
         case 'Rss':
             $filter = ['AbstractRss'];

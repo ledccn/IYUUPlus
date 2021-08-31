@@ -93,15 +93,16 @@ class Curl
      * 简易POST
      * @param string $url
      * @param array|object|string $data
+     * @param bool $asJson
      * @return false|string
      */
-    public static function http_post(string $url, $data)
+    public static function http_post(string $url, $data, bool $asJson = false)
     {
         $opts = array(
             'http' => array(
                 'method'  => 'POST',
-                'header'  => 'Content-type: ' . static::CONTENT_TYPE_DEFAULT,
-                'content' => (is_array($data) || is_object($data)) ? http_build_query($data) : $data,
+                'header'  => 'Content-type: ' . ($asJson ? static::CONTENT_TYPE_JSON : static::CONTENT_TYPE_DEFAULT),
+                'content' => (is_array($data) || is_object($data)) ? ($asJson ? json_encode($data, JSON_UNESCAPED_UNICODE) : http_build_query($data)) : $data,
                 'timeout' => 5
             ),
             // 解决SSL证书验证失败的问题
