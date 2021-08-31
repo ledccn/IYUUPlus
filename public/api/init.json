@@ -207,17 +207,6 @@
 							"assgin_admin_usernames": null
 						},
 						{
-							"id": 29585,
-							"title": "标签设置",
-							"icon": "fa fa-tags fa-fw",
-							"href": "page/setting/tags.html",
-							"target": "_self",
-							"sort_num": 5,
-							"parent_id": 80638,
-							"assign_admin_roles": "",
-							"assgin_admin_usernames": null
-						},
-						{
 							"id": 61661,
 							"title": "过滤器设置",
 							"icon": "fa fa-filter fa-fw",

@@ -64,4 +64,14 @@ class Constant
         'data'  =>  [],
         'msg'   =>  ''
     ];
+
+    /**
+     * 站点名转换为文件名，所使用的映射表
+     */
+    const SITENAME_TO_FILENAME_MAP = [
+        '1ptba' => 'ptba',
+        '52pt'  => 'site52pt',
+        'm-team'=> 'mteam',
+        'hd-torrents'=> 'hdtorrents',
+    ];
 }

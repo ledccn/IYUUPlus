@@ -35,8 +35,10 @@ class Reseed implements ConfigParserInterface
             $rs['iyuu.cn'] = $iyuu['iyuu.cn'];
 
             //默认
-            $default = Config::getDefault();
-            $rs['default'] = $default;
+            $rs['default'] = Config::getDefault();
+
+            //微信通知
+            $rs['weixin'] = Config::getWeixin();
 
             //解析站点
             $sites = Config::getUserSites();

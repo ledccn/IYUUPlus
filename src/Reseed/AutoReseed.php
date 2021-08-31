@@ -2,6 +2,7 @@
 namespace IYUU\Reseed;
 
 use Curl\Curl;
+use Exception;
 use IYUU\Client\AbstractClient;
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
@@ -77,6 +78,10 @@ class AutoReseed
      * @var null | Curl
      */
     protected static $curl = null;
+    /**
+     * 进程pid文件
+     * @var string
+     */
     protected static $pid_file = '';
     /**
      * 退出状态码
@@ -119,7 +124,7 @@ class AutoReseed
     {
         self::$curl = new Curl();
         self::$curl->setOpt(CURLOPT_SSL_VERIFYPEER, false);
-        self::$curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);
+        //self::$curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);
 
         self::getCliInput();
         self::Oauth();
@@ -232,10 +237,9 @@ class AutoReseed
     {
         echo microtime(true).' 辅种版本号：' . self::VER . PHP_EOL;
         $list = [
-            ' gitee源码仓库：https://gitee.com/ledc/IYUUAutoReseed',
-            ' github源码仓库：https://github.com/ledccn/IYUUAutoReseed',
-            ' 教程：https://gitee.com/ledc/IYUUAutoReseed/tree/master/wiki',
-            ' 问答社区：http://wenda.iyuu.cn',
+            ' gitee源码仓库：https://gitee.com/ledc/iyuuplus',
+            ' github源码仓库：https://github.com/ledccn/IYUUPlus',
+            ' 教程：https://www.iyuu.cn',
             ' 【IYUU自动辅种交流】QQ群：859882209、931954050、924099912'.PHP_EOL,
             ' 正在连接IYUUAutoReseed服务器，查询支持列表……'.PHP_EOL
         ];
@@ -250,7 +254,7 @@ class AutoReseed
             if (!empty($rs['msg'])) {
                 die($rs['msg'].PHP_EOL);
             }
-            die('网络故障或远端服务器无响应，请稍后再试！！！');
+            die('网络故障或远端服务器无响应，请稍后再试！！！'.PHP_EOL.'如果多次出现此提示，请修改您设置的执行周期（请勿整点、半点执行），错峰辅种。');
         }
         self::$sites = array_column($sites, null, 'id');
         // 初始化辅种检查规则    2020年12月12日新增
@@ -313,7 +317,7 @@ class AutoReseed
                 static::$links[$k]['root_folder'] = isset($v['root_folder']) ? $v['root_folder'] : 1;
                 $result = $client->status();
                 print $v['type'].'：'.$v['host']." Rpc连接 [{$result}]".PHP_EOL;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 die('[连接错误] '. $v['host'] . ' ' . $e->getMessage() . PHP_EOL);
             }
         }
@@ -392,7 +396,7 @@ class AutoReseed
                     echo '[下载器类型错误] '.$type. PHP_EOL. PHP_EOL;
                     break;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             echo '[添加下载任务出错] ' . $e->getMessage() . PHP_EOL;
         }
         return false;
@@ -477,7 +481,7 @@ class AutoReseed
         wlog($res, 'Response_'.$clientKey);
         $data = isset($res['data']) && $res['data'] ? $res['data'] : array();
         if (empty($data)) {
-            echo "clients_".$clientKey." 没有查询到可辅种数据".PHP_EOL.PHP_EOL;
+            echo "clients_".$clientKey."【".$clientValue['_config']['name']."】 没有查询到可辅种数据".PHP_EOL.PHP_EOL;
             return;
         }
         // 判断返回值
@@ -681,7 +685,7 @@ class AutoReseed
                 $ret = self::add($clientKey, $url, $downloadDir);
 
                 // 规范日志内容
-                $log = 'clients_'. $clientKey . PHP_EOL . $downloadDir . PHP_EOL . $downloadUrl . PHP_EOL.PHP_EOL;
+                $log = 'clients_'. $clientKey . "【".self::$links[$clientKey]['_config']['name']."】" . PHP_EOL . $downloadDir . PHP_EOL . $downloadUrl . PHP_EOL.PHP_EOL;
                 if ($ret) {
                     // 成功
                     // 操作流控参数
@@ -769,7 +773,7 @@ class AutoReseed
         if ($reseed_check && is_array($reseed_check)) {
             // 循环检查所有项目
             foreach ($reseed_check as $item) {
-                echo "clients_".$k."正在循环检查所有项目... {$siteName}".PHP_EOL;
+                echo "clients_".$k."【".self::$links[$k]['_config']['name']."】正在循环检查所有项目... {$siteName}".PHP_EOL;
                 $item = ($item === 'uid' ? 'id' : $item);   // 兼容性处理
                 if (empty(self::$_sites[$siteName]) || empty(self::$_sites[$siteName][$item])) {
                     $msg =  '-------因当前' .$siteName. "站点未设置".$item."，已跳过！！".PHP_EOL.PHP_EOL;
@@ -796,7 +800,7 @@ class AutoReseed
             echo '-------已跳过不辅种的站点：'.$_url.PHP_EOL.PHP_EOL;
             self::$wechatMsg['reseedPass']++;
             // 写入日志文件，供用户手动辅种
-            wlog('clients_'.$k.PHP_EOL.$downloadDir.PHP_EOL.$_url.PHP_EOL.PHP_EOL, $siteName);
+            wlog('clients_'.$k."【".self::$links[$k]['_config']['name']."】".PHP_EOL.$downloadDir.PHP_EOL.$_url.PHP_EOL.PHP_EOL, $siteName);
             return false;
         }
         // 流控检测
@@ -807,7 +811,7 @@ class AutoReseed
                 $details_page = str_replace('{}', $torrent_id, 'details.php?id={}&hit=1');
                 $_url = 'https://' .self::$sites[$sid]['base_url']. '/' .$details_page;
             }
-            wlog('clients_'.$k.PHP_EOL.$downloadDir.PHP_EOL."-------因当前" .$siteName. "站点触发流控，已跳过！！ {$_url}".PHP_EOL.PHP_EOL, 'reseedLimit');
+            wlog('clients_'.$k."【".self::$links[$k]['_config']['name']."】".PHP_EOL.$downloadDir.PHP_EOL."-------因当前" .$siteName. "站点触发流控，已跳过！！ {$_url}".PHP_EOL.PHP_EOL, 'reseedLimit');
             self::$wechatMsg['reseedSkip']++;
             return false;
         }
@@ -816,7 +820,7 @@ class AutoReseed
             $limitRule = self::$_sites[$siteName]['limitRule'];
             if (isset($limitRule['count']) && isset($limitRule['sleep'])) {
                 if ($limitRule['count'] <= 0) {
-                    echo '-------每次运行辅种的时候，超过流控限制，会在下次运行辅种的时候，继续添加辅种。当前站点辅种数量已满足规则，保障账号安全已跳过：'.$_url.PHP_EOL.PHP_EOL;
+                    echo '-------每次运行辅种，下载种子超过流控限制，会在下次运行辅种的时候，继续添加辅种。当前站点辅种数量已满足规则，保障账号安全已跳过：'.$_url.PHP_EOL.PHP_EOL;
                     self::$wechatMsg['reseedPass']++;
                     return false;
                 } else {
@@ -983,7 +987,13 @@ class AutoReseed
      */
     protected static function wechatMessage()
     {
-        if (isset(self::$conf['notify_on_change']) && self::$conf['notify_on_change'] && self::$wechatMsg['reseedSuccess'] == 0 && self::$wechatMsg['reseedError'] == 0) {
+        $weixin = self::$conf['weixin'];
+        // 1. 检查微信通知开关
+        if (empty($weixin['switch'])) {
+            return '';
+        }
+        // 2. 检查变化通知开关
+        if (!empty($weixin['notify_on_change']) && self::$wechatMsg['reseedSuccess'] === 0 && self::$wechatMsg['reseedError'] === 0) {
             return '';
         }
         $br = PHP_EOL;
@@ -1090,7 +1100,7 @@ class AutoReseed
             'content' => $postdata
         ));
         $context  = stream_context_create($opts);
-        $result = file_get_contents('http://iyuu.cn/'.$token.'.send', false, $context);
+        $result = file_get_contents('https://iyuu.cn/'.$token.'.send', false, $context);
         return  $result;
     }
 }

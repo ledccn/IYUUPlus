@@ -226,6 +226,15 @@ class Config
     }
 
     /**
+     * 微信配置
+     * @return array
+     */
+    public static function getWeixin():array
+    {
+        return Conf::get(self::filename['weixin'], Constant::config_format, []);
+    }
+
+    /**
      * 根据uuid获取计划任务配置
      * @param string $uuid
      * @return array

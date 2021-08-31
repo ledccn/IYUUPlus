@@ -7,6 +7,7 @@ namespace IYUU\Rss;
 use DOMDocument;
 use Curl\Curl;
 use DOMNode;
+use app\common\Constant;
 use IYUU\Library\Rpc;
 use app\domain\ConfigParser\Rss as domainRss;
 
@@ -71,12 +72,7 @@ abstract class AbstractRss
     /**
      * 站点名转换为文件名，所使用的映射表
      */
-    const SITENAME_TO_FILENAME_MAP = [
-        '1ptba' => 'ptba',
-        '52pt'  => 'site52pt',
-        'm-team'=> 'mteam',
-        'hd-torrents'=> 'hdtorrents',
-    ];
+    const SITENAME_TO_FILENAME_MAP = Constant::SITENAME_TO_FILENAME_MAP;
 
     /**
      * 实例化
