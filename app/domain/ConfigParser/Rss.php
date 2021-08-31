@@ -3,6 +3,7 @@ namespace app\domain\ConfigParser;
 
 use app\domain\ConfigParserInterface;
 use app\domain\Config;
+use IYUU\Spiders\SitesBase;
 
 class Rss implements ConfigParserInterface
 {
@@ -100,7 +101,7 @@ class Rss implements ConfigParserInterface
      * @param array $data
      * @return array
      */
-    public static function formatRssSites(array $data = []):array
+    public static function formatSites(array $data = []):array
     {
         $sites = Config::getSites();
         $sites = array_filter($sites, function ($k) use ($data) {

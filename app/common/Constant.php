@@ -74,4 +74,9 @@ class Constant
         'm-team'=> 'mteam',
         'hd-torrents'=> 'hdtorrents',
     ];
+
+    /**
+     * 下载种子，使用的请求方法
+     */
+    const SITE_DOWNLOAD_METHOD_POST = ['hdsky', 'hdcity'];
 }

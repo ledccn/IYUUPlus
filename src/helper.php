@@ -63,7 +63,7 @@ function send($site = '', $torrent = array())
  * @param string $method
  * @return mixed 返回的数据
  */
-function download($url, $cookies='', $useragent='', $method = 'GET')
+function download($url, $cookies = '', $useragent = '', $method = 'GET')
 {
     $header = array(
         "Content-Type:application/x-www-form-urlencoded",
@@ -103,7 +103,7 @@ function download($url, $cookies='', $useragent='', $method = 'GET')
  */
 function convertToMB($from)
 {
-    $number=substr($from, 0, -2);
+    $number = substr($from, 0, -2);
     $number = $number + 0;
     switch (strtoupper(substr($from, -2))) {
         case "KB":
@@ -123,7 +123,7 @@ function convertToMB($from)
 
 /**
  * @brief 种子过滤器
- * @param array $filter 站点标识
+ * @param array $filter 过滤器规则
  * @param array  $torrent 种子数组
  * 	Array
     (
@@ -301,7 +301,7 @@ function wlog($data='', $name = '', $path = '')
  * @param string $dir
  * @param array $filter
  */
-function ShowTableSites($dir = 'Protocols', $filter = array())
+function ShowTableSites($dir = 'Spiders', $filter = array())
 {
     // 过滤的文件
     switch ($dir) {

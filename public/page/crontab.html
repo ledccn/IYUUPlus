@@ -16,6 +16,7 @@
                 <option value="reseed">辅种任务</option>
                 <option value="move">转移任务</option>
                 <option value="rss">Rss下载任务</option>
+                <option value="spiders">免费种爬虫下载任务</option>
                 <!-- <option value="url">访问URL</option>
                 <option value="shell">Shell脚本</option>
                 <option value="patch">备份目录</option>
@@ -205,6 +206,50 @@
   </div>
   {{# } }}
 
+  {{# if (d.type === 'spiders') { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">站点爬虫</label>
+    <div class="layui-input-block">
+      <div id="spiders_sites_view"></div>
+      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 未配置的站点，将会显示为禁用状态。<a href="javascript:;" layuimini-href="page/setting/sites.html" target="_self" style="color:#1e9fff">站点设置</a></div>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">种子列表页地址</label>
+    <div class="layui-input-block">
+      <input type="text" name="urladdress" placeholder="请输入种子列表页地址" class="layui-input" value="">
+      <tip>未配置URL地址时，将会执行默认。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">下载器</label>
+    <div class="layui-input-block" id="spiders_clients_view">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">下载模式</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="workingMode" lay-skin="switch" lay-text="Watch模式|Rpc模式" lay-filter="workingMode" id="workingMode">
+      <tip>Rpc模式：可以远程访问下载器的API接口，POST种子元数据；Watch模式：仅往下载器设置的watch监控目录内写入种子文件。</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">数据目录</label>
+    <div class="layui-input-block">
+      <input type="text" name="downloadsDir" placeholder="请输入数据目录" class="layui-input">
+      <tip><span class="layui-badge">优先级：中</span>下载器的数据目录。如果此处留空，将会使用过滤器设置的数据目录或者下载器设置的数据目录；如果都未设置，将会采用下载器默认值。</tip>
+    </div>
+  </div>
+
+  <div class="layui-form-item">
+    <label class="layui-form-label required">筛选规则</label>
+    <div class="layui-input-block">
+      <div id="spiders_filter_view"></div>
+      <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 满足所选的规则，爬虫才会向下载器推送下载任务。</div>
+    </div>
+  </div>
+  {{# } }}
+
   {{# if (d.type === 'url') { }}
   <div class="layui-form-item">
     <label class="layui-form-label required">URL地址</label>
@@ -252,21 +297,21 @@
   {{#  }); }}
 </script>
 
-<!-- 模板：RSS下载任务 [站点] 单选框 -->
+<!-- 模板：下载任务 [站点] 单选框 -->
 <script id="rss_sites_tpl" type="text/html">
   {{#  layui.each(d, function(index, item){ }}
   <input type="radio" name="site" value="{{item.site}}" title="{{ item.site }}{{ item.nickname && item.site != item.nickname ? ' ' + item.nickname : '' }}" {{ item.disabled ? ' disabled' : '' }}>
   {{#  }); }}
 </script>
 
-<!-- 模板：RSS下载任务 [下载器] 单选框 -->
+<!-- 模板：下载任务 [下载器] 单选框 -->
 <script id="rss_clients_tpl" type="text/html">
   {{#  layui.each(d, function(index, item){ }}
   <input type="radio" name="clients" value="{{item.uuid}}" title="{{ item.name }}">
   {{#  }); }}
 </script>
 
-<!-- 模板：RSS下载任务 [筛选规则过滤器] 单选框 -->
+<!-- 模板：下载任务 [筛选规则过滤器] 单选框 -->
 <script id="rss_filter_tpl" type="text/html">
   {{#  layui.each(d, function(index, item){ }}
   <input type="radio" name="filter" value="{{item.uuid}}" title="{{ item.name }}">
@@ -341,7 +386,7 @@
       table = layui.table,
       form = layui.form,
       miniPage = layui.miniPage,
-      laytpl = layui.laytpl
+      laytpl = layui.laytpl,
       transfer = layui.transfer;
 
     const API = {
@@ -364,7 +409,7 @@
      * @param {string} where      执行周期
      * @param {object} formData   编辑时表单数据
      */
-    crontab_sel_action = function(type = '', action = '', where = 'day', formData = null) {
+    let crontab_sel_action = function(type = '', action = '', where = 'day', formData = null) {
       let rule = {
           type: type
           ,action: action
@@ -396,13 +441,15 @@
       move_sel_action(type, formData);
       //联动：RSSS下载任务
       rss_sel_action(type, formData);
-    }
+      //联动：免费种爬虫下载任务
+      spiders_sel_action(type, formData);
+    };
 
     /**
      * 任务周期选择框
      * @param {string} where     执行周期
      */
-    crontab_where_sel_action = function(where = '') {
+    let crontab_where_sel_action = function(where = '') {
       let rule = {
           where: where
           ,weeks: (where === 'week' ? true : false)
@@ -421,14 +468,14 @@
         view.innerHTML = html;
       });
       form.render();
-    }
+    };
 
     /**
      * 任务选择框联动，辅种任务
      * @param {string} type       任务类型
      * @param {object} formData   编辑时表单数据
      */
-    reseed_sel_action = function(type = '', formData) {
+    let reseed_sel_action = function(type = '', formData) {
       if (type !== 'reseed') {
         return;
       }
@@ -500,14 +547,14 @@
         callback !== null && typeof callback[1] === 'function' && callback[1]();
         form.render('checkbox');
       });
-    }
+    };
 
     /**
      * 任务选择框联动，转移做种任务
      * @param {string} type       任务类型
      * @param {object} formData   编辑时表单数据
      */
-    move_sel_action = function(type = '', formData) {
+    let move_sel_action = function(type = '', formData) {
       if (type !== 'move') {
         return;
       }
@@ -612,14 +659,14 @@
           }
         });
       });
-    }
-
+    };
+    
     /**
      * 任务选择框联动，RSS下载任务
      * @param {string} type       任务类型
      * @param {object} formData   编辑时表单数据
      */
-    rss_sel_action = function(type = '', formData) {
+    let rss_sel_action = function(type = '', formData) {
       if (type !== 'rss') {
         return;
       }
@@ -694,8 +741,90 @@
         callback !== null && typeof callback === 'function' && callback();
         form.render('radio');
       });
-    }
+    };
 
+      /**
+       * 任务选择框联动，RSS下载任务
+       * @param {string} type       任务类型
+       * @param {object} formData   编辑时表单数据
+       */
+    let spiders_sel_action = function(type = '', formData) {
+      if (type !== 'spiders') {
+        return;
+      }
+      let callback = null;
+      if (formData !== null) {
+        console.log(formData);
+        //定义回调
+        callback = function(){
+          form.val("form", formData);
+        };
+      }
+      //支持的所有站点
+      $.getJSON('/Api/getAllSpidersClass', {filter: true}, function (d) {
+        let getTpl = rss_sites_tpl.innerHTML
+            ,view = getById('spiders_sites_view');
+        if (d.ret !== 200) {
+            return;
+        }
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置站点，将会为您跳转到站点设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/sites.html';
+          });
+          return;
+        }
+        laytpl(getTpl).render(d.data.items, function(html) {
+          view.innerHTML = html;
+        });
+        //回调
+        callback !== null && typeof callback === 'function' && callback();
+        form.render('radio');
+      });
+      //使用的下载器
+      $.getJSON('/Api/Config?config_filename=clients&action=list', function (d) {
+        let getTpl = rss_clients_tpl.innerHTML
+            ,view = getById('spiders_clients_view');
+        if (d.ret !== 200) {
+          return;
+        }
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置下载器，将会为您跳转到下载器设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/clients.html';
+          });
+          return;
+        }
+        laytpl(getTpl).render(d.data.items, function(html) {
+          view.innerHTML = html;
+        });
+        //回调
+        callback !== null && typeof callback === 'function' && callback();
+        form.render('radio');
+      });
+      //使用的筛选规则过滤器
+      $.getJSON('/Api/Config?config_filename=filter&action=list', function (d) {
+        let getTpl = rss_filter_tpl.innerHTML
+            ,view = getById('spiders_filter_view');
+        if (d.ret !== 200) {
+            return;
+        }
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置筛选规则过滤器，将会为您跳转到过滤器设置！', function(index){
+              layer.close(index);
+              window.location = '/index.html#/page/setting/filter.html';
+          });
+          return;
+        }
+        laytpl(getTpl).render(d.data.items, function(html) {
+          view.innerHTML = html;
+        });
+        //回调
+        callback !== null && typeof callback === 'function' && callback();
+        form.render('radio');
+      });
+    };
+      
     /**
      * 初始化表格
      */ 
@@ -733,9 +862,9 @@
               case 'rss':
                 type = 'Rss下载任务';
                 break;
-              case 'download':
-                type = '下载任务';
-                break;
+              case 'spiders':
+                  type = '免费种爬虫下载任务';
+                  break;
               case 'url':
                 type = '访问URL';
                 break;
@@ -749,7 +878,7 @@
                 type = '动态域名DDNS';
                 break;
               case 'clear_log':
-                type = '清除日志'
+                type = '清除日志';
                 break;
               default:
                 break;
@@ -831,7 +960,7 @@
         case 'LAYTABLE_TIPS':
           layer.alert('这是工具栏右侧自定义的一个图标按钮');
         break;
-      };
+      }
     });
 
     /**

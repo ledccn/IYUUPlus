@@ -8,6 +8,7 @@ use app\common\Config;
 use app\common\Constant;
 use app\domain\Config as domainConfig;
 use app\domain\ConfigParser\Rss as domainRss;
+use app\domain\ConfigParser\Spiders as domainSpiders;
 use app\domain\Users as domainUsers;
 
 /**
@@ -175,7 +176,28 @@ class Api extends BaseController
     {
         $rs = self::RS;
         $sites = domainRss::getAllRssClass();
-        $sites = domainRss::formatRssSites($sites);
+        $sites = domainRss::formatSites($sites);
+        //过滤用户未配置站点
+        $filter = $request->get('filter');
+        if ($filter) {
+            domainConfig::disabledNotConfiguredUserSites($sites);
+        }
+
+        $rs['data']['items'] = $sites;
+        $rs['data']['total'] = count($sites);
+        return json($rs);
+    }
+
+    /**
+     * 获取所有RSS支持的站点
+     * @param Request $request
+     * @return Response
+     */
+    public function getAllSpidersClass(Request $request): Response
+    {
+        $rs = self::RS;
+        $sites = domainSpiders::getAllSpidersClass();
+        $sites = domainSpiders::formatSites($sites);
         //过滤用户未配置站点
         $filter = $request->get('filter');
         if ($filter) {
