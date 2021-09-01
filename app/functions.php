@@ -1,18 +1,20 @@
 <?php
+use app\common\components\Curl as ICurl;
+use app\domain\Config as domainConfig;
 /**
  * 返回IYUU当前版本号
  * @return string
  */
 function IYUU_VERSION():string
 {
-    return '2.0.0';
+    return '2.0.1';
 }
 
 /**
  * 返回项目名称
  * @return string
  */
-function iyuu_name():string
+function IYUU_PROJECT_NAME():string
 {
     return 'IYUUPlus';
 }
@@ -54,28 +56,18 @@ function get_current_git_filemtime($branch = 'master'):string
  */
 function ff($text = '', $desp = '')
 {
-    $token = env('IYUU', '');
-    $desp = ($desp == '') ? date("Y-m-d H:i:s") : $desp;
-    $postdata = array(
+    $config = domainConfig::getIyuu();
+    if (empty($config) || empty($config['iyuu.cn'])) {
+        return false;
+    }
+
+    $token = $config['iyuu.cn'];
+    $desp = empty($desp) ? date("Y-m-d H:i:s") : $desp;
+    $data = array(
         'text' => $text,
         'desp' => $desp
     );
-
-    $opts = array(
-        'http' => array(
-            'method'  => 'POST',
-            'header'  => 'Content-type: application/x-www-form-urlencoded',
-            'content' => http_build_query($postdata)
-        ),
-        // 解决SSL证书验证失败的问题
-        'ssl' => array(
-            'verify_peer' => false,
-            'verify_peer_name' => false,
-        )
-    );
-    $context  = stream_context_create($opts);
-    $result = file_get_contents('http://iyuu.cn/'.$token.'.send', false, $context);
-    return $result;
+    return ICurl::http_post('https://iyuu.cn/'.$token.'.send', $data);
 }
 
 /**

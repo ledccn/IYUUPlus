@@ -41,6 +41,8 @@ class ICheck
             'ob_get_contents',
             'proc_open',
             'proc_close',
+            'popen',
+            'pclose',
         ],
         //Linux
         '2' => [
@@ -52,6 +54,8 @@ class ICheck
             'ob_get_contents',
             'proc_open',
             'proc_close',
+            'popen',
+            'pclose',
             'pcntl_fork',
             'posix_setsid',
             'posix_getpid',

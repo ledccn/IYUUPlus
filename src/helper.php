@@ -33,10 +33,45 @@ use IYUU\Library\Table;
  */
 function send($site = '', $torrent = array())
 {
-    $br = "\r\n";
     $text = $site. ' 免费：' .$torrent['filename']. '，添加成功';
-    $desp = '主标题：'.$torrent['h1'] . $br;
+    $desp = torrent_text($torrent);
+    return ff($text, $desp);
+}
 
+/**
+ * 获得种子描述文本
+ * @param array $torrent
+ * Array
+ * (
+ *     [id] => 118632
+ *     [h1] => CCTV5+ 2019 ATP Men's Tennis Final 20191115B HDTV 1080i H264-HDSTV
+ *     [title] => 央视体育赛事频道 2019年ATP男子网球年终总决赛 单打小组赛 纳达尔VS西西帕斯 20191115[优惠剩余时间：4时13分]
+ *     [details] => https://xxx.me/details.php?id=118632
+ *     [download] => https://xxx.me/download.php?id=118632
+ *     [filename] => 118632.torrent
+ *     [type] => 0
+ *     [sticky] => 1
+ *     [time] => Array
+ *     (
+ *         [0] => "2019-11-16 20:41:53">4时13分
+ *         [1] => "2019-11-16 14:41:53">1时<br />46分
+ *     )
+ *     [comments] => 0
+ *     [size] => 5232.64MB
+ *     [seeders] => 69
+ *     [leechers] => 10
+ *     [completed] => 93
+ *     [percentage] => 100%
+ *     [owner] => 匿名
+ * )
+ *
+ * @return string
+ */
+function torrent_text(array $torrent = array())
+{
+    $br = "\r\n";
+    $desp = '主标题：'.($torrent['h1'] ?? '') . $br;
+    $desp.= '详情页：'.($torrent['details'] ?? '') . $br;
     if (isset($torrent['title'])) {
         $desp .= '副标题：'.$torrent['title']. $br;
     }
@@ -52,7 +87,7 @@ function send($site = '', $torrent = array())
     if (isset($torrent['owner'])) {
         $desp .= '发布者：'.$torrent['owner']. $br;
     }
-    return ff($text, $desp);
+    return $desp;
 }
 
 /**

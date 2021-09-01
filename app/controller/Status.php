@@ -57,7 +57,7 @@ class Status extends BaseController
             'sites_total'   => count($user_sites),
             'sites_conut'   => count($sites),
             'clients_total' => count($clients),
-            'project'       => iyuu_name(),
+            'project'       => IYUU_PROJECT_NAME(),
             'version'       => $version,
             'updated_at'    => $updated_at,
             'system_info'   => $system_info,

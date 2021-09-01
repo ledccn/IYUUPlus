@@ -122,7 +122,7 @@ class Users
         if (empty($password)) {
             throw new BusinessException('密码不能为空', 250);
         }
-        $userProfile = Conf::get(self::getUserProfileName(), 'json');
+        $userProfile = Conf::get(self::getUserProfileName(), 'json', null);
         if (is_null($userProfile)) {
             //初次使用，设置用户密码
             return self::setPassword($password);

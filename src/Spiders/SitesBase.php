@@ -241,7 +241,7 @@ class SitesBase
      * 获得种子列表页
      * - 适用于原生NexusPHP
      * @param string $url
-     * @return array|string|null
+     * @return array|null
      */
     public static function getTorrentListByNexusPHP(string $url)
     {
