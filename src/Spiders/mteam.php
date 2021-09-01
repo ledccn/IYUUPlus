@@ -1,17 +1,10 @@
 <?php
 namespace IYUU\Spiders;
 
-use IYUU\Library\requests;
 use IYUU\Library\Selector;
-use IYUU\Library\Rpc;
 
 class mteam extends SitesBase
 {
-    /**
-     * 站点标志
-     * @var string
-     */
-    const SITE = 'm-team';
     /**
      * 种子下载前缀
      */
@@ -97,20 +90,29 @@ class mteam extends SitesBase
             }
 
             // 组合返回数组
-            self::$TorrentList[$k]['id'] = $arr['id'];
-            self::$TorrentList[$k]['h1'] = $arr['h1'];
-            self::$TorrentList[$k]['title'] = isset($arr['title']) && $arr['title'] ? $arr['title'] : '';
-            self::$TorrentList[$k]['details'] = static::getHost() . self::detailsPrefix . $arr['id'];
-            self::$TorrentList[$k]['download'] = static::getHost() . $arr['url'] . $url_join;
-            self::$TorrentList[$k]['filename'] = $arr['id'].'.torrent';
+            static::$TorrentList[$k]['id'] = $arr['id'];
+            static::$TorrentList[$k]['h1'] = $arr['h1'];
+            static::$TorrentList[$k]['title'] = isset($arr['title']) && $arr['title'] ? $arr['title'] : '';
+            static::$TorrentList[$k]['details'] = static::getHost() . static::detailsPrefix . $arr['id'];
+            static::$TorrentList[$k]['download'] = static::getHost() . $arr['url'] . $url_join;
+            static::$TorrentList[$k]['filename'] = $arr['id'].'.torrent';
 
             // 种子促销类型解码
-            if (strpos($v, self::$getTorrent[0]) === false) {
+            if (strpos($v, static::$getTorrent[0]) === false) {
                 // 不免费
-                self::$TorrentList[$k]['type'] = 1;
+                static::$TorrentList[$k]['type'] = 1;
             } else {
                 // 免费种子
-                self::$TorrentList[$k]['type'] = 0;
+                static::$TorrentList[$k]['type'] = 0;
+            }
+            // H&R检测
+            foreach (static::$HR as $hrV) {
+                if (strpos($v, $hrV) != false) {
+                    static::$TorrentList[$k]['hr'] = 1;
+                    // 删除
+                    #unset( self::$TorrentList[$k] );
+                    break;
+                }
             }
             // 存活时间
             // 大小
