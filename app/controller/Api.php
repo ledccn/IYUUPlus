@@ -189,7 +189,7 @@ class Api extends BaseController
     }
 
     /**
-     * 获取所有RSS支持的站点
+     * 获取所有免费种爬虫支持的站点
      * @param Request $request
      * @return Response
      */

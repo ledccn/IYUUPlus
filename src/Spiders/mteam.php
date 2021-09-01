@@ -60,6 +60,8 @@ class mteam extends SitesBase
      */
     public static function decode($data = array())
     {
+        $url_join = static::getUrlJoin();
+        $url_join = empty($url_join) ? '' : '&' . $url_join;
         foreach ($data as $k => $v) {
             $arr = array();
             // 种子id
@@ -86,9 +88,10 @@ class mteam extends SitesBase
             if ($h2_offset === false) {
                 $arr['title'] = '';
             } else {
-                $h2_len = strlen($temp) - $h2_offset - strlen($h2StrStart);
+                $h2_startOffset = $h2_offset + strlen($h2StrStart);
+                $h2_len = strlen($temp) - $h2_startOffset;
                 //存在副标题
-                $arr['title'] = substr($temp, $h2_offset + strlen($h2StrStart), $h2_len);
+                $arr['title'] = substr($temp, $h2_startOffset, $h2_len);
                 // 第二次过滤
                 $arr['title'] = strip_tags($arr['title']);
             }
@@ -98,7 +101,7 @@ class mteam extends SitesBase
             self::$TorrentList[$k]['h1'] = $arr['h1'];
             self::$TorrentList[$k]['title'] = isset($arr['title']) && $arr['title'] ? $arr['title'] : '';
             self::$TorrentList[$k]['details'] = static::getHost() . self::detailsPrefix . $arr['id'];
-            self::$TorrentList[$k]['download'] = static::getHost() . $arr['url'];
+            self::$TorrentList[$k]['download'] = static::getHost() . $arr['url'] . $url_join;
             self::$TorrentList[$k]['filename'] = $arr['id'].'.torrent';
 
             // 种子促销类型解码

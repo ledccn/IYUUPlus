@@ -3,7 +3,6 @@ namespace app\domain\ConfigParser;
 
 use app\domain\ConfigParserInterface;
 use app\domain\Config;
-use IYUU\Spiders\SitesBase;
 
 class Rss implements ConfigParserInterface
 {
@@ -65,6 +64,8 @@ class Rss implements ConfigParserInterface
 
             //其他参数
             $rs = array_merge($cron, $rs);
+        } else {
+            $rs = [];
         }
         return $rs;
     }

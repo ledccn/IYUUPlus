@@ -2,7 +2,7 @@
 namespace IYUU\Spiders;
 
 use app\common\Constant;
-use app\domain\ConfigParser\Rss as domainRss;
+use app\domain\ConfigParser\Spiders as domainSpiders;
 use IYUU\Library\Rpc;
 use IYUU\Library\Selector;
 /**
@@ -63,7 +63,10 @@ class SitesBase
      */
     public static function getCliInput($uuid)
     {
-        self::$conf = domainRss::parser($uuid);
+        self::$conf = domainSpiders::parser($uuid);
+        if (empty(self::$conf)) {
+            die('当前任务不存在或者未开启。'.PHP_EOL);
+        }
         if (empty(self::$conf['site'])) {
             die('解析计划任务失败：用户未配置的站点。'.PHP_EOL);
         }
@@ -74,7 +77,7 @@ class SitesBase
             die('解析计划任务失败：当前下载器可能已经删除，请编辑站点爬虫下载任务，重选下载器。'.PHP_EOL);
         }
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
-        //cli(self::$conf);
+        //cli(self::$conf, true);
         /**
          * 初始化最关键的2个参数
          */
@@ -176,6 +179,21 @@ class SitesBase
     }
 
     /**
+     * 获得用户配置中的站点下载种子时候的附加参数
+     * - 例如：https=1&ipv6=1
+     * @return string
+     */
+    protected static function getUrlJoin():string
+    {
+        //站点配置
+        $config = self::$conf['site'];
+        if (!empty($config['url_join'])) {
+            return http_build_query($config['url_join']);
+        }
+        return '';
+    }
+
+    /**
      * 取站点下载种子时使用的方法(post/get)
      * @param string $site_name
      * @return string
@@ -249,6 +267,7 @@ class SitesBase
      */
     public static function run()
     {
+        //cli(static::$conf, true);exit;
         Rpc::init(static::$site_name, static::getTorrentDownloadMethod(static::$site_name), static::$conf);
         $html = static::get();
         if (empty($html)) {

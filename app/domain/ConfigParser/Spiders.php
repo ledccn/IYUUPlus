@@ -2,7 +2,6 @@
 namespace app\domain\ConfigParser;
 
 use app\domain\ConfigParserInterface;
-use app\domain\Config;
 use IYUU\Spiders\SitesBase;
 
 class Spiders implements ConfigParserInterface
