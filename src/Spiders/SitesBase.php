@@ -274,7 +274,7 @@ class SitesBase
             exit(1);
         }
         $data = static::decode($html);
-        cli($data, true);exit;
+        //cli($data, true);exit;
         Rpc::call($data);
         exit(0);
     }
