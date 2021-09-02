@@ -28,12 +28,14 @@ IYUU自动辅种工具（英文名：IYUUAutoReseed），是一款PHP语言编�
 
 
 # 使用方法
+
 ## 找到你的【种子目录】
 
 > qBittorrent的种子目录叫`BT_backup`，transmission的种子目录叫`torrents`。
 > Linux系统qBittorrent种子目录搜索命令：`find / -name BT_backup`
 > Linux系统transmission种子目录搜索命令：`find / -name torrents`
 > Windows系统qBittorrent种子目录，通常在`C:\Users\你的用户名\AppData\Local\qBittorrent\BT_backup`
+
 
 
 #### AMD64
@@ -49,6 +51,7 @@ docker run -d \
 iyuucn/iyuuplus:latest
 ```
 
+
 #### ARM64v8
 ```sh
 docker run -d \
@@ -62,6 +65,7 @@ docker run -d \
 iyuucn/iyuuplus:arm64v8
 ```
 请把上面命令中的汉字部分，改为你自己的实际目录。
+
 
 
 **命令解释**
