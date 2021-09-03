@@ -105,6 +105,9 @@ abstract class AbstractRss
     private static function getCliInput($uuid)
     {
         self::$conf = domainRss::parser($uuid);
+        if (empty(self::$conf)) {
+            die('当前任务不存在或者未开启。'.PHP_EOL);
+        }
         if (empty(self::$conf['site'])) {
             die('解析计划任务失败：用户未配置的站点。'.PHP_EOL);
         }
@@ -241,11 +244,11 @@ abstract class AbstractRss
         echo "正在初始化RPC链接...". PHP_EOL;
         Rpc::init($this->site, $this->method, self::$conf);
         $html = $this->get();
-        #p($html);
+        #cli($html);
         $this->checkCallback($html);
         $data = $this->decode($html);
         echo "已解码，正在推送给RPC下载器...". PHP_EOL;
-        #p($data);exit;
+        #cli($data);exit;
         Rpc::call($data);
         exit(0);
     }

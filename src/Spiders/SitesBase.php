@@ -268,6 +268,7 @@ class SitesBase
     public static function run()
     {
         //cli(static::$conf, true);exit;
+        echo "正在初始化RPC链接...". PHP_EOL;
         Rpc::init(static::$site_name, static::getTorrentDownloadMethod(static::$site_name), static::$conf);
         $html = static::get();
         if (empty($html)) {

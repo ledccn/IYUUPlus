@@ -59,8 +59,12 @@ class mteam extends SitesBase
             $arr = array();
             // 种子id
             $regex = "/details.php\?id\=(\d+)/i";
-            preg_match($regex, $v, $matchs_id);
-            $arr['id'] = $matchs_id[1];
+            if (preg_match($regex, $v, $matchs_id)) {
+                $arr['id'] = $matchs_id[1];
+            } else {
+                die('未获取到正确的种子id，站点可能更新，请联系开发者');
+            }
+
             // 种子地址
             $arr['url'] = self::downloadPrefix.$arr['id'];
             // 获取主标题
@@ -71,23 +75,8 @@ class mteam extends SitesBase
                 $arr['h1'] = '';
             }
 
-            // 获取副标题(倒序算法)
-            // 偏移量
-            $h2StrStart = '<br />';
-            $h2StrEnd = '</td><td width="80"';
-            $h2_endOffset = strpos($v, $h2StrEnd);
-            $temp = substr($v, 0, $h2_endOffset);
-            $h2_offset = strrpos($temp, $h2StrStart);
-            if ($h2_offset === false) {
-                $arr['title'] = '';
-            } else {
-                $h2_startOffset = $h2_offset + strlen($h2StrStart);
-                $h2_len = strlen($temp) - $h2_startOffset;
-                //存在副标题
-                $arr['title'] = substr($temp, $h2_startOffset, $h2_len);
-                // 第二次过滤
-                $arr['title'] = strip_tags($arr['title']);
-            }
+            // 获取副标题
+            $arr['title'] = static::getTitle($v);
 
             // 组合返回数组
             static::$TorrentList[$k]['id'] = $arr['id'];
@@ -109,8 +98,6 @@ class mteam extends SitesBase
             foreach (static::$HR as $hrV) {
                 if (strpos($v, $hrV) != false) {
                     static::$TorrentList[$k]['hr'] = 1;
-                    // 删除
-                    #unset( self::$TorrentList[$k] );
                     break;
                 }
             }
@@ -123,5 +110,32 @@ class mteam extends SitesBase
         }
         #p(self::$TorrentList);
         return self::$TorrentList;
+    }
+
+    /**
+     * 获取副标题
+     * - 倒序算法
+     * @param string $html
+     * @return string
+     */
+    public static function getTitle(string $html):string
+    {
+        $h2StrStart = '<br />';
+        $h2StrEnd = '</td><td width="80"';
+        $h2_endOffset = strpos($html, $h2StrEnd);
+        $temp = substr($html, 0, $h2_endOffset);
+        $h2_offset = strrpos($temp, $h2StrStart);
+        if ($h2_offset === false) {
+            $title = '';
+        } else {
+            $h2_startOffset = $h2_offset + strlen($h2StrStart);
+            $h2_len = strlen($temp) - $h2_startOffset;
+            //存在副标题
+            $title = substr($temp, $h2_startOffset, $h2_len);
+            // 第二次过滤
+            $title = strip_tags($title);
+        }
+
+        return $title;
     }
 }
