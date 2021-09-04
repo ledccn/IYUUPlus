@@ -6,24 +6,24 @@
 ```
 docker run -d \
 --name IYUUPlus \
--e cron='10 */10 * * *' \
+-e CRON_UPDATE='23 3-23/6 * * *' `# 更新脚本的cron，请务必修改，否则无法更新` \
 -v /volume1/IYUU/db:/IYUU/db \
 -p 8787:8787 \
 --restart=always \
-iyuucn/iyuuplus:arm64v8
+iyuucn/iyuuplus
 ```
 #### 小钢炮方法：
 
 ```
 docker run  -d \
---name IYUUPlus \
+-e CRON_UPDATE='23 3-23/6 * * *' `# 更新脚本的cron，请务必修改，否则无法更新` \
 -e cron='10 */10 * * *' \
 -v /volume1/IYUU/db:/IYUU/db \
 -v /var/lib/transmission/torrents:/torrents \
 -v /var/lib/qbittorrent/.local/share/data/qBittorrent/BT_backup:/BT_backup \
 -p 8787:8787 \
 --restart always \
-iyuucn/iyuuplus:arm64v8
+iyuucn/iyuuplus
 ```
 
 #### AMD64平台（MAC OS、台式、服务器、NAS等）
@@ -31,11 +31,11 @@ iyuucn/iyuuplus:arm64v8
 ```
 docker run -d \
 --name IYUUPlus \
--e cron='10 */10 * * *' \
+-e CRON_UPDATE='23 3-23/6 * * *' `# 更新脚本的cron，请务必修改，否则无法更新` \
 -v /volume1/IYUU/db:/IYUU/db \
 -p 8787:8787 \
 --restart=always \
-iyuucn/iyuuplus:latest
+iyuucn/iyuuplus
 ```
 
 
@@ -79,7 +79,7 @@ docker rm IYUUPlus
 
 ### 5.删除镜像
 ```
-docker rmi iyuucn/IYUUPlus:arm64v8
+docker rmi iyuucn/IYUUPlus
 ```
 
 

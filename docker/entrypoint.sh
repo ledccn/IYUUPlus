@@ -2,9 +2,11 @@
 
 cd /IYUU
 
-if [[ ! -d /IYUU/.git ]]; then
-    #git clone https://github.com/ledccn/IYUUPlus.git /IYUU
-    git clone https://gitee.com/ledc/iyuuplus.git /IYUU
+if [[ ! -d /IYUU/.git || ! -f /IYUU/.env ]]; then
+    #git clone https://github.com/ledccn/IYUUPlus.git /tmp/IYUU
+    git clone https://gitee.com/ledc/iyuuplus.git /tmp/IYUU
+    find /tmp/IYUU -mindepth 1 -maxdepth 1 | xargs -I {} cp -r {} /IYUU
+    rm -rf /tmp/IYUU
 else
     git fetch --all
     git reset --hard origin/master
