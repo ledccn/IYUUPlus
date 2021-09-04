@@ -64,6 +64,12 @@ abstract class AbstractRss
     public $passkey = '';
 
     /**
+     * 种子ID正则
+     * @var string
+     */
+    public $torrent_id_regex = '/id=(\d+)/i';
+
+    /**
      * 运行时解析的配置
      * @var array
      */
@@ -210,7 +216,7 @@ abstract class AbstractRss
                 $time = strtotime($item->getElementsByTagName('pubDate')->item(0)->nodeValue);
                 $length = $item->getElementsByTagName('enclosure')->item(0)->getAttribute('length');
                 // 提取id
-                if (preg_match('/id=(\d+)/i', $details, $match)) {
+                if (preg_match($this->torrent_id_regex, $details, $match)) {
                     $id = $match[1];
                 } else {
                     continue;
@@ -248,7 +254,7 @@ abstract class AbstractRss
         $this->checkCallback($html);
         $data = $this->decode($html);
         echo "已解码，正在推送给RPC下载器...". PHP_EOL;
-        #cli($data);exit;
+        //cli($data);exit;
         Rpc::call($data);
         exit(0);
     }
@@ -291,6 +297,41 @@ abstract class AbstractRss
         if (is_null($html)) {
             exit(1);
         }
+    }
+
+    /**
+     * 获取配置
+     * @param null $key         配置键值
+     * @param null $default     默认
+     * @return array|mixed|null
+     */
+    public static function getConfig($key = null, $default = null)
+    {
+        if ($key === null) {
+            return self::$conf;
+        }
+        $key_array = \explode('.', $key);
+        $value = self::$conf;
+        foreach ($key_array as $index) {
+            if (!isset($value[$index])) {
+                return $default;
+            }
+            $value = $value[$index];
+        }
+        return $value;
+    }
+
+    /**
+     * 获得当前站点HOST
+     * @return string
+     */
+    protected static function getHost():string
+    {
+        //站点配置
+        $sites = static::$conf['sites'];
+        $protocol = isset($sites['is_https']) && ($sites['is_https'] === 0) ? 'http://' : 'https://';
+        $domain = $sites['base_url'];
+        return $protocol . $domain . '/';   // 示例：https://baidu.com/
     }
 
     /**

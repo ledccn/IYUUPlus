@@ -30,6 +30,14 @@ class ttg extends AbstractRss
     public function decode($html = '')
     {
         echo "正在解码RSS资源...". PHP_EOL;
-        return $this->NexusPHP($html);
+        $items = $this->NexusPHP($html);
+        $host = static::getHost();
+        $passkey = static::getConfig('site.passkey');
+        $download_page = static::getConfig('sites.download_page');
+        foreach ($items as $k => &$torrent) {
+            $id = $torrent['id'];
+            $torrent['download'] = $host . str_replace(['{}', '{passkey}'], [$id, $passkey], $download_page);
+        }
+        return $items;
     }
 }

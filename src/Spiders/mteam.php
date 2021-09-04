@@ -58,22 +58,12 @@ class mteam extends SitesBase
         foreach ($data as $k => $v) {
             $arr = array();
             // 种子id
-            $regex = "/details.php\?id\=(\d+)/i";
-            if (preg_match($regex, $v, $matchs_id)) {
-                $arr['id'] = $matchs_id[1];
-            } else {
-                die('未获取到正确的种子id，站点可能更新，请联系开发者');
-            }
+            $arr['id'] = static::getId($v);
 
             // 种子地址
             $arr['url'] = self::downloadPrefix.$arr['id'];
             // 获取主标题
-            $regex = '/<a title=[\'|\"](.*?)[\'|\"]/';
-            if (preg_match($regex, $v, $matchs_h1)) {
-                $arr['h1'] = $matchs_h1[1];
-            } else {
-                $arr['h1'] = '';
-            }
+            $arr['h1'] = static::getH1($v);
 
             // 获取副标题
             $arr['title'] = static::getTitle($v);
@@ -110,6 +100,37 @@ class mteam extends SitesBase
         }
         #p(self::$TorrentList);
         return self::$TorrentList;
+    }
+
+    /**
+     * 获取种子ID
+     * @param string $html
+     * @return int
+     */
+    public static function getId(string $html):int
+    {
+        // 种子id
+        $regex = "/details.php\?id\=(\d+)/i";
+        if (preg_match($regex, $html, $matchs_id)) {
+            return $matchs_id[1];
+        } else {
+            die('未获取到正确的种子id，站点可能更新，请联系开发者');
+        }
+    }
+
+    /**
+     * 获取主标题
+     * @param string $html
+     * @return string
+     */
+    public static function getH1(string $html):string
+    {
+        $regex = '/<a title=[\'|\"](.*?)[\'|\"]/';
+        $h1 = '';
+        if (preg_match($regex, $html, $matchs_h1)) {
+            $h1 = $matchs_h1[1];
+        }
+        return $h1;
     }
 
     /**

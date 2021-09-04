@@ -7,7 +7,7 @@ use app\domain\Config as domainConfig;
  */
 function IYUU_VERSION():string
 {
-    return '2.0.1';
+    return '2.0.2';
 }
 
 /**

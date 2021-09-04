@@ -278,6 +278,10 @@ class Rpc
                     default:
                         break;
                 }
+                // 微信通知
+                if ($ret) {
+                    send(static::$site, $value);
+                }
             }
         }
         return true;
