@@ -1,11 +1,29 @@
 #!/bin/sh
-set -e
-envFile="/IYUU/.env"
-if [ ! -f "$envFile" ]; then
-#git clone https://github.com/ledccn/IYUUPlus.git /IYUU
-git clone https://gitee.com/ledc/iyuuplus.git /IYUU
-cd /IYUU && php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+cd /IYUU
+
+if [[ ! -d /IYUU/.git ]]; then
+    #git clone https://github.com/ledccn/IYUUPlus.git /IYUU
+    git clone https://gitee.com/ledc/iyuuplus.git /IYUU
+else
+    git fetch --all
+    git reset --hard origin/master
+    git pull
 fi
-cd /IYUU && git fetch --all && git reset --hard origin/master
-/usr/bin/php /IYUU/start.php start -d
-/usr/sbin/crond -f
+
+if [ ! -s .env ]; then
+    cp .env.example .env
+fi
+
+if [[ -z ${CRON_UPDATE} ]]; then
+    CRON_UPDATE="23 3-23/6 * * *"
+fi
+
+echo "设置cron..."
+echo "${CRON_UPDATE} cd /IYUU && git fetch --all && git reset --hard origin/master && git pull && php start.php restart -d" | crontab -
+
+echo "当前crontab如下："
+crontab -l
+
+php /IYUU/start.php start -d
+crond -f

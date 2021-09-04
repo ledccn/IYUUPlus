@@ -18,8 +18,7 @@ ARG app_env=prod
 # ARG add_user=www-data
 
 ENV APP_ENV=${app_env:-"prod"} \
-    TIMEZONE=${timezone:-"Asia/Shanghai"} \
-    cron="3 */10 * * *"
+    TIMEZONE=${timezone:-"Asia/Shanghai"}
 
 ##
 # ---------- building ----------
@@ -28,7 +27,7 @@ ENV APP_ENV=${app_env:-"prod"} \
 RUN set -ex \
         # change apk source repo
         #&& sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/' /etc/apk/repositories \
-        #&& sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories \
+        && sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories \
         && apk update \
         && apk add --no-cache \
         # Install base packages ('ca-certificates' will install 'nghttp2-libs')
@@ -102,10 +101,6 @@ RUN set -ex \
         # - config timezone
         && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \
         && echo "${TIMEZONE}" > /etc/timezone \
-        && crontab -l > /tmp/crontab.bak \
-        && echo "$cron cd /IYUU && git fetch --all && git reset --hard origin/master" >> /tmp/crontab.bak \
-        && echo '10 */12 * * * /usr/bin/php /IYUU/start.php restart -d' >> /tmp/crontab.bak \
-        && crontab /tmp/crontab.bak \
         # ---------- some config work ----------
         # - ensure 'www-data' user exists(82 is the standard uid/gid for "www-data" in Alpine)
         # && addgroup -g 82 -S ${add_user} \
@@ -115,11 +110,9 @@ RUN set -ex \
         # && chown -R ${add_user}:${add_user} /data \
         && rm -rf /var/cache/apk/* /tmp/* /usr/share/man /usr/share/php7 \
         && cp /IYUU/docker/entrypoint.sh /entrypoint.sh \
-        && chmod +x /entrypoint.sh \
         && echo -e "\033[42;37m Build Completed :).\033[0m\n"
 
 EXPOSE 8787
 VOLUME ["/IYUU/db", "/IYUU"]
 WORKDIR /IYUU
 ENTRYPOINT ["/entrypoint.sh"]
-# CMD /run.sh
