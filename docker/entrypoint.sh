@@ -2,7 +2,7 @@
 
 cd /IYUU
 
-if [[ ! -d /IYUU/.git || ! -f /IYUU/.env ]]; then
+if [[ ! -d .git ]]; then
     #git clone https://github.com/ledccn/IYUUPlus.git /tmp/IYUU
     git clone https://gitee.com/ledc/iyuuplus.git /tmp/IYUU
     find /tmp/IYUU -mindepth 1 -maxdepth 1 | xargs -I {} cp -r {} /IYUU
@@ -13,7 +13,7 @@ else
     git pull
 fi
 
-if [ ! -s .env ]; then
+if [[ ! -s .env ]]; then
     cp .env.example .env
 fi
 
