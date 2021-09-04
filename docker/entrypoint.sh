@@ -17,7 +17,7 @@ if [[ ! -s .env ]]; then
     cp -f .env.example .env
 fi
 
-if [[ -z ${CRON_UPDATE} ]]; then
+if [[ -z "${CRON_UPDATE}" ]]; then
     minute=$(($RANDOM % 60))
     hour_start=$(($RANDOM % 6))
     hour_interval=$(($RANDOM % 4 + 6))
