@@ -18,7 +18,10 @@ if [ ! -s .env ]; then
 fi
 
 if [[ -z ${CRON_UPDATE} ]]; then
-    CRON_UPDATE="23 3-23/6 * * *"
+    minute=$(($RANDOM % 60))
+    hour_start=$(($RANDOM % 6))
+    hour_interval=$(($RANDOM % 4 + 6))
+    CRON_UPDATE="${minute} ${hour_start}-23/${hour_interval} * * *"
 fi
 
 echo "设置cron..."

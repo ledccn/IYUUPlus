@@ -6,18 +6,17 @@
 ```
 docker run -d \
 --name IYUUPlus \
--e CRON_UPDATE='23 3-23/6 * * *' `# 更新脚本的cron，请务必修改，否则无法更新` \
 -v /volume1/IYUU/db:/IYUU/db \
 -p 8787:8787 \
 --restart=always \
 iyuucn/iyuuplus
 ```
+*如需指定IYUU脚本更新时间，请添加一行`-e CRON_UPDATE='23 3-23/6 * * *' \`，请将`23 3-23/6 * * *`修改为你想更新的时间。*
+
 #### 小钢炮方法：
 
 ```
 docker run  -d \
--e CRON_UPDATE='23 3-23/6 * * *' `# 更新脚本的cron，请务必修改，否则无法更新` \
--e cron='10 */10 * * *' \
 -v /volume1/IYUU/db:/IYUU/db \
 -v /var/lib/transmission/torrents:/torrents \
 -v /var/lib/qbittorrent/.local/share/data/qBittorrent/BT_backup:/BT_backup \
@@ -25,18 +24,19 @@ docker run  -d \
 --restart always \
 iyuucn/iyuuplus
 ```
+*如需指定IYUU脚本更新时间，请添加一行`-e CRON_UPDATE='23 3-23/6 * * *' \`，请将`23 3-23/6 * * *`修改为你想更新的时间。*
 
 #### AMD64平台（MAC OS、台式、服务器、NAS等）
 
 ```
 docker run -d \
 --name IYUUPlus \
--e CRON_UPDATE='23 3-23/6 * * *' `# 更新脚本的cron，请务必修改，否则无法更新` \
 -v /volume1/IYUU/db:/IYUU/db \
 -p 8787:8787 \
 --restart=always \
 iyuucn/iyuuplus
 ```
+*如需指定IYUU脚本更新时间，请添加一行`-e CRON_UPDATE='23 3-23/6 * * *' \`，请将`23 3-23/6 * * *`修改为你想更新的时间。*
 
 
 **命令解释**
