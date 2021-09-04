@@ -24,6 +24,7 @@ ENV APP_ENV=${app_env:-"prod"} \
 # ---------- building ----------
 ##
 
+WORKDIR /IYUU
 RUN set -ex \
         # change apk source repo
         #&& sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/' /etc/apk/repositories \
@@ -116,5 +117,4 @@ RUN set -ex \
 
 EXPOSE 8787
 VOLUME ["/IYUU/db", "/IYUU"]
-WORKDIR /IYUU
 ENTRYPOINT ["/entrypoint.sh"]
