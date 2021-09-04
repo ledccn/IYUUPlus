@@ -85,22 +85,19 @@ RUN set -ex \
         # && git clone https://gitee.com/ledc/iyuuplus.git /IYUU \
         && git remote set-url origin https://gitee.com/ledc/iyuuplus.git \
         && git config --global pull.ff only \
-        && cd /IYUU && php -r "file_exists('.env') || copy('.env.example', '.env');" \
         && apk del --purge *-dev \
         # install latest composer
         && wget https://getcomposer.org/composer.phar \
         && mv composer.phar /usr/local/bin/composer \
         # make it executable
         && chmod +x /usr/local/bin/composer \
-        #  ---------- some config,clear work ----------
-        && cd /etc/php7 \
         # - config PHP
         && { \
             echo "upload_max_filesize=100M"; \
             echo "post_max_size=108M"; \
             echo "memory_limit=1024M"; \
             echo "date.timezone=${TIMEZONE}"; \
-        } | tee conf.d/99-overrides.ini \
+        } | tee /etc/php7/conf.d/99-overrides.ini \
         # - config timezone
         && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \
         && echo "${TIMEZONE}" > /etc/timezone \
