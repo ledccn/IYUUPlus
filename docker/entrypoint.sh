@@ -14,7 +14,7 @@ else
 fi
 
 if [[ ! -s .env ]]; then
-    cp .env.example .env
+    cp -f .env.example .env
 fi
 
 if [[ -z ${CRON_UPDATE} ]]; then
