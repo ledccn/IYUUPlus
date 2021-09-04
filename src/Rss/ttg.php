@@ -16,10 +16,33 @@ class ttg extends AbstractRss
      * @var string
      */
     public $site = 'ttg';
+
     /**
      * RSS订阅页面
      */
     public $rss_page = 'putrss.php?par={}&ssl=yes';
+
+    /**
+     * RSS专用密钥
+     * @var string
+     */
+    public $down_hash = '';
+
+    public function init()
+    {
+        //站点配置
+        $config = static::$conf['site'];
+        $this->cookies = !empty($config['cookie']) ? $config['cookie'] : '';
+        $this->passkey = !empty($config['passkey']) ? $config['passkey'] : '';
+        $this->down_hash = !empty($config['downHash']) ? $config['downHash'] : '';
+        if (empty($this->down_hash)) {
+            die($this->site.' 没有配置RSS专用密钥，请去RSS订阅页面生成[putrss.php?par={密钥在这里}&ssl=yes]，初始化错误。'.PHP_EOL);
+        }
+        if (empty($this->passkey)) {
+            die($this->site.' 没有配置密钥，初始化错误。'.PHP_EOL);
+        }
+        $this->rss_page = str_replace("{}", $this->down_hash, $this->rss_page);
+    }
 
     /**
      * 抽象方法，在类中实现
@@ -30,7 +53,16 @@ class ttg extends AbstractRss
     public function decode($html = '')
     {
         echo "正在解码RSS资源...". PHP_EOL;
-        $items = $this->NexusPHP($html);
+        return $this->NexusPHP($html);
+    }
+
+    /**
+     * 辅种时添加种子的方法
+     * @param array $items
+     * @return array
+     */
+    public function formatTorrent(array $items):array
+    {
         $host = static::getHost();
         $passkey = static::getConfig('site.passkey');
         $download_page = static::getConfig('sites.download_page');

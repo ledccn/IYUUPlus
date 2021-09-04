@@ -1,7 +1,4 @@
 <?php
-/**
- * 站点RSS解码抽象类
- */
 namespace IYUU\Rss;
 
 use DOMDocument;
