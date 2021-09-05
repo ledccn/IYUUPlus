@@ -126,3 +126,41 @@ function dataSize($bytes, string $delimiter = '', int $decimals = 2):string
 
     return number_format($bytes, $decimals) . $delimiter . $type[$i];
 }
+
+/**
+ * 工具函数,读取文件最后$n行
+ * @param string $filename  文件的路径
+ * @param int   $n          文件的行数
+ * @return  string
+ */
+function fileLastLines(string $filename, int $n = 1)
+{
+    // 文件存在并打开文件
+    if (!is_file($filename) || !$fp = fopen($filename, 'r')) {
+        return null;
+    }
+
+    $pos = -2;
+    $eof = '';
+    $lines = array();
+    while ($n > 0) {
+        $str = '';
+        while ($eof != "\n") {
+            //在打开的文件中定位
+            if (!fseek($fp, $pos, SEEK_END)) {
+                //从文件指针中读取一个字符
+                $eof = fgetc($fp);
+                $pos--;
+                $str = $eof . $str;
+            } else {
+                break;
+            }
+        }
+        // 插入到数组的开头
+        array_unshift($lines, $str);
+        $eof = '';
+        $n--;
+    }
+
+    return implode('', $lines);
+}
