@@ -18,17 +18,17 @@ ARG app_env=prod
 # ARG add_user=www-data
 
 ENV APP_ENV=${app_env:-"prod"} \
-    TIMEZONE=${timezone:-"Asia/Shanghai"} \
-    cron="3 */10 * * *"
+    TIMEZONE=${timezone:-"Asia/Shanghai"}
 
 ##
 # ---------- building ----------
 ##
 
+WORKDIR /IYUU
 RUN set -ex \
         # change apk source repo
         #&& sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/' /etc/apk/repositories \
-        #&& sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories \
+        && sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/' /etc/apk/repositories \
         && apk update \
         && apk add --no-cache \
         # Install base packages ('ca-certificates' will install 'nghttp2-libs')
@@ -81,31 +81,26 @@ RUN set -ex \
         php7-zip \
         php7-zlib \
         php7-xml \
-        # && git clone https://github.com/ledccn/IYUUPlus.git /IYUU \
-        && git clone https://gitee.com/ledc/iyuuplus.git /IYUU \
-        && cd /IYUU && php -r "file_exists('.env') || copy('.env.example', '.env');" \
+        && git clone https://github.com/ledccn/IYUUPlus.git /IYUU \
+        # && git clone https://gitee.com/ledc/iyuuplus.git /IYUU \
+        && git remote set-url origin https://gitee.com/ledc/iyuuplus.git \
+        && git config --global pull.ff only \
         && apk del --purge *-dev \
         # install latest composer
         && wget https://getcomposer.org/composer.phar \
         && mv composer.phar /usr/local/bin/composer \
         # make it executable
         && chmod +x /usr/local/bin/composer \
-        #  ---------- some config,clear work ----------
-        && cd /etc/php7 \
         # - config PHP
         && { \
             echo "upload_max_filesize=100M"; \
             echo "post_max_size=108M"; \
             echo "memory_limit=1024M"; \
             echo "date.timezone=${TIMEZONE}"; \
-        } | tee conf.d/99-overrides.ini \
+        } | tee /etc/php7/conf.d/99-overrides.ini \
         # - config timezone
         && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \
         && echo "${TIMEZONE}" > /etc/timezone \
-        && crontab -l > /tmp/crontab.bak \
-        && echo "$cron cd /IYUU && git fetch --all && git reset --hard origin/master" >> /tmp/crontab.bak \
-        && echo '10 */12 * * * /usr/bin/php /IYUU/start.php restart -d' >> /tmp/crontab.bak \
-        && crontab /tmp/crontab.bak \
         # ---------- some config work ----------
         # - ensure 'www-data' user exists(82 is the standard uid/gid for "www-data" in Alpine)
         # && addgroup -g 82 -S ${add_user} \
@@ -115,11 +110,8 @@ RUN set -ex \
         # && chown -R ${add_user}:${add_user} /data \
         && rm -rf /var/cache/apk/* /tmp/* /usr/share/man /usr/share/php7 \
         && cp /IYUU/docker/entrypoint.sh /entrypoint.sh \
-        && chmod +x /entrypoint.sh \
         && echo -e "\033[42;37m Build Completed :).\033[0m\n"
 
 EXPOSE 8787
 VOLUME ["/IYUU/db", "/IYUU"]
-WORKDIR /IYUU
 ENTRYPOINT ["/entrypoint.sh"]
-# CMD /run.sh
