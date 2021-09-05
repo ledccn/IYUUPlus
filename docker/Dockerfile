@@ -4,7 +4,7 @@ FROM alpine:latest
 #FROM swoft/alphp:base
 #FROM swoft/alphp:cli
 
-LABEL maintainer="david <367013672@qq.com>" version="1.0"
+LABEL maintainer="david <367013672@qq.com>" version="2.0"
 
 ##
 # ---------- env settings ----------
