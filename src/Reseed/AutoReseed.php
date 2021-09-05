@@ -89,22 +89,21 @@ class AutoReseed
      * @var int
      */
     public static $ExitCode = 0;
-
     /**
      * 微信通知消息体
      * @var array
      */
     protected static $wechatMsg = array(
-        'hashCount'			=>	0,		// 提交给服务器的hash总数
-        'sitesCount'		=>	0,		// 可辅种站点总数
-        'reseedCount'		=>	0,		// 返回的总数据
-        'reseedSuccess'		=>	0,		// 成功：辅种成功（会加入缓存，哪怕种子在校验中，下次也会过滤）
-        'reseedError'		=>	0,		// 错误：辅种失败（可以重试）
-        'reseedRepeat'		=>	0,		// 重复：客户端已做种
-        'reseedSkip'		=>	0,		// 跳过：因未设置passkey，而跳过
-        'reseedPass'		=>	0,		// 忽略：因上次成功添加、存在缓存，而跳过
-        'MoveSuccess'       =>  0,      // 移动成功
-        'MoveError'         =>  0,      // 移动失败
+        'hashCount'     =>  0,  // 提交给服务器的hash总数
+        'sitesCount'    =>	0,  // 可辅种站点总数
+        'reseedCount'   =>	0,  // 返回的总数据
+        'reseedSuccess' =>	0,  // 成功：辅种成功（会加入缓存，哪怕种子在校验中，下次也会过滤）
+        'reseedError'   =>	0,  // 错误：辅种失败（可以重试）
+        'reseedRepeat'  =>	0,  // 重复：客户端已做种
+        'reseedSkip'    =>	0,  // 跳过：因未设置passkey，而跳过
+        'reseedPass'    =>	0,  // 忽略：因上次成功添加、存在缓存，而跳过
+        'MoveSuccess'   =>  0,  // 移动成功
+        'MoveError'     =>  0,  // 移动失败
     );
     /**
      * 错误通知消息体
@@ -241,7 +240,7 @@ class AutoReseed
             ' gitee源码仓库：https://gitee.com/ledc/iyuuplus',
             ' github源码仓库：https://github.com/ledccn/IYUUPlus',
             ' 教程：https://www.iyuu.cn',
-            ' 【IYUU自动辅种交流】QQ群：859882209、931954050、924099912'.PHP_EOL,
+            ' 【IYUU自动辅种交流】QQ群：859882209, 931954050, 924099912, 586608623, 41477250'.PHP_EOL,
             ' 正在连接IYUUAutoReseed服务器，查询支持列表……'.PHP_EOL
         ];
         array_walk($list, function ($v, $k) {
@@ -314,7 +313,7 @@ class AutoReseed
                 static::$links[$k]['rpc'] = $client;
                 static::$links[$k]['_config'] = $v;
                 static::$links[$k]['type'] = $v['type'];
-                static::$links[$k]['BT_backup'] = isset($v['BT_backup']) && $v['BT_backup'] ? $v['BT_backup'] : '';
+                static::$links[$k]['BT_backup'] = !empty($v['BT_backup']) ? $v['BT_backup'] : '';
                 static::$links[$k]['root_folder'] = isset($v['root_folder']) ? $v['root_folder'] : 1;
                 $result = $client->status();
                 print $v['type'].'：'.$v['host']." Rpc连接 [{$result}]".PHP_EOL;
@@ -366,9 +365,9 @@ class AutoReseed
                     }
                     break;
                 case 'qBittorrent':
-                    //如果用户的下载器开启自动种子管理，需要传入这个参数
+                    //如果用户的下载器设置自动种子管理，需要传入这个参数
                     if (isset(static::$links[$rpcKey]['_config']['autoTMM'])) {
-                        $extra_options['autoTMM'] = 'false';	//关闭自动种子管理
+                        $extra_options['autoTMM'] = 'false';  //关闭自动种子管理
                     }
                     #$extra_options['skip_checking'] = 'true';    //跳校验
                     // 添加任务校验后是否暂停
@@ -466,7 +465,7 @@ class AutoReseed
     }
 
     /**
-     * 当前请求API接口获取数据
+     * 请求API接口获取当前客户端辅种数据
      * @param array $hashString         当前客户端infohash与目录对应的字典
      * @param array $hashArray          当前客户端infohash
      * @param int   $clientKey          当前客户端key
@@ -476,7 +475,10 @@ class AutoReseed
     {
         echo "正在向服务器提交 【".$clientValue['_config']['name']."】 种子哈希……".PHP_EOL;
         $res = self::$curl->post(Constant::API_BASE.Constant::API['infohash'], $hashArray);
-        cli($res->response);
+        if (isset($clientValue['_config']['debug'])) {
+            // 当前下载器设置了调试模式
+            cli($res->response);
+        }
         $res = json_decode($res->response, true);
         // 写响应日志
         wlog($res, 'Response_'.$clientKey);
@@ -515,7 +517,7 @@ class AutoReseed
                 $torrent_id = $value['torrent_id'];  // 种子id
                 // 检查禁用站点
                 if (empty(self::$sites[$sid])) {
-                    echo '-----当前站点不受支持，已跳过。' .PHP_EOL.PHP_EOL;
+                    echo '-----当前站点不受支持，已跳过。sid:'. $sid .PHP_EOL.PHP_EOL;
                     self::$wechatMsg['reseedSkip']++;
                     continue;
                 }
@@ -976,7 +978,7 @@ class AutoReseed
                 self::$_sites[$site][$expireKEY]   = time() + $expire - 60;     // 提前60秒过期
             }
         } else {
-            echo $site.' 很抱歉，请求IYUU辅种签名时失败啦，请稍后重新尝试辅种！详情：'.$ret['msg'].PHP_EOL;
+            echo $site.' 很抱歉，请求IYUU辅种签名时失败啦，请稍后重新尝试辅种！详情：'.($ret['msg'] ?? 'null').PHP_EOL;
         }
 
         return $signString;
