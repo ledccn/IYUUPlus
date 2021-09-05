@@ -159,7 +159,7 @@ class AutoReseed
         // 用户选择辅种的站点
         self::$_sites = self::$conf['sites'];
         // 对url拼接串进行预处理
-        array_walk(self::$_sites, function (&$v, $k){
+        array_walk(self::$_sites, function (&$v, $k) {
             if (!empty($v['url_join'])) {
                 $url_join = http_build_query($v['url_join']);
                 $v['url_join'] = [$url_join];
@@ -191,7 +191,7 @@ class AutoReseed
         file_put_contents($lockFile, $data);
 
         //注册一个会在php中止时执行的函数
-        register_shutdown_function(function () use (&$cron_name){
+        register_shutdown_function(function () use (&$cron_name) {
             self::deletePid();
             $lockFile = domainCrontab::getLockFile($cron_name);
             is_file($lockFile) and unlink($lockFile);
@@ -247,7 +247,7 @@ class AutoReseed
         array_walk($list, function ($v, $k) {
             echo microtime(true). $v . PHP_EOL;
         });
-        $url = sprintf('%s?sign=%s&version=%s',Constant::API_BASE.Constant::API['sites'], Oauth::getSign(), self::VER);
+        $url = sprintf('%s?sign=%s&version=%s', Constant::API_BASE.Constant::API['sites'], Oauth::getSign(), self::VER);
         $res = self::$curl->get($url);
         $rs = json_decode($res->response, true);
         $sites = empty($rs['data']['sites']) ? [] : $rs['data']['sites'];

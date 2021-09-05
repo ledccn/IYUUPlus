@@ -3,7 +3,6 @@ namespace app\common;
 
 /**
  * 配置文件读写类
- * @access private 常驻内存运行，禁止执行器调用
  */
 class Config
 {

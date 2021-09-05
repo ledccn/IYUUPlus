@@ -65,7 +65,7 @@ class Curl
      * @param bool $reset   是否重置Curl(默认true)
      * @return ICurl
      */
-    public static function get($url, $data = array(), bool $reset = true): ICurl
+    public static function get(string $url, $data = array(), bool $reset = true): ICurl
     {
         return static::one($reset)->get($url, $data);
     }
@@ -78,7 +78,7 @@ class Curl
      * @param bool $reset   是否重置Curl(默认true)
      * @return ICurl
      */
-    public static function post($url, $data = array(), $asJson = false, bool $reset = true): ICurl
+    public static function post(string $url, $data = array(), bool $asJson = false, bool $reset = true): ICurl
     {
         static::one($reset);
         if ($asJson) {

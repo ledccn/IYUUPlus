@@ -107,7 +107,7 @@ class Rss implements ConfigParserInterface
         $sites = Config::getSites();
         $sites = array_filter($sites, function ($k) use ($data) {
             return in_array($k, $data);
-        },ARRAY_FILTER_USE_KEY);
+        }, ARRAY_FILTER_USE_KEY);
         ksort($sites);
 
         return $sites;

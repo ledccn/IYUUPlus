@@ -145,7 +145,8 @@ class Config
      * 排除字段
      * @param $data
      */
-    protected static function createDataExcludeKeys(&$data) {
+    protected static function createDataExcludeKeys(&$data)
+    {
         if (is_array($data)) {
             foreach ([Constant::config_filename, Constant::action] as $key) {
                 unset($data[$key]);

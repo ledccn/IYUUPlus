@@ -22,6 +22,5 @@ class send implements EventListenerInterface
      */
     public function process(string $event):void
     {
-
     }
 }

@@ -14,7 +14,6 @@
 
 use Webman\Route;
 
-
 Route::any('/test', function ($request) {
     return response('test');
 });

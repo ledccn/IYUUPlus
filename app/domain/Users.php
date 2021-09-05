@@ -40,7 +40,7 @@ class Users
         $api_url = Constant::API_BASE;
         $api_action = Constant::API['sites'];
         $url = sprintf('%s%s?sign=%s&version=%s', $api_url, $api_action, $token, IYUU_VERSION());
-        file_put_contents(db_path().'/_url.json',print_r($url, true));
+        file_put_contents(db_path().'/_url.json', print_r($url, true));
         $res = $curl->get($url);
         $rs = json_decode($res->response, true);
         if (empty($res->response) || empty($rs) || !is_array($rs)) {
@@ -49,7 +49,7 @@ class Users
             $rs['msg'] = "无法访问{$api_url}接口，请检查本地网络；或重新创建容器，网络模式改为HOST模式。";
             return $rs;
         }
-        file_put_contents(db_path().'/_response.json',print_r($res->response, true));
+        file_put_contents(db_path().'/_response.json', print_r($res->response, true));
         if (isset($rs['ret']) && ($rs['ret'] === 200) && isset($rs['data']['sites']) && is_array($rs['data']['sites'])) {
             $sites = array_column($rs['data']['sites'], null, 'site');
             Conf::set('sites', $sites, Constant::config_format);
@@ -131,7 +131,7 @@ class Users
         //验证密码
         $salt = $userProfile['salt'];
         if ($userProfile['pass_hash'] !== self::createPassHash($password, $salt)) {
-            throw new BusinessException('密码错误，请重新输入！',250);
+            throw new BusinessException('密码错误，请重新输入！', 250);
         }
         return true;
     }

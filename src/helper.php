@@ -258,7 +258,7 @@ function filter($filter = [], $torrent = array())
                 // NO2:分隔
                 $keywords = explode(',', $keyword);
                 // NO3:移除空白字符和预定义字符
-                array_walk($keywords, function (&$v, $k){
+                array_walk($keywords, function (&$v, $k) {
                     $v = trim($v);
                 });
                 // NO4:过滤空

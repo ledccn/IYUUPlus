@@ -1,8 +1,9 @@
 <?php
 use app\common\components\Curl as ICurl;
 use app\domain\Config as domainConfig;
+
 /**
- * 返回IYUU当前版本号
+ * 返回IYUU客户端版本号
  * @return string
  */
 function IYUU_VERSION():string
@@ -100,8 +101,7 @@ function check_token($token = ''):bool
  */
 function run_exec($cmd = '')
 {
-    if(DIRECTORY_SEPARATOR === '\\')
-    {
+    if (DIRECTORY_SEPARATOR === '\\') {
         pclose(popen('start /B '.$cmd, 'r'));
     } else {
         pclose(popen($cmd, 'r'));
@@ -119,8 +119,7 @@ function dataSize($bytes, string $delimiter = '', int $decimals = 2):string
 {
     $type = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
     $i = 0;
-    while($bytes >= 1024)
-    {
+    while ($bytes >= 1024) {
         $bytes /= 1024;
         $i++;
     }

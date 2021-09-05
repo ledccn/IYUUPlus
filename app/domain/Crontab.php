@@ -68,14 +68,14 @@ class Crontab
     {
         // 初始化目录
         $sys_dir = [self::cron_dir, self::run_dir, self::pid_dir, self::lock_dir, self::log_dir];
-        array_walk($sys_dir, function ($v, $k){
+        array_walk($sys_dir, function ($v, $k) {
             $dir = cron_path() . DIRECTORY_SEPARATOR . $v;
             is_dir($dir) or mkdir($dir, 0777, true);
         });
 
         // 初始化计划任务文件[不同平台的配置，会造成command错误，需要重新解析命令]
         $cron = Config::getCrontab();
-        array_walk($cron, function ($v, $k){
+        array_walk($cron, function ($v, $k) {
             self::createHock($v);
         });
     }
@@ -324,8 +324,7 @@ class Crontab
         // 清理上次的日志
         self::clearLogs($uuid);
         // 运行命令
-        if(DIRECTORY_SEPARATOR === '\\')
-        {
+        if (DIRECTORY_SEPARATOR === '\\') {
             pclose(popen('start /B '.$cmd.' >> '.$logFile, 'r'));
         } else {
             pclose(popen($cmd.' >> '.$logFile.' 2>&1 &', 'r'));

@@ -26,12 +26,12 @@ class Constant
      */
     const API_BASE = 'https://api.iyuu.cn';
     const API = [
-        'login'   => '/App.Api.Bind',
-        'sites'   => '/App.Api.Sites',
-        'infohash'=> '/App.Api.Infohash',
-        'hash'    => '/App.Api.Hash',
-        'notify'  => '/App.Api.Notify',
-        'recommend'  =>  '/Api/GetRecommendSites',
+        'login'     => '/App.Api.Bind',
+        'sites'     => '/App.Api.Sites',
+        'infohash'  => '/App.Api.Infohash',
+        'hash'      => '/App.Api.Hash',
+        'notify'    => '/App.Api.Notify',
+        'recommend' => '/App.Api.GetRecommendSites',
         'getSign'   => '/App.Api.GetSign',
     ];
 
@@ -76,7 +76,7 @@ class Constant
     ];
 
     /**
-     * 下载种子，使用的请求方法
+     * 使用POST请求方法下载种子的站点
      */
     const SITE_DOWNLOAD_METHOD_POST = ['hdsky', 'hdcity'];
 }
