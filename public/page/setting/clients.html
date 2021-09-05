@@ -177,7 +177,7 @@
         view.innerHTML = html;
       });
       form.render();
-    }
+    };
 
     /**
      * 初始化表格
@@ -242,6 +242,7 @@
       switch (layEvent) {
         case 'edit':
           clients_sel_action(obj.data.type, 'edit');
+          $('#clients_type_view :input').removeAttr("checked");
           form.val("form", obj.data);
           break;
         case 'delete':
