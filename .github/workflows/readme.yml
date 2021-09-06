@@ -1,0 +1,37 @@
+name: 更新DockerHub简介
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - ./README.md
+      - .github/workflows/readme.yml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: 更新DockerHub简介
+    env:
+      IMAGE_NAME: iyuuplus
+    steps:
+      - 
+        name: Checkout
+        uses: actions/checkout@master
+
+      - 
+        name: Login DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - 
+        name: Update DockerHub Description
+        uses: christian-korneck/update-container-description-action@v1
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASS: ${{ secrets.DOCKERHUB_PASSWORD }}
+        with:
+          destination_container_repo: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          provider: dockerhub
+          readme_file: ./README.md
