@@ -1,92 +1,86 @@
-# 使用方法：
-### 1.拉取镜像、创建容器，运行
+# Docker安装方法
 
-#### ARM平台通用方法
+### 1.找到你的【种子目录】
 
-```
-docker run -d \
---name IYUUPlus \
--v /volume1/IYUU/db:/IYUU/db \
--p 8787:8787 \
---restart=always \
-iyuucn/iyuuplus
-```
-*如需指定IYUU脚本更新时间，请添加一行`-e CRON_UPDATE='23 3-23/6 * * *' \`，请将`23 3-23/6 * * *`修改为你想更新的时间；不设置则随机时间更新。*
+> qBittorrent的种子目录叫`BT_backup`，transmission的种子目录叫`torrents`。
+> Linux系统qBittorrent种子目录搜索命令：`find / -name BT_backup`
+> Linux系统transmission种子目录搜索命令：`find / -name torrents`
+> Windows系统qBittorrent种子目录，通常在`C:\Users\你的用户名\AppData\Local\qBittorrent\BT_backup`
 
-#### 小钢炮方法：
+如果你知道具体路径，可以直接在下一步创建命令中指定。
 
-```
-docker run  -d \
--v /volume1/IYUU/db:/IYUU/db \
--v /var/lib/transmission/torrents:/torrents \
--v /var/lib/qbittorrent/.local/share/data/qBittorrent/BT_backup:/BT_backup \
--p 8787:8787 \
---restart always \
-iyuucn/iyuuplus
-```
-*如需指定IYUU脚本更新时间，请添加一行`-e CRON_UPDATE='23 3-23/6 * * *' \`，请将`23 3-23/6 * * *`修改为你想更新的时间；不设置则随机时间更新。*
+### 2.拉取镜像、创建容器，运行
 
-#### AMD64平台（MAC OS、台式、服务器、NAS等）
+**全平台通用**
 
 ```
 docker run -d \
---name IYUUPlus \
--v /volume1/IYUU/db:/IYUU/db \
--p 8787:8787 \
---restart=always \
-iyuucn/iyuuplus
+  -v /你想在本地保存IYUU配置的路径/:/IYUU/db                    `# 冒号左边请修改为你想在本地保存IYUU配置文件的路径` \
+  -v /qBittorrent的BT_backup文件夹在宿主机上的路径/:/BT_backup  `# 冒号左边请修改为你自己的路径，如不使用qb，可删除本行` \
+  -v /transmission的torrents文件夹在宿主机上的路径/:/torrents   `# 冒号左边请修改为你自己的路径，如不使用tr，可删除本行` \
+  -p 8787:8787 \
+  --name IYUUPlus \
+  --restart=always \
+  iyuucn/iyuuplus
 ```
-*如需指定IYUU脚本更新时间，请添加一行`-e CRON_UPDATE='23 3-23/6 * * *' \`，请将`23 3-23/6 * * *`修改为你想更新的时间；不设置则随机时间更新。*
 
+*请将`-v`命令中的路径修改为你的实际路径。若不使用transmission可删除transmission那一行，若不使用qBittorrent可删除qBittorrent那一行。*
+
+*在容器中配置下载器时，下载器的`种子目录`请填入映射后的目录。*
+
+*如果上述方式安装后，容器内网络异常，可以指定网络模式为host，使用`--network=host \`代替`-p 8787:8787 \`这一行。*
+
+**以小钢炮为例，其具体命令如下**
+
+```
+docker run -d \
+  -v /volume1/IYUU/db:/IYUU/db \
+  -v /var/lib/transmission/torrents:/torrents \
+  -v /var/lib/qbittorrent/.local/share/data/qBittorrent/BT_backup:/BT_backup \
+  -p 8787:8787 \
+  --name IYUUPlus \
+  --restart always \
+  iyuucn/iyuuplus
+```
 
 **命令解释**
 
 | 参数        | 解释                                                         |
 | ----------- | ------------------------------------------------------------ |
 | `--name`    | 容器名字                                                     |
-| `-e`        | 环境变量，定时更新执行时间                                   |
 | `-v`        | 本地目录或文件:容器目录文件，资源挂载到容器。<br />请新建一个配置文件目录，然后映射进容器内`/IYUU/db`，容器内的数据都会保存到这个目录。 |
-| `--restart` | 启动模式                                                     |
-
-如果上述方式安装后，容器内网络异常，可以加一行代码指定网络模式`-net=host`
-
-### docker容器运行成功后，打开浏览器访问：http://127.0.0.1:8787
-把`127.0.01`替换为局域网地址，或者公网DDNS域名；
+| `--restart` | 重启策略                                                     |
 
 
+### 3.配置IYUU
+docker容器运行成功后，打开浏览器访问：http://127.0.0.1:8787 进行配置，或把`127.0.0.1`替换为局域网地址，或者公网DDNS域名。
 
-------
 
+# 部分Docker指令
 
-
-### 2.停止
+### 1.停止
 
 ```
 docker stop IYUUPlus
 ```
 
-
-### 3.运行
+### 2.运行
 
 ```
 docker start IYUUPlus
 ```
 
-### 4.删除容器
+### 3.删除容器
 ```
 docker rm IYUUPlus
 ```
 
-### 5.删除镜像
+### 4.删除镜像
 ```
 docker rmi iyuucn/IYUUPlus
 ```
 
-
-
-------
-
-
+# 说明
 
 #### 功能
 
