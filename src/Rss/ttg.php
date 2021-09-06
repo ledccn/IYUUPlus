@@ -32,7 +32,6 @@ class ttg extends AbstractRss
     {
         //站点配置
         $config = static::$conf['site'];
-        $this->cookies = !empty($config['cookie']) ? $config['cookie'] : '';
         $this->passkey = !empty($config['passkey']) ? $config['passkey'] : '';
         $this->down_hash = !empty($config['downHash']) ? $config['downHash'] : '';
         if (empty($this->down_hash)) {

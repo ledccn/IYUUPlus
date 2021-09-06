@@ -19,12 +19,7 @@ abstract class AbstractRss
      * 域名
      * @var string
      */
-    public $domain = '';
     public $host = 'https://{}/';
-    /**
-     * 下载种子的请求类型
-     */
-    public $method = 'GET';
     /**
      * 种子下载前缀
      */
@@ -47,14 +42,6 @@ abstract class AbstractRss
      * @var Curl
      */
     public $curl = null;
-    /**
-     * cookie
-     */
-    public $cookies = '';
-    /**
-     * 浏览器 User-Agent
-     */
-    public $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36';
     /**
      * passkey
      */
@@ -123,7 +110,33 @@ abstract class AbstractRss
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
         //cli(self::$conf);
         $siteName = self::$conf['site']['name'];
-        return isset(self::SITENAME_TO_FILENAME_MAP[$siteName]) ? self::SITENAME_TO_FILENAME_MAP[$siteName] : $siteName;
+        return static::getFileName($siteName);
+    }
+
+    /**
+     * 从站点名解析出类名（文件名）
+     * @param string $site_name
+     * @return string 类文件名
+     */
+    public static function getFileName(string $site_name):string
+    {
+        return isset(self::SITENAME_TO_FILENAME_MAP[$site_name]) ? self::SITENAME_TO_FILENAME_MAP[$site_name] : $site_name;
+    }
+
+    /**
+     * 从类名解析出站点名（配置里站点的键名）
+     * @param string $class_name
+     * @return string
+     */
+    public static function getSiteName(string $class_name):string
+    {
+        $classname_to_sitename_map = array_flip(static::SITENAME_TO_FILENAME_MAP);
+        if (array_key_exists($class_name, $classname_to_sitename_map)) {
+            $siteName = $classname_to_sitename_map[$class_name];
+        } else {
+            $siteName = $class_name;
+        }
+        return $siteName;
     }
 
     /**
@@ -134,7 +147,7 @@ abstract class AbstractRss
     {
         if ($init) {
             echo $this->site." 正在初始化RSS配置...". PHP_EOL;
-            cli(self::$conf);
+            //cli(self::$conf);
             $this->_initialize();
             $this->init();
             echo $this->site." RSS解码类实例化，成功！".PHP_EOL;
@@ -142,19 +155,12 @@ abstract class AbstractRss
     }
 
     /**
-     * 初始化 第一步
+     * 初始化 第一步，初始化父类的关键参数
      */
     final protected function _initialize()
     {
-        //常规配置
-        $default = empty(static::$conf['default']) ? [] : static::$conf['default'];
-        $this->userAgent = !empty($default['ua']) ? $default['ua'] : $this->userAgent;
-
         //云端下发
-        $sites = static::$conf['sites'];
-        $protocol = isset($sites['is_https']) && ($sites['is_https'] === 0) ? 'http://' : 'https://';
-        $this->domain = $sites['base_url'];
-        $this->host = $protocol . $this->domain . '/';   // 示例：https://baidu.com/
+        $this->host = static::getHost();   // 示例：https://baidu.com/
 
         // 初始化curl
         $this->curl = new Curl();
@@ -162,7 +168,7 @@ abstract class AbstractRss
         //$this->curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);     // 检查证书
         $this->curl->setOpt(CURLOPT_CONNECTTIMEOUT, self::CONNECTTIMEOUT);  // 超时
         $this->curl->setOpt(CURLOPT_TIMEOUT, self::TIMEOUT);                // 超时
-        $this->curl->setUserAgent($this->userAgent);
+        $this->curl->setUserAgent(static::getUserAgent());
     }
 
     /**
@@ -172,7 +178,6 @@ abstract class AbstractRss
     {
         //站点配置
         $config = static::$conf['site'];
-        $this->cookies = !empty($config['cookie']) ? $config['cookie'] : '';
         $this->passkey = !empty($config['passkey']) ? $config['passkey'] : '';
         if (empty($this->passkey)) {
             die($this->site.' 没有配置密钥，初始化错误。'.PHP_EOL);
@@ -239,13 +244,24 @@ abstract class AbstractRss
     }
 
     /**
+     * 取站点下载种子时使用的方法(post/get)
+     * @param string $site_name
+     * @return string
+     */
+    public static function getTorrentDownloadMethod(string $site_name):string
+    {
+        $method = Constant::SITE_DOWNLOAD_METHOD_POST;
+        return in_array($site_name, $method) ? 'POST' : 'GET';
+    }
+
+    /**
      * 公共方法：实现rss订阅下载，子类可以重写此方法
      * @return void
      */
     public function run()
     {
         echo "正在初始化RPC链接...". PHP_EOL;
-        Rpc::init($this->site, $this->method, self::$conf);
+        Rpc::init($this->site, static::getTorrentDownloadMethod($this->site), self::$conf);
         $html = $this->get();
         #cli($html);
         $this->checkCallback($html);
@@ -329,6 +345,17 @@ abstract class AbstractRss
         $protocol = isset($sites['is_https']) && ($sites['is_https'] === 0) ? 'http://' : 'https://';
         $domain = $sites['base_url'];
         return $protocol . $domain . '/';   // 示例：https://baidu.com/
+    }
+
+    /**
+     * 获得用户浏览器UA
+     * @return string
+     */
+    protected static function getUserAgent():string
+    {
+        //常规配置
+        $default = empty(static::$conf['default']) ? [] : static::$conf['default'];
+        return !empty($default['ua']) ? $default['ua'] : Constant::UserAgent;
     }
 
     /**

@@ -19,7 +19,6 @@ class hddolby extends AbstractRss
     {
         //站点配置
         $config = static::$conf['site'];
-        $this->cookies = isset($config['cookie']) && $config['cookie'] ? $config['cookie'] : '';
         $this->passkey = isset($config['downHash']) && $config['downHash'] ? $config['downHash'] : '';
         if (empty($this->passkey)) {
             die($this->site.' 没有配置密钥，初始化错误。'.PHP_EOL);
