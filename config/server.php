@@ -1,6 +1,6 @@
 <?php
 return [
-    'listen'               => 'http://0.0.0.0:8787',
+    'listen'               => 'http://[::]:8787',
     'transport'            => 'tcp',
     'context'              => [],
     'name'                 => 'IYUUAutoReseed',
