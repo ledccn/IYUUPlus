@@ -779,7 +779,7 @@ class AutoReseed
                 echo "clients_".$k."【".self::$links[$k]['_config']['name']."】正在循环检查所有项目... {$siteName}".PHP_EOL;
                 $item = ($item === 'uid' ? 'id' : $item);   // 兼容性处理
                 if (empty(self::$_sites[$siteName]) || empty(self::$_sites[$siteName][$item])) {
-                    $msg =  '-------因当前' .$siteName. "站点未设置".$item."，已跳过！！".PHP_EOL.PHP_EOL;
+                    $msg =  '-------因当前' .$siteName. "站点未设置".$item."，已跳过！！【如果确实已设置，请检查辅种任务，是否勾选{$siteName}站点】".PHP_EOL.PHP_EOL;
                     echo $msg;
                     self::$wechatMsg['reseedSkip']++;
                     return false;
