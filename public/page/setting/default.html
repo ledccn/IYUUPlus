@@ -24,7 +24,14 @@
           </div>
         </div>
       </div>
-
+      <div class="layui-form-item">
+        <label class="layui-form-label">监听IPv6</label>
+        <div class="layui-input-block">
+          <input type="checkbox" name="listen_ipv6" lay-skin="switch" lay-text="ON|OFF">
+          <tip>如果您拥有公网IPv6地址，想把端口映射到外网通过IPv6访问，请打开这个开关。</tip>
+        </div>
+      </div>
+      
       <div class="layui-form-item">
         <div class="layui-input-block">
           <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">保存</button>

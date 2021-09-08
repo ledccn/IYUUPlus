@@ -33,6 +33,21 @@ if (method_exists('Dotenv\Dotenv', 'createUnsafeImmutable')) {
     Dotenv::createMutable(base_path())->load();
 }
 
+echo microtime(true).'  检查配置，是否同时监听IPv6...'.PHP_EOL;
+$listen_ipv6 = false;
+$default_config_file = db_path() . '/default.json';
+if (is_file($default_config_file)) {
+    $default_config = file_get_contents($default_config_file);
+    $conf = json_decode($default_config, true);
+    $listen_ipv6 = isset($conf['listen_ipv6']);
+    if ($listen_ipv6) {
+        echo microtime(true).'  您设置同时监听IPv6，Windows系统本机访问URL为http://localhost:8787'.PHP_EOL;
+    } else {
+        echo microtime(true).'  未监听IPv6，如果您有公网IPv6地址，可以打开监听[ IYUUPlus -> 系统设置 -> 常规设置 -> 监听IPv6 ]'.PHP_EOL;
+    }
+} else {
+    echo microtime(true).'  未检测到常规配置JSON文件。'.PHP_EOL;
+}
 Config::load(config_path(), ['route', 'container']);
 $config = config('server');
 
@@ -56,7 +71,7 @@ Worker::$pidFile                      = $config['pid_file'];
 Worker::$stdoutFile                   = $config['stdout_file'];
 TcpConnection::$defaultMaxPackageSize = $config['max_package_size'] ?? 10*1024*1024;
 
-$worker = new Worker($config['listen'], $config['context']);
+$worker = new Worker($listen_ipv6 ? 'http://[::]:8787' : $config['listen'], $config['context']);
 $property_map = [
     'name',
     'count',
