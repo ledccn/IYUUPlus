@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/init.php';
 require_once __DIR__ . '/app/common/ICheck.php';
 use Workerman\Worker;
 use Workerman\Protocols\Http;

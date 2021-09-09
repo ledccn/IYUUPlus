@@ -462,6 +462,7 @@ class AutoReseed
                 self::requestApi($hashString, array_merge($hashArray, $sign), $clientKey, $clientValue);
             }
         }
+        echo PHP_EOL . '辅种已完成';
     }
 
     /**

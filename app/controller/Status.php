@@ -7,6 +7,7 @@ use app\common\exception\BusinessException;
 use app\common\Config as Conf;
 use app\common\Constant;
 use app\domain\Config;
+use IYUU\Reseed\AutoReseed;
 
 /**
  * Class Status
@@ -29,6 +30,27 @@ class Status extends BaseController
             'log_file'      => $log_file,
             'stdout_file'   => $stdout_file,
         ];
+        return json($rs);
+    }
+
+    /**
+     * 辅种成功日志、辅种失败日志
+     * @param Request $request
+     * @return Response
+     */
+    public function reseedLog(Request $request): Response
+    {
+        $rs = self::RS;
+        $key = $request->get('id', 'success');
+        if ($key === 'success') {
+            $log = Conf::get(AutoReseed::$cacheDir . 'reseedSuccess.txt', 'raw', '', true);
+        } else {
+            $log = Conf::get(AutoReseed::$cacheDir . 'reseedError.txt', 'raw', '', true);
+        }
+        $rs['data'] = [
+            $key => $log
+        ];
+
         return json($rs);
     }
 
