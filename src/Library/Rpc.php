@@ -59,9 +59,9 @@ class Rpc
      * 初始化
      * @param string $site
      * @param string $method
-     * @param array  $config
+     * @param array $config
      */
-    public static function init($site, $method, $config)
+    public static function init(string $site, string $method, array $config)
     {
         //初始化站点、下载种子请求类型、所有配置
         self::$site = $site;
@@ -132,7 +132,7 @@ class Rpc
                 static::$links['rpc'] = $client;
                 static::$links['_config'] = self::$clients;
                 static::$links['type'] = self::$clients['type'];
-                static::$links['root_folder'] = isset(self::$clients['root_folder']) ? self::$clients['root_folder'] : 1;
+                static::$links['root_folder'] = self::$clients['root_folder'] ?? 1;
                 $result = $client->status();
                 print self::$clients['type'].'：'.self::$clients['host']." Rpc连接 [{$result}]".PHP_EOL;
             } catch (\Exception $e) {
@@ -146,31 +146,31 @@ class Rpc
      * @brief 种子处理函数
      * @param array $data 种子数组
      * Array
-        (
-            [id] => 118632
-            [h1] => CCTV5+ 2019 ATP Men's Tennis Final 20191115B HDTV 1080i H264-HDxxx
-            [title] => 央视体育赛事频道 2019年ATP男子网球年终总决赛 单打小组赛 纳达尔VS西西帕斯 20191115[优惠剩余时间：4时13分]
-            [details] => https://XXX.me/details.php?id=118632
-            [download] => https://XXX.me/download.php?id=118632
-            [filename] => 118632.torrent
-            [type] => 0
-            [sticky] => 1
-            [time] => Array
-                (
-                    [0] => "2019-11-16 20:41:53">4时13分
-                    [1] => "2019-11-16 14:41:53">1时<br />46分
-                )
-            [comments] => 0
-            [size] => 5232.64MB
-            [seeders] => 69
-            [leechers] => 10
-            [completed] => 93
-            [percentage] => 100%
-            [owner] => 匿名
-        )
+     * (
+     * [id] => 118632
+            * [h1] => CCTV5+ 2019 ATP Men's Tennis Final 20191115B HDTV 1080i H264-HDxxx
+            * [title] => 央视体育赛事频道 2019年ATP男子网球年终总决赛 单打小组赛 纳达尔VS西西帕斯 20191115[优惠剩余时间：4时13分]
+            * [details] => https://XXX.me/details.php?id=118632
+            * [download] => https://XXX.me/download.php?id=118632
+            * [filename] => 118632.torrent
+            * [type] => 0
+            * [sticky] => 1
+            * [time] => Array
+                * (
+                    * [0] => "2019-11-16 20:41:53">4时13分
+                    * [1] => "2019-11-16 14:41:53">1时<br />46分
+                * )
+            * [comments] => 0
+            * [size] => 5232.64MB
+            * [seeders] => 69
+            * [leechers] => 10
+            * [completed] => 93
+            * [percentage] => 100%
+            * [owner] => 匿名
+        * )
      * @return mixed
      */
-    public static function call($data = array())
+    public static function call(array $data = array())
     {
         // 首次运行锁 开始
         $LOCK = self::$torrentDir . self::$site . '.lock';

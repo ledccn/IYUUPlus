@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/app/common/ICheck.php';
 use Workerman\Worker;
 use Workerman\Protocols\Http;
 use Workerman\Connection\TcpConnection;
@@ -12,17 +11,6 @@ use Dotenv\Dotenv;
 use support\Request;
 use support\bootstrap\Log;
 use support\bootstrap\Container;
-use app\common\ICheck;
-
-//检查扩展与函数
-if (class_exists('app\\common\\ICheck')) {
-    $currentOs = \DIRECTORY_SEPARATOR === '\\' ? 1 : 2;
-    ICheck::analysis($currentOs);
-} else {
-    exit('Class ICheck not found'.PHP_EOL);
-}
-//不存在env时，复制一份
-is_file(__DIR__ . DIRECTORY_SEPARATOR . '.env') || copy(__DIR__ . DIRECTORY_SEPARATOR . '.env.example', __DIR__ . DIRECTORY_SEPARATOR . '.env');
 
 if (method_exists('Dotenv\Dotenv', 'createUnsafeImmutable')) {
     Dotenv::createUnsafeImmutable(base_path())->load();

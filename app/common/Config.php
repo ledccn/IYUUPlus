@@ -103,7 +103,7 @@ class Config
      * @param bool $absolutePath
      * @return bool
      */
-    public static function delete(string $name, bool $absolutePath = false)
+    public static function delete(string $name, bool $absolutePath = false): bool
     {
         if ($name === null || $name === '') {
             return false;
@@ -124,7 +124,7 @@ class Config
      */
     public static function createFilePath(string $name = '', string $type = 'array'):string
     {
-        $ext = isset(self::extMap[$type]) ? self::extMap[$type] : self::extMap['object'];
+        $ext = self::extMap[$type] ?? self::extMap['object'];
         return db_path() . DIRECTORY_SEPARATOR . $name . $ext;
     }
 }

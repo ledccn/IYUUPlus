@@ -250,7 +250,7 @@ class Config
      * @param array $sites
      * @return array
      */
-    public static function disabledUserSites(&$sites):array
+    public static function disabledUserSites(array &$sites):array
     {
         $user_sites = self::getUserSites();
         array_walk($sites, function (&$v, $k) use ($user_sites) {
@@ -266,7 +266,7 @@ class Config
      * @param array $sites
      * @return array
      */
-    public static function disabledNotConfiguredUserSites(&$sites):array
+    public static function disabledNotConfiguredUserSites(array &$sites):array
     {
         $user_sites = self::getUserSites();
         array_walk($sites, function (&$v, $k) use ($user_sites) {

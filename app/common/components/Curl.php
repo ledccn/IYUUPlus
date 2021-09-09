@@ -38,7 +38,7 @@ class Curl
      * @param bool $reset
      * @return ICurl
      */
-    public static function one($reset = true)
+    public static function one(bool $reset = true): ICurl
     {
         if (self::$_instance === null) {
             self::$_instance = new ICurl();
@@ -65,7 +65,7 @@ class Curl
      * @param bool $reset   是否重置Curl(默认true)
      * @return ICurl
      */
-    public static function get(string $url, $data = array(), bool $reset = true): ICurl
+    public static function get(string $url, array $data = array(), bool $reset = true): ICurl
     {
         return static::one($reset)->get($url, $data);
     }

@@ -17,7 +17,7 @@ class Context
      * 配置信息（只读）
      * @var array
      */
-    private $config = [];
+    private $config;
 
     /**
      * 被重载的上下文Session数据保存在此
@@ -33,7 +33,6 @@ class Context
     private function __construct(array $config)
     {
         $this->config = $config;
-        $this->session = [];
     }
 
     /**

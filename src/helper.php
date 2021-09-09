@@ -31,7 +31,7 @@ use IYUU\Library\Table;
     )
  * @return false|string
  */
-function send($site = '', $torrent = array())
+function send(string $site = '', array $torrent = array())
 {
     $text = $site. ' 免费：' .$torrent['filename']. '，添加成功';
     $desp = torrent_text($torrent);
@@ -67,7 +67,7 @@ function send($site = '', $torrent = array())
  *
  * @return string
  */
-function torrent_text(array $torrent = array())
+function torrent_text(array $torrent = array()): string
 {
     $br = "\r\n";
     $desp = '主标题：'.($torrent['h1'] ?? '') . $br;
@@ -94,11 +94,11 @@ function torrent_text(array $torrent = array())
  * @brief 下载种子
  * @param string $url 种子URL
  * @param string $cookies 模拟登陆的cookie
- * @param $useragent
+ * @param string $useragent
  * @param string $method
- * @return mixed 返回的数据
+ * @return bool|string 返回的数据
  */
-function download($url, $cookies = '', $useragent = '', $method = 'GET')
+function download(string $url, string $cookies = '', string $useragent = '', string $method = 'GET')
 {
     $header = array(
         "Content-Type:application/x-www-form-urlencoded",
@@ -136,7 +136,7 @@ function download($url, $cookies = '', $useragent = '', $method = 'GET')
  * @param string $from 文件大小(如：100GB)
  * @return int 单位MB
  */
-function convertToMB($from)
+function convertToMB(string $from)
 {
     $number = substr($from, 0, -2);
     $number = $number + 0;
@@ -159,33 +159,33 @@ function convertToMB($from)
 /**
  * @brief 种子过滤器
  * @param array $filter 过滤器规则
- * @param array  $torrent 种子数组
+ * @param array $torrent 种子数组
  * 	Array
-    (
-        [id] => 118632
-        [h1] => CCTV5+ 2019 ATP Men's Tennis Final 20191115B HDTV 1080i H264-HDSTV
-        [title] => 央视体育赛事频道 2019年ATP男子网球年终总决赛 单打小组赛 纳达尔VS西西帕斯 20191115[优惠剩余时间：4时13分]
-        [details] => https://xxx.me/details.php?id=118632
-        [download] => https://xxx.me/download.php?id=118632
-        [filename] => 118632.torrent
-        [type] => 0
-        [sticky] => 1
-        [time] => Array
-        (
-        [0] => "2019-11-16 20:41:53">4时13分
-        [1] => "2019-11-16 14:41:53">1时<br />46分
-        )
-        [comments] => 0
-        [size] => 5232.64MB
-        [seeders] => 69
-        [leechers] => 10
-        [completed] => 93
-        [percentage] => 100%
-        [owner] => 匿名
-    )
+    * (
+        * [id] => 118632
+        * [h1] => CCTV5+ 2019 ATP Men's Tennis Final 20191115B HDTV 1080i H264-HDSTV
+        * [title] => 央视体育赛事频道 2019年ATP男子网球年终总决赛 单打小组赛 纳达尔VS西西帕斯 20191115[优惠剩余时间：4时13分]
+        * [details] => https://xxx.me/details.php?id=118632
+        * [download] => https://xxx.me/download.php?id=118632
+        * [filename] => 118632.torrent
+        * [type] => 0
+        * [sticky] => 1
+        * [time] => Array
+        * (
+        * [0] => "2019-11-16 20:41:53">4时13分
+        * [1] => "2019-11-16 14:41:53">1时<br />46分
+        * )
+        * [comments] => 0
+        * [size] => 5232.64MB
+        * [seeders] => 69
+        * [leechers] => 10
+        * [completed] => 93
+        * [percentage] => 100%
+        * [owner] => 匿名
+    * )
  * @return bool 或 string 	false不过滤
  */
-function filter($filter = [], $torrent = array())
+function filter(array $filter = [], array $torrent = array())
 {
     if (empty($filter)) {
         return false;
@@ -205,8 +205,8 @@ function filter($filter = [], $torrent = array())
     // 种子数过滤
     if (!empty($torrent['seeders'])) {
         $seeders = $torrent['seeders'];
-        $min = isset($filter['seeders']['min']) ? $filter['seeders']['min'] : 1;	//默认 1
-        $max = isset($filter['seeders']['max']) ? $filter['seeders']['max'] : 3;	//默认 3
+        $min = $filter['seeders']['min'] ?? 1;	//默认 1
+        $max = $filter['seeders']['max'] ?? 3;	//默认 3
         if ($seeders < $min || $seeders > $max) {
             return $filename. ' 当前做种' .$seeders. '人，被过滤';
         }
@@ -215,8 +215,8 @@ function filter($filter = [], $torrent = array())
     // 下载数过滤
     if (!empty($torrent['leechers'])) {
         $leechers = $torrent['leechers'];
-        $min = isset($filter['leechers']['min']) ? $filter['leechers']['min'] : 0;		//默认
-        $max = isset($filter['leechers']['max']) ? $filter['leechers']['max'] : 30000;	//默认
+        $min = $filter['leechers']['min'] ?? 0;		//默认
+        $max = $filter['leechers']['max'] ?? 30000;	//默认
         if ($leechers < $min || $leechers > $max) {
             return $filename. ' 当前下载' .$leechers. '人，被过滤';
         }
@@ -225,8 +225,8 @@ function filter($filter = [], $torrent = array())
     // 完成数过滤
     if (!empty($torrent['completed'])) {
         $completed = $torrent['completed'];
-        $min = isset($filter['completed']['min']) ? $filter['completed']['min'] : 0;		//默认
-        $max = isset($filter['completed']['max']) ? $filter['completed']['max'] : 30000;	//默认
+        $min = $filter['completed']['min'] ?? 0;		//默认
+        $max = $filter['completed']['max'] ?? 30000;	//默认
         if ($completed < $min || $completed > $max) {
             return $filename. ' 已完成数' .$completed. '人，被过滤';
         }
@@ -307,12 +307,12 @@ function filter($filter = [], $torrent = array())
 
 /**
  * 日志记录函数(追加式写入)
- * @param string $data
+ * @param string|int|array|object $data
  * @param string $name
  * @param string $path
  * @return bool|int
  */
-function wlog($data='', $name = '', $path = '')
+function wlog($data, string $name = '', string $path = '')
 {
     if (is_bool($data)) {
         $show_data=$data ? 'true' : 'false';
@@ -336,7 +336,7 @@ function wlog($data='', $name = '', $path = '')
  * @param string $dir
  * @param array $filter
  */
-function ShowTableSites($dir = 'Spiders', $filter = array())
+function ShowTableSites(string $dir = 'Spiders', array $filter = array())
 {
     // 过滤的文件
     switch ($dir) {

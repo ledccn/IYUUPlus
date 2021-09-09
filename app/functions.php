@@ -26,7 +26,7 @@ function IYUU_PROJECT_NAME():string
  * @param bool $short
  * @return string
  */
-function get_current_git_commit($branch = 'master', $short = true):string
+function get_current_git_commit(string $branch = 'master', bool $short = true):string
 {
     if ($hash = file_get_contents(sprintf(base_path() . '/.git/refs/heads/%s', $branch))) {
         $hash = trim($hash);
@@ -41,7 +41,7 @@ function get_current_git_commit($branch = 'master', $short = true):string
  * @param string $branch
  * @return string
  */
-function get_current_git_filemtime($branch = 'master'):string
+function get_current_git_filemtime(string $branch = 'master'):string
 {
     if ($time = filemtime(sprintf(base_path() . '/.git/refs/heads/%s', $branch))) {
         return date("Y-m-d H:i:s", $time);
@@ -55,7 +55,7 @@ function get_current_git_filemtime($branch = 'master'):string
  * @param string $desp
  * @return false|string
  */
-function ff($text = '', $desp = '')
+function ff(string $text = '', string $desp = '')
 {
     $config = domainConfig::getIyuu();
     if (empty($config) || empty($config['iyuu.cn'])) {
@@ -89,7 +89,7 @@ function getUUID(int $pid = 0):string
  * @param string $token
  * @return bool
  */
-function check_token($token = ''):bool
+function check_token(string $token = ''):bool
 {
     return (strlen($token) < 60) && (strpos($token, 'IYUU') === 0) && (strpos($token, 'T') < 15);
 }
@@ -99,7 +99,7 @@ function check_token($token = ''):bool
  * @descr 原理为php的程序执行函数后台执行
  * @param string $cmd
  */
-function run_exec($cmd = '')
+function run_exec(string $cmd = '')
 {
     if (DIRECTORY_SEPARATOR === '\\') {
         pclose(popen('start /B '.$cmd, 'r'));
@@ -131,9 +131,9 @@ function dataSize($bytes, string $delimiter = '', int $decimals = 2):string
  * 工具函数,读取文件最后$n行
  * @param string $filename  文件的路径
  * @param int   $n          文件的行数
- * @return  string
+ * @return string
  */
-function fileLastLines(string $filename, int $n = 1)
+function fileLastLines(string $filename, int $n = 1): ?string
 {
     // 文件存在并打开文件
     if (!is_file($filename) || !$fp = fopen($filename, 'r')) {

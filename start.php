@@ -27,12 +27,6 @@ is_file(__DIR__ . DIRECTORY_SEPARATOR . '.env') || copy(__DIR__ . DIRECTORY_SEPA
 is_dir(db_path()) or mkdir(db_path(), 0777, true);
 is_writable(db_path()) or exit('错误：'.db_path().'目录无写入权限，程序终止！');
 
-if (method_exists('Dotenv\Dotenv', 'createUnsafeImmutable')) {
-    Dotenv::createUnsafeImmutable(base_path())->load();
-} else {
-    Dotenv::createMutable(base_path())->load();
-}
-
 echo microtime(true).'  检查配置，是否同时监听IPv6...'.PHP_EOL;
 $listen_ipv6 = false;
 $default_config_file = db_path() . '/default.json';
@@ -48,6 +42,13 @@ if (is_file($default_config_file)) {
 } else {
     echo microtime(true).'  未检测到常规配置JSON文件。'.PHP_EOL;
 }
+
+if (method_exists('Dotenv\Dotenv', 'createUnsafeImmutable')) {
+    Dotenv::createUnsafeImmutable(base_path())->load();
+} else {
+    Dotenv::createMutable(base_path())->load();
+}
+
 Config::load(config_path(), ['route', 'container']);
 $config = config('server');
 
