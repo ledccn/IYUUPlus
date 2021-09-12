@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace IYUU\Library\Event;
+namespace app\common\event;
 
 /**
  * An Event whose processing may be interrupted when the event has been handled.

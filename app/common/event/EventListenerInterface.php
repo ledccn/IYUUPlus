@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace IYUU\Library\Event;
+namespace app\common\event;
 
 /**
  * 事件监听器接口
@@ -16,7 +16,7 @@ interface EventListenerInterface
 
     /**
      * 处理事件
-     * @param string $event
+     * @param object $event
      */
-    public function process(string $event): void;
+    public function process(object $event): void;
 }

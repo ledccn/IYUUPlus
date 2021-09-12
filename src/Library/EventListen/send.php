@@ -1,7 +1,7 @@
 <?php
 namespace IYUU\Library\EventListen;
 
-use IYUU\Library\Event\EventListenerInterface;
+use app\common\event\EventListenerInterface;
 
 class send implements EventListenerInterface
 {

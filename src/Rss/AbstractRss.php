@@ -168,6 +168,8 @@ abstract class AbstractRss
         //$this->curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);     // 检查证书
         $this->curl->setOpt(CURLOPT_CONNECTTIMEOUT, self::CONNECTTIMEOUT);  // 超时
         $this->curl->setOpt(CURLOPT_TIMEOUT, self::TIMEOUT);                // 超时
+        $this->curl->setOpt(CURLOPT_FOLLOWLOCATION, 1); // 自动跳转，跟随请求Location
+        $this->curl->setOpt(CURLOPT_MAXREDIRS, 2);      // 递归次数
         $this->curl->setUserAgent(static::getUserAgent());
     }
 
@@ -290,6 +292,7 @@ abstract class AbstractRss
         echo $this->site." 正在请求RSS... {$url}". PHP_EOL;
         $url = (stripos($url, 'http://') === 0 || stripos($url, 'https://') === 0) ? $url : $this->host . $url;
         $res = $this->curl->get($url);
+        //cli($res);exit;
         if ($res->http_status_code == 200) {
             echo "RSS获取信息，成功！". PHP_EOL;
             return $res->response;
