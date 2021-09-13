@@ -1,0 +1,47 @@
+<style>
+    .layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+    <div class="layui-tab layui-tab-brief" lay-filter="reseed_log">
+      <ul class="layui-tab-title">
+        <li class="layui-this" lay-id="success">成功日志</li>
+        <li lay-id="error">失败日志</li>
+      </ul>
+      <div class="layui-tab-content">
+        <div class="layui-tab-item layui-show"><pre class="layui-code" lay-title="成功日志" lay-height="700px" lay-skin="notepad" id="success"></pre></div>
+        <div class="layui-tab-item"><pre class="layui-code" lay-title="失败日志" lay-height="700px" lay-skin="notepad" id="error"></pre></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  layui.use(['code','element'], function () {
+    let $ = layui.$,
+      layer = layui.layer,
+      element = layui.element;
+
+    layui.code();
+    $.getJSON('/Status/reseedLog', function (data) {
+        console.log(data.data);
+        if (data && data.ret === 200) {
+            getById('success').innerHTML = data.data.success;
+        } else {
+            layer.msg('系统错误，请联系开发者。' + data.msg);
+        }
+    });
+    
+    //监听Tab切换
+    element.on('tab(reseed_log)', function(){
+      let id = this.getAttribute('lay-id');
+      $.getJSON('/Status/reseedLog', {id: id}, function (data) {
+        console.log(data.data);
+        if (data && data.ret === 200) {
+          getById(id).innerHTML = ((id === 'success') ? data.data.success : data.data.error);
+        } else {
+          layer.msg('系统错误，请联系开发者。' + data.msg);
+        }
+      });
+    });
+  });
+</script>

@@ -306,32 +306,6 @@ function filter(array $filter = [], array $torrent = array())
 }
 
 /**
- * 日志记录函数(追加式写入)
- * @param string|int|array|object $data
- * @param string $name
- * @param string $path
- * @return bool|int
- */
-function wlog($data, string $name = '', string $path = '')
-{
-    if (is_bool($data)) {
-        $show_data=$data ? 'true' : 'false';
-    } elseif (is_null($data)) {
-        $show_data='null';
-    } else {
-        $show_data=print_r($data, true);
-    }
-    // 写入日志
-    $dir = $path==='' ? TORRENT_PATH . DS . 'cache' . DS : $path;
-    IFile::mkdir($dir);
-    $file = $dir . $name . '.txt';
-    $pointer = @fopen($file, "a");
-    $worldsnum = @fwrite($pointer, $show_data);
-    @fclose($pointer);
-    return $worldsnum;
-}
-
-/**
  * 显示支持的站点列表
  * @param string $dir
  * @param array $filter

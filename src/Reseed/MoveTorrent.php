@@ -89,7 +89,7 @@ class MoveTorrent extends AutoReseed
             } else {
                 $infohash_Dir = $hashArray['hashString'];
                 // 写日志
-                wlog($hashArray, 'move'.$k);
+                static::wLog($hashArray, 'move'.$k);
             }
             // 前置过滤：移除转移成功的hash
             $rs = self::hashFilter($infohash_Dir);
@@ -172,12 +172,12 @@ class MoveTorrent extends AutoReseed
                         self::$links[$k]['rpc']->delete($torrentDelete);
                     }
                     // 转移成功的种子，以infohash为文件名，写入缓存
-                    wlog($log, $info_hash, self::$cacheMove);
-                    wlog($log, 'MoveSuccess'.$k);
+                    static::wLog($log, $info_hash, self::$cacheMove);
+                    static::wLog($log, 'MoveSuccess'.$k);
                     static::$wechatMsg['MoveSuccess']++;
                 } else {
                     // 失败的种子
-                    wlog($log, 'MoveError'.$k);
+                    static::wLog($log, 'MoveError'.$k);
                     static::$wechatMsg['MoveError']++;
                 }
             }
@@ -307,7 +307,7 @@ class MoveTorrent extends AutoReseed
     {
         $br = PHP_EOL;
         $text = 'IYUU自动辅种-统计报表';
-        $desp = '### 版本号：'. static::VER . $br;
+        $desp = '### 版本号：'. IYUU_VERSION() . $br;
         // 移动做种
         if (static::$wechatMsg['MoveSuccess'] || static::$wechatMsg['MoveError']) {
             $desp .= $br.'----------'.$br;

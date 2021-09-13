@@ -17,11 +17,7 @@ use app\domain\Crontab as domainCrontab;
 class AutoReseed
 {
     /**
-     * 版本号
-     */
-    const VER = '2.0.0';
-    /**
-     * 配置
+     * 解析的运行时配置
      * @var array
      */
     protected static $conf = [];
@@ -122,21 +118,26 @@ class AutoReseed
      */
     public static function init()
     {
+        // 1. 初始化curl
         self::$curl = new Curl();
         self::$curl->setOpt(CURLOPT_SSL_VERIFYPEER, false);
         //self::$curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);
-
+        // 2. 解析命令行参数
         self::getCliInput();
+        // 3. 鉴权绑定
         self::Oauth();
+        // 4. 获取站点列表
         self::getSites();
+        // 5. 显示站点列表
         self::ShowTableSites();
-        // 递归删除上次缓存
+        // 6. 递归删除上次缓存
         IFile::rmdir(self::$cacheDir, true);
+        // 7. 初始化运行目录
         IFile::mkdir(self::$cacheDir);
         IFile::mkdir(self::$cacheHash);
         IFile::mkdir(self::$cacheMove);
         IFile::mkdir(self::$cacheNotify);
-        // 连接全局客户端
+        // 8. 连接下载服务器
         self::links();
     }
 
@@ -145,7 +146,6 @@ class AutoReseed
      */
     protected static function getCliInput()
     {
-        // 命令行参数
         global $argv;
         $cron_name = isset($argv[1]) ? $argv[1] : null;
         is_null($cron_name) and die('缺少命令行参数。');
@@ -189,7 +189,7 @@ class AutoReseed
         $lockFile = domainCrontab::getLockFile($cron_name);
         file_put_contents($lockFile, $data);
 
-        //注册一个会在php中止时执行的函数
+        //注册一个会在php中止时执行的函数，删除pid、删除锁文件
         register_shutdown_function(function () use (&$cron_name) {
             self::deletePid();
             $lockFile = domainCrontab::getLockFile($cron_name);
@@ -235,7 +235,7 @@ class AutoReseed
      */
     protected static function getSites()
     {
-        echo microtime(true).' 辅种版本号：' . self::VER . PHP_EOL;
+        echo microtime(true).' 辅种版本号：' . IYUU_VERSION() . PHP_EOL;
         $list = [
             ' gitee源码仓库：https://gitee.com/ledc/iyuuplus',
             ' github源码仓库：https://github.com/ledccn/IYUUPlus',
@@ -246,7 +246,7 @@ class AutoReseed
         array_walk($list, function ($v, $k) {
             echo microtime(true). $v . PHP_EOL;
         });
-        $url = sprintf('%s?sign=%s&version=%s', Constant::API_BASE.Constant::API['sites'], Oauth::getSign(), self::VER);
+        $url = sprintf('%s?sign=%s&version=%s', Constant::API_BASE . Constant::API['sites'], Oauth::getSign(), IYUU_VERSION());
         $res = self::$curl->get($url);
         $rs = json_decode($res->response, true);
         $sites = empty($rs['data']['sites']) ? [] : $rs['data']['sites'];
@@ -316,6 +316,7 @@ class AutoReseed
                 static::$links[$k]['BT_backup'] = !empty($v['BT_backup']) ? $v['BT_backup'] : '';
                 static::$links[$k]['root_folder'] = isset($v['root_folder']) ? $v['root_folder'] : 1;
                 $result = $client->status();
+                static::$links[$k]['version'] = $result;    // 示例：QB v4.3.8, TR success
                 print $v['type'].'：'.$v['host']." Rpc连接 [{$result}]".PHP_EOL;
             } catch (Exception $e) {
                 die('[连接错误] '. $v['host'] . ' ' . $e->getMessage() . PHP_EOL);
@@ -334,10 +335,7 @@ class AutoReseed
     protected static function add($rpcKey, $torrent, $save_path = '', $extra_options = array())
     {
         try {
-            $is_url = false;
-            if ((strpos($torrent, 'http://')===0) || (strpos($torrent, 'https://')===0) || (strpos($torrent, 'magnet:?xt=urn:btih:')===0)) {
-                $is_url = true;
-            }
+            $is_url = static::isTorrentUrl($torrent);
             // 下载服务器类型
             $type = static::$links[$rpcKey]['type'];
             // 判断
@@ -403,6 +401,16 @@ class AutoReseed
     }
 
     /**
+     * 判断内容是否为种子的URL链接
+     * @param string $torrent
+     * @return bool
+     */
+    protected static function isTorrentUrl(string $torrent)
+    {
+        return (stripos($torrent, 'http://') === 0) || (stripos($torrent, 'https://') === 0) || (strpos($torrent, 'magnet:?xt=urn:btih:') === 0);
+    }
+
+    /**
      * 辅种或转移，总入口
      */
     public static function call()
@@ -436,10 +444,10 @@ class AutoReseed
             $sign = [];
             $sign['sign'] = Oauth::getSign();
             $sign['timestamp'] = time();
-            $sign['version'] = self::VER;
+            $sign['version'] = IYUU_VERSION();
             //cli($hashArray);
             // 写请求日志
-            wlog($hashArray, 'Request_'.$clientKey);
+            static::wLog($hashArray, 'Request_'.$clientKey);
             self::$wechatMsg['hashCount'] += count($hashString);
             // 此处优化大于5000条做种时，设置超时
             if (count($hashString) > 5000) {
@@ -482,7 +490,7 @@ class AutoReseed
         }
         $res = json_decode($res->response, true);
         // 写响应日志
-        wlog($res, 'Response_'.$clientKey);
+        static::wLog($res, 'Response_'.$clientKey);
         $data = isset($res['data']) && $res['data'] ? $res['data'] : array();
         if (empty($data)) {
             echo "clients_".$clientKey."【".$clientValue['_config']['name']."】 没有查询到可辅种数据".PHP_EOL.PHP_EOL;
@@ -701,13 +709,13 @@ class AutoReseed
                         }
                     }
                     // 添加成功，以infohash为文件名，写入缓存；所有客户端共用缓存，不可以重复辅种！如果需要重复辅种，请经常删除缓存！
-                    wlog($log, $value['info_hash'], self::$cacheHash);
-                    wlog($log, 'reseedSuccess');
+                    static::wLog($log, $value['info_hash'], self::$cacheHash);
+                    static::wLog($log, 'reseedSuccess');
                     // 成功累加
                     self::$wechatMsg['reseedSuccess']++;
                 } else {
                     // 失败
-                    wlog($log, 'reseedError');
+                    static::wLog($log, 'reseedError');
                     // 失败累加
                     self::$wechatMsg['reseedError']++;
                 }
@@ -804,7 +812,7 @@ class AutoReseed
             echo '-------已跳过不辅种的站点：'.$_url.PHP_EOL.PHP_EOL;
             self::$wechatMsg['reseedPass']++;
             // 写入日志文件，供用户手动辅种
-            wlog('clients_'.$k."【".self::$links[$k]['_config']['name']."】".PHP_EOL.$downloadDir.PHP_EOL.$_url.PHP_EOL.PHP_EOL, $siteName);
+            static::wLog('clients_'.$k."【".self::$links[$k]['_config']['name']."】".PHP_EOL.$downloadDir.PHP_EOL.$_url.PHP_EOL.PHP_EOL, $siteName);
             return false;
         }
         // 流控检测
@@ -815,7 +823,7 @@ class AutoReseed
                 $details_page = str_replace('{}', $torrent_id, 'details.php?id={}&hit=1');
                 $_url = 'https://' .self::$sites[$sid]['base_url']. '/' .$details_page;
             }
-            wlog('clients_'.$k."【".self::$links[$k]['_config']['name']."】".PHP_EOL.$downloadDir.PHP_EOL."-------因当前" .$siteName. "站点触发流控，已跳过！！ {$_url}".PHP_EOL.PHP_EOL, 'reseedLimit');
+            static::wLog('clients_'.$k."【".self::$links[$k]['_config']['name']."】".PHP_EOL.$downloadDir.PHP_EOL."-------因当前" .$siteName. "站点触发流控，已跳过！！ {$_url}".PHP_EOL.PHP_EOL, 'reseedLimit');
             self::$wechatMsg['reseedSkip']++;
             return false;
         }
@@ -964,7 +972,7 @@ class AutoReseed
         // 请求IYUU获取签名
         $data = [
             'sign' => self::$conf['iyuu.cn'],
-            'version'   => self::VER,
+            'version'   => IYUU_VERSION(),
             'site'      => $site,
             'uid'       => isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0,
         ];
@@ -1002,7 +1010,7 @@ class AutoReseed
         }
         $br = PHP_EOL;
         $text = 'IYUU自动辅种-统计报表';
-        $desp = '### 版本号：'. self::VER . $br;
+        $desp = '### 版本号：'. IYUU_VERSION() . $br;
         $desp .= '**支持站点：'.self::$wechatMsg['sitesCount']. '**  [当前支持自动辅种的站点数量]' .$br;
         $desp .= '**总做种：'.self::$wechatMsg['hashCount'] . '**  [客户端做种的hash总数]' .$br;
         $desp .= '**返回数据：'.self::$wechatMsg['reseedCount']. '**  [服务器返回的可辅种数据]' .$br;
@@ -1099,5 +1107,31 @@ class AutoReseed
             'desp' => $desp
         );
         return ICurl::http_post('https://iyuu.cn/'.$token.'.send', $data);
+    }
+
+    /**
+     * 追加式写入日志
+     * @param string|int|array|object $data
+     * @param string $name
+     * @param string $path
+     * @return bool|int
+     */
+    protected static function wLog($data, string $name = '', string $path = '')
+    {
+        if (is_bool($data)) {
+            $show_data = $data ? 'true' : 'false';
+        } elseif (is_null($data)) {
+            $show_data = 'null';
+        } else {
+            $show_data = print_r($data, true);
+        }
+        // 写入日志
+        $dir = empty($path) ? static::$cacheDir : $path;
+        IFile::mkdir($dir);
+        $file = $dir . $name . '.txt';
+        $pointer = @fopen($file, "a");
+        $result = @fwrite($pointer, $show_data);
+        @fclose($pointer);
+        return $result;
     }
 }

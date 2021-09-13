@@ -18,9 +18,9 @@ class send implements EventListenerInterface
     /**
      * 订阅器的处理方法(事件触发后，会执行该方法)
      *
-     * @param string $event
+     * @param object $event
      */
-    public function process(string $event):void
+    public function process(object $event):void
     {
     }
 }
