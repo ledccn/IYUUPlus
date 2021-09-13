@@ -486,7 +486,12 @@ class qBittorrent extends AbstractClient
      */
     public function recheck($hash)
     {
-        return $this->postData('torrent_recheck', ['hashes' => $hash]);
+        // 关键 上传文件流 multipart/form-data【严格按照api文档编写】
+        $post_data = $this->buildUrls(['hashes' => $hash]);
+        // 设置请求头
+        $this->curl->setHeader('Content-Type', 'multipart/form-data; boundary='.$this->delimiter);
+        $this->curl->setHeader('Content-Length', strlen($post_data));
+        return $this->postData('torrent_recheck', $post_data);
     }
 
     /**
