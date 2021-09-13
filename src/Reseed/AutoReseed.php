@@ -317,6 +317,7 @@ class AutoReseed
                 static::$links[$k]['root_folder'] = isset($v['root_folder']) ? $v['root_folder'] : 1;
                 $result = $client->status();
                 static::$links[$k]['version'] = $result;    // 示例：QB v4.3.8, TR success
+                static::$links[$k]['reseed_infohash'] = []; // 初始化本次运行时辅种infohash变量
                 print $v['type'].'：'.$v['host']." Rpc连接 [{$result}]".PHP_EOL;
             } catch (Exception $e) {
                 die('[连接错误] '. $v['host'] . ' ' . $e->getMessage() . PHP_EOL);
@@ -455,9 +456,12 @@ class AutoReseed
                 $timeout = isset(self::$conf['default']['TIMEOUT']) && self::$conf['default']['TIMEOUT'] > 600 ? self::$conf['default']['TIMEOUT'] : 600;
                 self::$curl->setOpt(CURLOPT_CONNECTTIMEOUT, $_timeout);
                 self::$curl->setOpt(CURLOPT_TIMEOUT, $timeout);
+            }
+            // 分组200个hash，分批辅种
+            if (count($hashString) > 200) {
                 $hashJson = $hashArray['hash'];
-                $infoHash = json_decode($hashJson, true);     // Json转数组
-                $hash = array_chunk($infoHash, 200);       // 分隔数组
+                $infoHash = json_decode($hashJson, true);
+                $hash = array_chunk($infoHash, 200);
                 foreach ($hash as $info_hash) {
                     $hashArray = [];
                     sort($info_hash);
@@ -468,6 +472,16 @@ class AutoReseed
                 }
             } else {
                 self::requestApi($hashString, array_merge($hashArray, $sign), $clientKey, $clientValue);
+            }
+            /**
+             * qBittorrent下载器的特殊操作
+             */
+            if ($clientValue['type'] === 'qBittorrent') {
+                // 检查当前客户端辅种的INFOHASH，是否自动校验
+                if (isset(static::$conf['auto_check']) && !empty(static::$links[$clientKey]['reseed_infohash'])) {
+                    $hashes = join('|', static::$links[$clientKey]['reseed_infohash']);
+                    static::$links[$clientKey]['rpc']->recheck($hashes);
+                }
             }
         }
         echo PHP_EOL . '辅种已完成';
@@ -483,7 +497,7 @@ class AutoReseed
     private static function requestApi($hashString, $hashArray, $clientKey, $clientValue)
     {
         echo "正在向服务器提交 【".$clientValue['_config']['name']."】 种子哈希……".PHP_EOL;
-        $res = self::$curl->post(Constant::API_BASE.Constant::API['infohash'], $hashArray);
+        $res = self::$curl->post(Constant::API_BASE . Constant::API['infohash'], $hashArray);
         if (isset($clientValue['_config']['debug'])) {
             // 当前下载器设置了调试模式
             cli($res->response);
@@ -491,7 +505,7 @@ class AutoReseed
         $res = json_decode($res->response, true);
         // 写响应日志
         static::wLog($res, 'Response_'.$clientKey);
-        $data = isset($res['data']) && $res['data'] ? $res['data'] : array();
+        $data = $res['data'] ?? array();
         if (empty($data)) {
             echo "clients_".$clientKey."【".$clientValue['_config']['name']."】 没有查询到可辅种数据".PHP_EOL.PHP_EOL;
             return;
@@ -524,6 +538,7 @@ class AutoReseed
                 self::$wechatMsg['reseedCount']++;
                 $sid = $value['sid'];                // 站点id
                 $torrent_id = $value['torrent_id'];  // 种子id
+                $reseed_infohash = $value['info_hash'];  // 种子infohash
                 // 检查禁用站点
                 if (empty(self::$sites[$sid])) {
                     echo '-----当前站点不受支持，已跳过。sid:'. $sid .PHP_EOL.PHP_EOL;
@@ -532,14 +547,14 @@ class AutoReseed
                 }
                 // 站名
                 $siteName = self::$sites[$sid]['site'];
-                // 错误通知
+                // 设置错误通知数据结构
                 self::setNotify($siteName, $sid, $torrent_id);
                 // 协议
                 $protocol = self::$sites[$sid]['is_https'] == 0 ? 'http://' : 'https://';
                 // 种子页规则
                 $download_page = str_replace('{}', $torrent_id, self::$sites[$sid]['download_page']);
                 // 辅种检查规则
-                $reseed_check = self::$sites[$sid]['reseed_check']; // 赋值
+                $reseed_check = self::$sites[$sid]['reseed_check'];
 
                 // 临时种子连接（会写入辅种日志）
                 $_url = $protocol . self::$sites[$sid]['base_url']. '/' .$download_page;
@@ -582,16 +597,16 @@ class AutoReseed
                                 $_url = str_replace($remove, $matchs[1], $_url);
                                 echo "下载种子：".$_url.PHP_EOL;
                                 $url = download($_url, $cookie, $userAgent);
-                                if (strpos($url, '第一次下载提示') != false) {
+                                if (strpos($url, '第一次下载提示') !== false) {
                                     self::$noReseed[] = $siteName;
                                     $reseedPass = true;
 
                                     echo "当前站点触发第一次下载提示，已加入排除列表".PHP_EOL;
-                                    sleepIYUU(30, '请进入瓷器详情页，点右上角蓝色框：下载种子，成功后更新cookie！');
+                                    sleepIYUU(30, '请进入种子详情页，点右上角蓝色框：下载种子，成功后更新cookie！');
                                     self::ff($siteName. '站点，辅种时触发第一次下载提示！');
                                     break;
                                 }
-                                if (strpos($url, '系统检测到过多的种子下载请求') != false) {
+                                if (strpos($url, '系统检测到过多的种子下载请求') !== false) {
                                     self::$_sites[$siteName]['limit'] = 1;
                                     $reseedPass = true;
 
@@ -633,7 +648,7 @@ class AutoReseed
                             // 城市下载种子会302转向
                             echo "下载种子：".$_url.PHP_EOL;
                             $url = download($_url, $cookie, $userAgent);
-                            if (strpos($url, 'Non-exist torrent id!') != false) {
+                            if (strpos($url, 'Non-exist torrent id!') !== false) {
                                 echo '种子已被删除！'.PHP_EOL;
                                 self::sendNotify('404');
                                 // 标志：跳过辅种
@@ -713,6 +728,8 @@ class AutoReseed
                     static::wLog($log, 'reseedSuccess');
                     // 成功累加
                     self::$wechatMsg['reseedSuccess']++;
+                    // 保存当前客户端辅种的INFOHASH
+                    self::$links[$clientKey]['reseed_infohash'][] = $reseed_infohash;
                 } else {
                     // 失败
                     static::wLog($log, 'reseedError');
@@ -759,10 +776,10 @@ class AutoReseed
      */
     private static function cookieExpired($siteName)
     {
-        self::$_sites[$siteName]['cookie'] = '';
+        //self::$_sites[$siteName]['cookie'] = '';
 
         self::ff($siteName. '站点，cookie已过期，请更新后重新辅种！');
-        sleepIYUU(15, 'cookie已过期，请更新后重新辅种！已加入排除列表');
+        sleepIYUU(15, 'cookie已过期，请更新后重新辅种！');
     }
 
     /**

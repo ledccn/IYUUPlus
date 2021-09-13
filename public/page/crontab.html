@@ -92,6 +92,13 @@
     </div>
     <div class="layui-form-mid layui-word-aux"><i class="layui-icon layui-icon-tips"></i> 如果您新增站点或者新增下载器，需要再次编辑计划任务并勾选。</div>
   </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">自动校验</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="auto_check" lay-skin="switch" lay-text="YES|NO" lay-filter="auto_check" id="auto_check">
+      <tip>辅种添加的任务，自动开始校验（如果您的QB下载器，添加的辅种任务不会自动开始校验，可以勾选此设置）。此功能在TR以及低版本QB中属于默认行为，是否勾选都不影响自动校验；</tip>
+    </div>
+  </div>
   {{# } }}
 
   {{# if (d.type === 'move') { }}
