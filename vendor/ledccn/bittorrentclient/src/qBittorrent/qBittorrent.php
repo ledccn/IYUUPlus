@@ -401,7 +401,7 @@ class qBittorrent extends AbstractClient
         $extra_options['urls'] = $torrent_url;
         #$extra_options['skip_checking'] = 'true';    //跳校验
         // 关键 上传文件流 multipart/form-data【严格按照api文档编写】
-        $post_data = $this->buildUrls($extra_options);
+        $post_data = $this->buildData($extra_options);
         #p($post_data);
         // 设置请求头
         $this->curl->setHeader('Content-Type', 'multipart/form-data; boundary='.$this->delimiter);
@@ -424,7 +424,7 @@ class qBittorrent extends AbstractClient
         $extra_options['torrents'] = $torrent_metainfo;
         #$extra_options['skip_checking'] = 'true';    //跳校验
         // 关键 上传文件流 multipart/form-data【严格按照api文档编写】
-        $post_data = $this->buildData($extra_options);
+        $post_data = $this->buildTorrent($extra_options);
         // 设置请求头
         $this->curl->setHeader('Content-Type', 'multipart/form-data; boundary='.$this->delimiter);
         $this->curl->setHeader('Content-Length', strlen($post_data));
@@ -487,7 +487,7 @@ class qBittorrent extends AbstractClient
     public function recheck($hash)
     {
         // 关键 上传文件流 multipart/form-data【严格按照api文档编写】
-        $post_data = $this->buildUrls(['hashes' => $hash]);
+        $post_data = $this->buildData(['hashes' => $hash]);
         // 设置请求头
         $this->curl->setHeader('Content-Type', 'multipart/form-data; boundary='.$this->delimiter);
         $this->curl->setHeader('Content-Length', strlen($post_data));
@@ -583,7 +583,7 @@ class qBittorrent extends AbstractClient
      * @param array $param
      * @return string
      */
-    public function buildUrls($param)
+    public function buildData($param)
     {
         $this->delimiter = uniqid();
         $eol = "\r\n";
@@ -604,7 +604,7 @@ class qBittorrent extends AbstractClient
      * @param array $param
      * @return string
      */
-    public function buildData($param)
+    public function buildTorrent($param)
     {
         $this->delimiter = uniqid();
         $eol = "\r\n";

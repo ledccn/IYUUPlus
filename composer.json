@@ -36,8 +36,8 @@
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-curl": "*",
-    "ledccn/bittorrentclient": "dev-master",
-    "ext-dom": "*"
+    "ext-dom": "*",
+    "ledccn/bittorrentclient": "dev-master"
   },
   "suggest": {
     "ext-event": "For better performance. "
