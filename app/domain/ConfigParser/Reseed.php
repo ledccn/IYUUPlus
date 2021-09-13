@@ -57,6 +57,9 @@ class Reseed implements ConfigParserInterface
                     return array_key_exists($k, $key);
                 }, ARRAY_FILTER_USE_KEY);
             }
+
+            //其他参数
+            $rs = array_merge($cron, $rs);
         }
 
         return $rs;
