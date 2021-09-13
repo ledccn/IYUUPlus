@@ -53,13 +53,14 @@
     <label class="layui-form-label required">下载器地址端口</label>
     <div class="layui-input-block">
       <input type="text" name="host" lay-verify="required" lay-reqtext="下载器完整地址不能为空" placeholder="请输入下载器完整地址（包含端口）" class="layui-input">
-      <tip id="tips">完整的服务器地址（含端口），如：http://192.168.3.1:9091</tip>
+      <tip id="tips">完整的下载服务器地址（含端口），如：<span class="layui-badge layui-bg-cyan">http://192.168.3.1:9091</span></tip>
     </div>
   </div>
   <div class="layui-form-item">
     <label class="layui-form-label">下载器接入点</label>
     <div class="layui-input-block">
       <input type="text" name="endpoint" placeholder="请输入下载器接入点，如果不懂请保持默认。" class="layui-input" value="{{ d.endpoint || ''}}">
+      <tip>如果你不懂啥意思，请保持默认，修改必定出错。<span class="layui-badge">不懂原因胡乱修改，造成下载器连接失败的，群内禁言1天。</span></tip>
     </div>
   </div>
   <div class="layui-form-item">
