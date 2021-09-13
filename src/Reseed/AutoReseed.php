@@ -4,6 +4,9 @@ namespace IYUU\Reseed;
 use Curl\Curl;
 use Exception;
 use IYUU\Client\AbstractClient;
+use IYUU\Client\ClientException;
+use IYUU\Client\qBittorrent\qBittorrent;
+use IYUU\Client\transmission\transmission;
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
 use app\common\components\Curl as ICurl;
@@ -327,26 +330,26 @@ class AutoReseed
 
     /**
      * @brief 添加下载任务
-     * @param $rpcKey
+     * @param $clientKey
      * @param string $torrent 种子元数据
      * @param string $save_path 保存路径
      * @param array $extra_options
      * @return bool
      */
-    protected static function add($rpcKey, $torrent, $save_path = '', $extra_options = array())
+    protected static function add($clientKey, $torrent, $save_path = '', $extra_options = array())
     {
         try {
             $is_url = static::isTorrentUrl($torrent);
             // 下载服务器类型
-            $type = static::$links[$rpcKey]['type'];
+            $type = static::$links[$clientKey]['type'];
             // 判断
             switch ($type) {
                 case 'transmission':
                     $extra_options['paused'] = isset($extra_options['paused']) ? $extra_options['paused'] : true;
                     if ($is_url) {
-                        $result = static::$links[$rpcKey]['rpc']->add($torrent, $save_path, $extra_options);			// URL添加
+                        $result = static::getRpc($clientKey)->add($torrent, $save_path, $extra_options);			// URL添加
                     } else {
-                        $result = static::$links[$rpcKey]['rpc']->add_metainfo($torrent, $save_path, $extra_options);	// 元数据添加
+                        $result = static::getRpc($clientKey)->add_metainfo($torrent, $save_path, $extra_options);	// 元数据添加
                     }
                     if (isset($result['result']) && $result['result'] == 'success') {
                         $_key = isset($result['arguments']['torrent-added']) ? 'torrent-added' : 'torrent-duplicate';
@@ -365,7 +368,7 @@ class AutoReseed
                     break;
                 case 'qBittorrent':
                     //如果用户的下载器设置自动种子管理，需要传入这个参数
-                    if (isset(static::$links[$rpcKey]['_config']['autoTMM'])) {
+                    if (isset(static::$links[$clientKey]['_config']['autoTMM'])) {
                         $extra_options['autoTMM'] = 'false';  //关闭自动种子管理
                     }
                     #$extra_options['skip_checking'] = 'true';    //跳校验
@@ -376,13 +379,13 @@ class AutoReseed
                         $extra_options['paused'] = 'true';
                     }
                     // 是否创建根目录
-                    $extra_options['root_folder'] = static::$links[$rpcKey]['root_folder'] ? 'true' : 'false';
+                    $extra_options['root_folder'] = static::$links[$clientKey]['root_folder'] ? 'true' : 'false';
                     if ($is_url) {
-                        $result = static::$links[$rpcKey]['rpc']->add($torrent, $save_path, $extra_options);			// URL添加
+                        $result = static::getRpc($clientKey)->add($torrent, $save_path, $extra_options);			// URL添加
                     } else {
                         $extra_options['name'] = 'torrents';
                         $extra_options['filename'] = time().'.torrent';
-                        $result = static::$links[$rpcKey]['rpc']->add_metainfo($torrent, $save_path, $extra_options);	// 元数据添加
+                        $result = static::getRpc($clientKey)->add_metainfo($torrent, $save_path, $extra_options);	// 元数据添加
                     }
                     if ($result === 'Ok.') {
                         print "********RPC添加下载任务成功 [{$result}]".PHP_EOL.PHP_EOL;
@@ -413,6 +416,7 @@ class AutoReseed
 
     /**
      * 辅种或转移，总入口
+     * @throws ClientException
      */
     public static function call()
     {
@@ -423,6 +427,7 @@ class AutoReseed
 
     /**
      * IYUUAutoReseed辅种
+     * @throws ClientException
      */
     private static function reseed()
     {
@@ -435,7 +440,7 @@ class AutoReseed
                 continue;
             }
             echo "正在从下载器 【".$clientValue['_config']['name']."】 获取种子哈希……".PHP_EOL;
-            $hashArray = self::$links[$clientKey]['rpc']->all();
+            $hashArray = static::getRpc($clientKey)->all();
             if (empty($hashArray)) {
                 continue;
             }
@@ -480,13 +485,23 @@ class AutoReseed
                 echo '检查当前客户端辅种的INFOHASH，是否自动校验' . PHP_EOL;
                 //cli(static::$links[$clientKey]['reseed_infohash'] ?? []);
                 if (isset(static::$conf['auto_check']) && !empty(static::$links[$clientKey]['reseed_infohash'])) {
-                    echo 'qBittorrent下载服务器添加辅种任务:' . count(static::$links[$clientKey]['reseed_infohash']) . '个，已发送自动校验命令。';
+                    echo 'qBittorrent下载服务器添加辅种任务:' . count(static::$links[$clientKey]['reseed_infohash']) . '个，已发送自动校验命令。' . PHP_EOL;
                     $hashes = join('|', static::$links[$clientKey]['reseed_infohash']);
-                    static::$links[$clientKey]['rpc']->recheck($hashes);
+                    static::getRpc($clientKey)->recheck($hashes);
                 }
             }
         }
         echo PHP_EOL . '辅种已完成';
+    }
+
+    /**
+     * 优化IDE跟踪
+     * @param string $clientKey
+     * @return qBittorrent|transmission
+     */
+    public static function getRpc(string $clientKey)
+    {
+        return static::$links[$clientKey]['rpc'];
     }
 
     /**

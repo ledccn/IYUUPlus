@@ -149,8 +149,8 @@ class MoveTorrent extends AutoReseed
                 echo "种子已推送给下载器，正在转移做种...".PHP_EOL;
 
                 // 目标下载器类型
-                $rpcKey = self::$conf['to_clients']['uuid'];
-                $type = self::$links[$rpcKey]['type'];
+                $clientKey = self::$conf['to_clients']['uuid'];
+                $type = self::$links[$clientKey]['type'];
                 $extra_options = array();
                 // 转移后，是否开始？
                 $extra_options['paused'] = isset(self::$conf['paused']) && self::$conf['paused'] ? true : false;
@@ -161,7 +161,7 @@ class MoveTorrent extends AutoReseed
                 }
 
                 // 添加转移任务：成功返回：true
-                $ret = self::add($rpcKey, $torrent, $downloadDir, $extra_options);
+                $ret = self::add($clientKey, $torrent, $downloadDir, $extra_options);
                 /**
                  * 转移成功的种子写日志
                  */
