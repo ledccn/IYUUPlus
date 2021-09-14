@@ -1,8 +1,4 @@
 FROM alpine:latest
-#FROM alpine:3.12
-#FROM alpine:3.8
-#FROM swoft/alphp:base
-#FROM swoft/alphp:cli
 
 LABEL maintainer="david <367013672@qq.com>" version="2.0"
 
