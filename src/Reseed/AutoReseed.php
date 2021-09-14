@@ -169,6 +169,12 @@ class AutoReseed
         });
         // 用户辅种的下载器
         self::$clients = self::$conf['clients'];
+        // curl超时
+        $default = self::$conf['default'];
+        $_timeout = isset($default['CONNECTTIMEOUT']) && is_numeric($default['CONNECTTIMEOUT']) && (int)$default['CONNECTTIMEOUT'] > 20 ? $default['CONNECTTIMEOUT'] : 20;
+        $timeout = isset($default['TIMEOUT']) && is_numeric($default['TIMEOUT']) && (int)$default['TIMEOUT'] > 100 ? $default['TIMEOUT'] : 100;
+        self::$curl->setOpt(CURLOPT_CONNECTTIMEOUT, $_timeout);
+        self::$curl->setOpt(CURLOPT_TIMEOUT, $timeout);
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
     }
 
@@ -320,7 +326,6 @@ class AutoReseed
                 continue;
             }
             try {
-                // 传入配置，创建客户端实例
                 $client = AbstractClient::create($v);
                 static::$links[$k]['rpc'] = $client;    // 客户端实例
                 static::$links[$k]['_config'] = $v;     // 完整配置
@@ -328,7 +333,7 @@ class AutoReseed
                 static::$links[$k]['BT_backup'] = !empty($v['BT_backup']) ? $v['BT_backup'] : '';
                 static::$links[$k]['root_folder'] = isset($v['root_folder']) && booleanParse($v['root_folder']) ? true : false;
                 $result = $client->status();
-                static::$links[$k]['version'] = $result;    // 示例：QB v4.3.8, TR success
+                static::$links[$k]['version'] = $result;    // QB：v4.3.8, TR：success
                 static::$links[$k]['reseed_infohash'] = []; // 初始化本次运行时辅种infohash变量
                 print $v['type'].'：'.$v['host']." Rpc连接 [{$result}]".PHP_EOL;
             } catch (Exception $e) {
@@ -368,11 +373,11 @@ class AutoReseed
                         print "********RPC添加下载任务成功 [" .$result['result']. "] (id=" .$id. ")".PHP_EOL.PHP_EOL;
                         return true;
                     } else {
-                        $errmsg = isset($result['result']) ? $result['result'] : '未知错误，请稍后重试！';
-                        if (strpos($errmsg, 'http error 404: Not Found') !== false) {
+                        $err = isset($result['result']) ? $result['result'] : '未知错误，请稍后重试！';
+                        if (strpos($err, 'http error 404: Not Found') !== false) {
                             static::sendNotify('404');
                         }
-                        print "-----RPC添加种子任务，失败 [{$errmsg}]" . PHP_EOL.PHP_EOL;
+                        print "-----RPC添加种子任务，失败 [{$err}]" . PHP_EOL.PHP_EOL;
                     }
                     break;
                 case 'qBittorrent':
@@ -453,6 +458,9 @@ class AutoReseed
             if (empty($hashArray)) {
                 continue;
             }
+            if (isset($clientValue['_config']['debug'])) {
+                cli($hashArray);
+            }
             $hashString = $hashArray['hashString'];   // 哈希目录字典
             unset($hashArray['hashString']);
             // 签名
@@ -460,22 +468,15 @@ class AutoReseed
             $sign['sign'] = Oauth::getSign();
             $sign['timestamp'] = time();
             $sign['version'] = IYUU_VERSION();
-            //cli($hashArray);
             // 写请求日志
             static::wLog($hashArray, 'Request_'.$clientKey);
             self::$wechatMsg['hashCount'] += count($hashString);
-            // 此处优化大于5000条做种时，设置超时
-            if (count($hashString) > 5000) {
-                $_timeout = isset(self::$conf['default']['CONNECTTIMEOUT']) && self::$conf['default']['CONNECTTIMEOUT'] > 60 ? self::$conf['default']['CONNECTTIMEOUT'] : 60;
-                $timeout = isset(self::$conf['default']['TIMEOUT']) && self::$conf['default']['TIMEOUT'] > 600 ? self::$conf['default']['TIMEOUT'] : 600;
-                self::$curl->setOpt(CURLOPT_CONNECTTIMEOUT, $_timeout);
-                self::$curl->setOpt(CURLOPT_TIMEOUT, $timeout);
-            }
             // 分组200个hash，分批辅种
-            if (count($hashString) > 200) {
+            $group_num = 200;
+            if (count($hashString) > $group_num) {
                 $hashJson = $hashArray['hash'];
                 $infoHash = json_decode($hashJson, true);
-                $hash = array_chunk($infoHash, 200);
+                $hash = array_chunk($infoHash, $group_num);
                 foreach ($hash as $info_hash) {
                     $hashArray = [];
                     sort($info_hash);
@@ -528,7 +529,6 @@ class AutoReseed
         echo "正在向服务器提交 【".$clientValue['_config']['name']."】 种子哈希……".PHP_EOL;
         $res = self::$curl->post(Constant::API_BASE . Constant::API['infohash'], $hashArray);
         if (isset($clientValue['_config']['debug'])) {
-            // 当前下载器设置了调试模式
             cli($res->response);
         }
         $res = json_decode($res->response, true);
