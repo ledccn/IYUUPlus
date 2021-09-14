@@ -394,14 +394,15 @@
   <span class="layui-badge" lay-event="delete">删除</span>
 </script>
 <script>
-  layui.use(['table','form','miniPage','laytpl','code','transfer'], function () {
+  layui.use(['table','form','miniPage','laytpl','code','transfer','util'], function () {
     let $ = layui.$,
       layer = layui.layer,
       table = layui.table,
       form = layui.form,
       miniPage = layui.miniPage,
       laytpl = layui.laytpl,
-      transfer = layui.transfer;
+      transfer = layui.transfer,
+      util = layui.util;
 
     const API = {
       tableList: '/Api/Config?config_filename=crontab&action=list'
@@ -475,6 +476,7 @@
         ,view = getById('crontab_where_view');
       //初始清空
       view.innerHTML = '';
+      clear_crontab_input();
       if (where === '') {
         return ;
       }
@@ -482,6 +484,13 @@
         view.innerHTML = html;
       });
       form.render();
+    };
+    
+    /**
+     * 清空crontab文本框
+     */
+    let clear_crontab_input = function() {
+        getById('crontab').value = '';
     };
 
     /**
@@ -1121,6 +1130,22 @@
     form.on('select(where)', function(data){
       crontab_where_sel_action(data.value);
     });
+    //监听onchange变更事件
+    util.event('id', {
+      day: function(othis){
+        console.log('day');
+        clear_crontab_input();
+      }
+      ,hour: function(othis){
+        console.log('hour');
+        clear_crontab_input();
+      }
+      ,minute: function(othis){
+        console.log('minute');
+        clear_crontab_input();
+      }
+    },'change');
+    
     //监听提交
     form.on('submit(saveBtn)', function (data) {
       $.ajax({
