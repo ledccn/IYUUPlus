@@ -124,7 +124,6 @@ class AutoReseed
         // 1. 初始化curl
         self::$curl = new Curl();
         self::$curl->setOpt(CURLOPT_SSL_VERIFYPEER, false);
-        //self::$curl->setOpt(CURLOPT_SSL_VERIFYHOST, 2);
         // 2. 解析命令行参数
         self::getCliInput();
         // 3. 鉴权绑定
@@ -157,10 +156,11 @@ class AutoReseed
             die('解析计划任务失败：站点或客户端为空！可能当前任务已被停止或删除！'.PHP_EOL);
         }
         self::savePid($cron_name);
+        // 初始化Oauth静态类
         Oauth::init(self::$conf);
-        // 用户选择辅种的站点
+        // 勾选的辅种站点
         self::$_sites = self::$conf['sites'];
-        // 对url拼接串进行预处理
+        // 预处理url拼接串
         array_walk(self::$_sites, function (&$v, $k) {
             if (!empty($v['url_join'])) {
                 $url_join = http_build_query($v['url_join']);
@@ -190,6 +190,7 @@ class AutoReseed
 
         //lock文件
         $lockFile = domainCrontab::getLockFile($cron_name);
+        //TODO.. 本次执行检查锁，避免系统资源耗尽
         file_put_contents($lockFile, $data);
 
         //注册一个会在php中止时执行的函数，删除pid、删除锁文件
@@ -238,17 +239,7 @@ class AutoReseed
      */
     protected static function getSites()
     {
-        echo microtime(true).' 辅种版本号：' . IYUU_VERSION() . PHP_EOL;
-        $list = [
-            ' gitee源码仓库：https://gitee.com/ledc/iyuuplus',
-            ' github源码仓库：https://github.com/ledccn/IYUUPlus',
-            ' 教程：https://www.iyuu.cn',
-            ' 【IYUU自动辅种交流】QQ群：859882209, 931954050, 924099912, 586608623, 41477250'.PHP_EOL,
-            ' 正在连接IYUUAutoReseed服务器，查询支持列表……'.PHP_EOL
-        ];
-        array_walk($list, function ($v, $k) {
-            echo microtime(true). $v . PHP_EOL;
-        });
+        static::showInfo();
         $url = sprintf('%s?sign=%s&version=%s', Constant::API_BASE . Constant::API['sites'], Oauth::getSign(), IYUU_VERSION());
         $res = self::$curl->get($url);
         $rs = json_decode($res->response, true);
@@ -271,6 +262,24 @@ class AutoReseed
                 });
                 $v['reseed_check'] = $rule ? $rule : [];
             }
+        });
+    }
+
+    /**
+     * 显示基本信息
+     */
+    protected static function showInfo()
+    {
+        echo microtime(true).' 辅种版本号：' . IYUU_VERSION() . PHP_EOL;
+        $list = [
+            ' gitee源码仓库：https://gitee.com/ledc/iyuuplus',
+            ' github源码仓库：https://github.com/ledccn/IYUUPlus',
+            ' 教程：https://www.iyuu.cn',
+            ' 【IYUU自动辅种交流】QQ群：859882209, 931954050, 924099912, 586608623, 41477250'.PHP_EOL,
+            ' 正在连接IYUUAutoReseed服务器，查询支持列表……'.PHP_EOL
+        ];
+        array_walk($list, function ($v, $k) {
+            echo microtime(true). $v . PHP_EOL;
         });
     }
 
@@ -313,11 +322,11 @@ class AutoReseed
             try {
                 // 传入配置，创建客户端实例
                 $client = AbstractClient::create($v);
-                static::$links[$k]['rpc'] = $client;
-                static::$links[$k]['_config'] = $v;
-                static::$links[$k]['type'] = $v['type'];
+                static::$links[$k]['rpc'] = $client;    // 客户端实例
+                static::$links[$k]['_config'] = $v;     // 完整配置
+                static::$links[$k]['type'] = $v['type'];// 类型
                 static::$links[$k]['BT_backup'] = !empty($v['BT_backup']) ? $v['BT_backup'] : '';
-                static::$links[$k]['root_folder'] = isset($v['root_folder']) ? $v['root_folder'] : 1;
+                static::$links[$k]['root_folder'] = isset($v['root_folder']) && booleanParse($v['root_folder']) ? true : false;
                 $result = $client->status();
                 static::$links[$k]['version'] = $result;    // 示例：QB v4.3.8, TR success
                 static::$links[$k]['reseed_infohash'] = []; // 初始化本次运行时辅种infohash变量
@@ -482,10 +491,10 @@ class AutoReseed
              * qBittorrent下载器的特殊操作
              */
             if ($clientValue['type'] === 'qBittorrent') {
-                echo '检查当前客户端辅种的INFOHASH，是否自动校验' . PHP_EOL;
+                echo '检查当前客户端自动校验开关和已添加辅种任务的种子infohash，是否需要自动校验' . PHP_EOL;
                 //cli(static::$links[$clientKey]['reseed_infohash'] ?? []);
                 if (isset(static::$conf['auto_check']) && !empty(static::$links[$clientKey]['reseed_infohash'])) {
-                    $msg = 'qBittorrent下载服务器添加辅种任务:' . count(static::$links[$clientKey]['reseed_infohash']) . '个，稍后将发送自动校验命令。';
+                    $msg = ' qBittorrent下载服务器添加辅种任务:' . count(static::$links[$clientKey]['reseed_infohash']) . '个，稍后将发送自动校验命令。';
                     $hashes = join('|', static::$links[$clientKey]['reseed_infohash']);
                     sleepIYUU(30, $msg);
                     static::getRpc($clientKey)->recheck($hashes);
