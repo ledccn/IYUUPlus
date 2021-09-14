@@ -485,9 +485,12 @@ class AutoReseed
                 echo '检查当前客户端辅种的INFOHASH，是否自动校验' . PHP_EOL;
                 //cli(static::$links[$clientKey]['reseed_infohash'] ?? []);
                 if (isset(static::$conf['auto_check']) && !empty(static::$links[$clientKey]['reseed_infohash'])) {
-                    echo 'qBittorrent下载服务器添加辅种任务:' . count(static::$links[$clientKey]['reseed_infohash']) . '个，已发送自动校验命令。' . PHP_EOL;
+                    $msg = 'qBittorrent下载服务器添加辅种任务:' . count(static::$links[$clientKey]['reseed_infohash']) . '个，稍后将发送自动校验命令。';
                     $hashes = join('|', static::$links[$clientKey]['reseed_infohash']);
+                    sleepIYUU(30, $msg);
                     static::getRpc($clientKey)->recheck($hashes);
+                } else {
+                    echo '当前qBittorrent下载器未开启自动校验或本次未添加辅种任务。' . PHP_EOL;
                 }
             }
         }
