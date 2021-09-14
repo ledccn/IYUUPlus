@@ -3,6 +3,7 @@ namespace IYUU\Reseed;
 
 use app\domain\ConfigParser\Move as domainMove;
 use app\domain\Crontab as domainCrontab;
+use IYUU\Client\ClientException;
 
 class MoveTorrent extends AutoReseed
 {
@@ -44,7 +45,6 @@ class MoveTorrent extends AutoReseed
      */
     protected static function getCliInput()
     {
-        // 命令行参数
         global $argv;
         $cron_name = isset($argv[1]) ? $argv[1] : null;
         is_null($cron_name) and die('缺少命令行参数。');
@@ -52,7 +52,6 @@ class MoveTorrent extends AutoReseed
         // 用户选择的下载器
         self::$clients = self::$conf['clients'];
         echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
-        //cli(self::$conf);//exit;
     }
 
     /**
@@ -67,6 +66,7 @@ class MoveTorrent extends AutoReseed
 
     /**
      * IYUUAutoReseed做种客户端转移
+     * @throws ClientException
      */
     private static function move()
     {
@@ -82,7 +82,7 @@ class MoveTorrent extends AutoReseed
             }
             echo "正在从下载器 clients_".$k." 获取种子哈希……".PHP_EOL;
             $move = [];     // 客户端做种列表 传址
-            $hashArray = self::$links[$k]['rpc']->all($move);
+            $hashArray = static::getRpc($k)->all($move);
             if (empty($hashArray)) {
                 // 失败
                 continue;
@@ -99,7 +99,7 @@ class MoveTorrent extends AutoReseed
             }
             //遍历当前客户端种子
             foreach ($infohash_Dir as $info_hash => $downloadDir) {
-                // 调用路径过滤
+                // 调用路径过滤器、选择器
                 if (self::pathFilter($downloadDir)) {
                     continue;
                 }
@@ -107,8 +107,9 @@ class MoveTorrent extends AutoReseed
                 echo '转换前：'.$downloadDir.PHP_EOL;
                 $downloadDir = self::pathReplace($downloadDir);
                 echo '转换后：'.$downloadDir.PHP_EOL;
+                $help_msg = 'IYUU自动转移做种客户端--使用教程'.PHP_EOL.'https://www.iyuu.cn/archives/451/'.PHP_EOL.'https://www.iyuu.cn/archives/465/'.PHP_EOL;
                 if (is_null($downloadDir)) {
-                    echo 'IYUU自动转移做种客户端--使用教程 https://www.iyuu.cn/archives/351/'.PHP_EOL;
+                    echo $help_msg;
                     die("路径转换参数配置错误，请重新配置！！！".PHP_EOL);
                 }
                 // 种子目录：脚本要能够读取到
@@ -116,7 +117,7 @@ class MoveTorrent extends AutoReseed
                 $torrentPath = '';
                 // 待删除种子
                 $torrentDelete = '';
-                // 获取种子原文件的实际路径
+                // 获取种子文件的实际路径
                 switch ($v['type']) {
                     case 'transmission':
                         // 优先使用API提供的种子路径
@@ -130,7 +131,7 @@ class MoveTorrent extends AutoReseed
                         break;
                     case 'qBittorrent':
                         if (empty($path)) {
-                            echo 'IYUU自动转移做种客户端--使用教程 https://www.iyuu.cn/archives/351/'.PHP_EOL;
+                            echo $help_msg;
                             die("clients_".$k." 未设置种子的BT_backup目录，无法完成转移！");
                         }
                         $torrentPath = $path .DS. $info_hash . '.torrent';
@@ -140,7 +141,7 @@ class MoveTorrent extends AutoReseed
                         break;
                 }
                 if (!is_file($torrentPath)) {
-                    echo 'IYUU自动转移做种客户端--使用教程 https://www.iyuu.cn/archives/351/'.PHP_EOL;
+                    echo $help_msg;
                     die("clients_".$k." 的种子文件{$torrentPath}不存在，无法完成转移！");
                 }
                 echo '存在种子：'.$torrentPath.PHP_EOL;
@@ -169,7 +170,7 @@ class MoveTorrent extends AutoReseed
                 if ($ret) {
                     //转移成功时，删除做种，不删资源
                     if (isset(self::$conf['delete_torrent']) && self::$conf['delete_torrent']) {
-                        self::$links[$k]['rpc']->delete($torrentDelete);
+                        static::getRpc($k)->delete($torrentDelete);
                     }
                     // 转移成功的种子，以infohash为文件名，写入缓存
                     static::wLog($log, $info_hash, self::$cacheMove);
@@ -194,7 +195,7 @@ class MoveTorrent extends AutoReseed
         foreach ($infohash_Dir as $info_hash => $dir) {
             if (is_file(self::$cacheMove . $info_hash.'.txt')) {
                 unset($infohash_Dir[$info_hash]);
-                echo '-------当前种子上次已成功转移，前置过滤已跳过！ ' .PHP_EOL.PHP_EOL;
+                echo '-------当前种子上次已成功转移，前置过滤已跳过！ 如需再次转移，可以清理转移缓存。' .PHP_EOL.PHP_EOL;
             }
         }
         return empty($infohash_Dir) ? true : false;

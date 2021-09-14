@@ -175,9 +175,12 @@ class Rpc
         // 首次运行锁 开始
         $LOCK = self::$torrentDir . self::$site . '.lock';
         if (!is_file($LOCK)) {
+            echo "系统未检测到首次运行锁({$LOCK})，将会启动账号保护逻辑。".PHP_EOL;
+            $max_downloads = 2;
+            echo "为保护账号安全，首次运行仅处理前{$max_downloads}个种子，其余全部忽略；下次运行，会继续下载新种。".PHP_EOL;
             file_put_contents($LOCK, date('Y-m-d H:i:s'));
             foreach ($data as $k => $torrent) {
-                if ($k < 2) {   // 首次运行仅处理前2个种子，其余全部忽略
+                if ($k < $max_downloads) {
                     continue;
                 }
                 $_torrentFile = self::$torrentDir . $torrent['id'] . '.torrent';
