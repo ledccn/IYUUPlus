@@ -86,8 +86,8 @@ class Crontab
      */
     public static function createHock(array &$param)
     {
-        $param['startTime'] = $param['startTime'] ?? time();
-        $param['crontab'] = $param['crontab'] ?? self::parseCron($param);
+        $param['startTime'] = !empty($param['startTime']) ? $param['startTime'] : time();
+        $param['crontab'] = !empty($param['crontab']) ? $param['crontab'] : self::parseCron($param);
         $param['command'] = self::parseCommand($param);
         if (isset($param['switch']) && booleanParse($param['switch'])) {
             $filename = self::getFilePath($param['uuid'], self::cron_dir, self::cron_suffix);
