@@ -117,6 +117,11 @@ class AutoReseed
     );
 
     /**
+     * 临时变量
+     */
+    protected static $temp = [];
+
+    /**
      * 初始化
      */
     public static function init()
@@ -804,7 +809,13 @@ class AutoReseed
      */
     private static function cookieExpired($siteName)
     {
-        self::ff($siteName. '站点，cookie已过期，请更新后重新辅种！');
+        $msg = $siteName. '站点，cookie已过期，请更新后重新辅种！';
+        $msg_md5 = md5($msg);
+        if (empty(static::$temp[$msg_md5])) {
+            self::ff($msg);
+            static::$temp[$msg_md5] = $msg;
+        }
+
         sleepIYUU(15, 'cookie已过期，请更新后重新辅种！出现此提示切莫惊慌，请根据提示信息，手动访问种子详情页，检查种子是否被删除。');
     }
 
