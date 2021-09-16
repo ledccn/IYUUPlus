@@ -467,16 +467,15 @@
     let crontab_where_sel_action = function(where = '') {
       let rule = {
           where: where
-          ,weeks: (where === 'week' ? true : false)
-          ,day: ($.inArray(where, ['day_n', 'month']) >= 0 ? true : false)
-          ,hour: ($.inArray(where, ['hour', 'minute_n']) < 0 ? true : false)
-          ,minute: where ? true : false
+          ,weeks: where === 'week'
+          ,day: $.inArray(where, ['day_n', 'month']) >= 0
+          ,hour: $.inArray(where, ['hour', 'minute_n']) < 0
+          ,minute: !!where
         }
         ,getTpl = crontab_where_tpl.innerHTML
         ,view = getById('crontab_where_view');
       //初始清空
       view.innerHTML = '';
-      clear_crontab_input();
       if (where === '') {
         return ;
       }
@@ -490,7 +489,8 @@
      * 清空crontab文本框
      */
     let clear_crontab_input = function() {
-        getById('crontab').value = '';
+      console.log('清空crontab文本框');
+      getById('crontab').value = '';
     };
 
     /**
@@ -766,11 +766,11 @@
       });
     };
 
-      /**
-       * 任务选择框联动，RSS下载任务
-       * @param {string} type       任务类型
-       * @param {object} formData   编辑时表单数据
-       */
+    /**
+     * 任务选择框联动，免费种爬虫下载任务
+     * @param {string} type       任务类型
+     * @param {object} formData   编辑时表单数据
+     */
     let spiders_sel_action = function(type = '', formData) {
       if (type !== 'spiders') {
         return;
@@ -872,7 +872,7 @@
       ,cols: [[
         {field: 'name', title: '任务名称', width:180, align: "center", sort: true, fixed: 'left'}
         ,{field: 'uuid', title: 'UUID', width:80, align: "center", hide: true}
-        ,{field: 'type', title: '任务类型', width:130, align: "center", sort: true
+        ,{field: 'type', title: '任务类型', width:150, align: "center", sort: true
           ,templet: function(d){
             let type = '';
             switch (d.type) {
@@ -1128,20 +1128,22 @@
     });
     //监听选择：执行周期where
     form.on('select(where)', function(data){
+      clear_crontab_input();
       crontab_where_sel_action(data.value);
+    });
+    //监听选择：执行周期weeks
+    form.on('select(weeks)', function(data){
+      clear_crontab_input();
     });
     //监听onchange变更事件
     util.event('id', {
       day: function(othis){
-        console.log('day');
         clear_crontab_input();
       }
       ,hour: function(othis){
-        console.log('hour');
         clear_crontab_input();
       }
       ,minute: function(othis){
-        console.log('minute');
         clear_crontab_input();
       }
     },'change');

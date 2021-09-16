@@ -8,7 +8,7 @@ use Throwable;
  * 事件调度器
  * Class EventDispatcher
  */
-class EventDispatcher implements ListenerProviderInterface,EventDispatcherInterface
+class EventDispatcher implements ListenerProviderInterface, EventDispatcherInterface
 {
     /**
      * @var EventListenerInterface
