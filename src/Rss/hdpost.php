@@ -47,7 +47,7 @@ class hdpost extends AbstractRss
         }
 
         // 2. 替换
-        $url = str_replace("{passkey}", $this->passkey, $url);
+        $url = str_replace("{rsskey}", static::getConfig('site.rsskey', ''), $url);
         echo $this->site." 正在请求RSS... {$url}". PHP_EOL;
         $url = (stripos($url, 'http://') === 0 || stripos($url, 'https://') === 0) ? $url : $this->host . $url;
         $res = $this->curl->get($url);

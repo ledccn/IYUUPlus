@@ -54,7 +54,7 @@
 <script id="site_field_tpl" type="text/html">
   {{# if (d.cookie.visible === true) { }}
   <div class="layui-form-item">
-    <label class="layui-form-label {{ d.cookie.required ? 'required' : '' }}">Cookie</label>
+    <label class="layui-form-label {{ d.cookie.required ? 'required' : '' }}">{{d.cookie.name}}</label>
     <div class="layui-input-block">
       <input type="text" name="{{d.cookie.name}}" {{ d.cookie.verify ? 'lay-verify="'+d.cookie.verify+'"' : '' }} lay-reqtext="{{d.cookie.name}}不能为空" placeholder="请输入{{d.cookie.name}}" class="layui-input">
       <tip>作用：模拟您的操作行为。</tip>
@@ -63,15 +63,24 @@
   {{# } }}
   {{# if (d.passkey.visible === true) { }}
   <div class="layui-form-item">
-    <label class="layui-form-label {{ d.passkey.required ? 'required' : '' }}">Passkey</label>
+    <label class="layui-form-label {{ d.passkey.required ? 'required' : '' }}">{{d.passkey.name}}</label>
     <div class="layui-input-block">
       <input type="text" name="{{d.passkey.name}}" {{ d.passkey.verify ? 'lay-verify="'+d.passkey.verify+'"' : '' }} lay-reqtext="{{d.passkey.name}}不能为空" placeholder="请输入{{d.passkey.name}}" class="layui-input">
     </div>
   </div>
   {{# } }}
+  {{# if (d.rsskey.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.passkey.required ? 'required' : '' }}">{{d.rsskey.name}}</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.rsskey.name}}" {{ d.rsskey.verify ? 'lay-verify="'+d.rsskey.verify+'"' : '' }} lay-reqtext="{{d.rsskey.name}}不能为空" placeholder="请输入{{d.rsskey.name}}" class="layui-input">
+      <tip>{{d.rsskey.desc}}</tip>
+    </div>
+  </div>
+  {{# } }}
   {{# if (d.torrent_pass.visible === true) { }}
   <div class="layui-form-item">
-    <label class="layui-form-label {{ d.torrent_pass.required ? 'required' : '' }}">torrent_pass</label>
+    <label class="layui-form-label {{ d.torrent_pass.required ? 'required' : '' }}">{{d.torrent_pass.name}}</label>
     <div class="layui-input-block">
       <input type="text" name="{{d.torrent_pass.name}}" {{ d.torrent_pass.verify ? 'lay-verify="'+d.torrent_pass.verify+'"' : '' }} lay-reqtext="{{d.torrent_pass.name}}不能为空" placeholder="请输入{{d.torrent_pass.name}}" class="layui-input">
     </div>
@@ -79,7 +88,7 @@
   {{# } }}
   {{# if (d.authkey.visible === true) { }}
   <div class="layui-form-item">
-    <label class="layui-form-label {{ d.authkey.required ? 'required' : '' }}">authkey</label>
+    <label class="layui-form-label {{ d.authkey.required ? 'required' : '' }}">{{d.authkey.name}}</label>
     <div class="layui-input-block">
       <input type="text" name="{{d.authkey.name}}" {{ d.authkey.verify ? 'lay-verify="'+d.authkey.verify+'"' : '' }} lay-reqtext="{{d.authkey.name}}不能为空" placeholder="请输入{{d.authkey.name}}" class="layui-input">
     </div>
@@ -163,6 +172,7 @@
       let rule = {
           cookie: {name: 'cookie', visible: true, required: false, desc: '', verify: '', reqtext: ''}
           ,passkey: {name: 'passkey', visible: true, required: true, desc: '', verify: 'required', reqtext: ''}
+          ,rsskey: {name: 'rsskey', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,torrent_pass: {name: 'torrent_pass', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,authkey: {name: 'authkey', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,id: false
@@ -237,6 +247,11 @@
           rule.torrent_pass.visible = true;
           rule.authkey.visible = true;
           break;
+        case 'hdpost':
+          rule.passkey.visible = false;
+          rule.rsskey.visible = true;
+          rule.rsskey.desc = '站点右上角点击头像 ->安全性 ->RSS Key ->Current RID';
+          break;
         //默认规则
         default:
           break;
@@ -245,7 +260,7 @@
         view.innerHTML = html;
       });
       form.render();
-    }
+    };
     /**
      * 初始化表格
      */

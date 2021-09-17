@@ -271,7 +271,7 @@ class AutoReseed
                 array_walk($rule, function (&$vv, $kk) {
                     $vv = trim($vv);
                 });
-                $v['reseed_check'] = $rule ? $rule : [];
+                $v['reseed_check'] = empty($rule) ? [] : $rule;
             }
         });
     }
