@@ -132,7 +132,7 @@ class MoveTorrent extends AutoReseed
                     case 'qBittorrent':
                         if (empty($path)) {
                             echo $help_msg;
-                            die("clients_".$k." 未设置种子的BT_backup目录，无法完成转移！");
+                            die("clients_".$k." IYUUPlus内下载器未设置种子目录，无法完成转移！");
                         }
                         $torrentPath = $path .DS. $info_hash . '.torrent';
                         $torrentDelete = $info_hash;

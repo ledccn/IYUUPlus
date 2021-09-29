@@ -52,6 +52,13 @@
 </script>
 <!-- 模板：站点配置字段 -->
 <script id="site_field_tpl" type="text/html">
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.mirror.required ? 'required' : '' }}">镜像域名</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.mirror.name}}" {{ d.mirror.verify ? 'lay-verify="'+d.mirror.verify+'"' : '' }} lay-reqtext="{{d.mirror.name}}不能为空" placeholder="请输入{{d.mirror.name}}" class="layui-input">
+      <tip>代理域名或者镜像域名(仅域名部分，例如：pt.baidu.com)。</tip>
+    </div>
+  </div>
   {{# if (d.cookie.visible === true) { }}
   <div class="layui-form-item">
     <label class="layui-form-label {{ d.cookie.required ? 'required' : '' }}">{{d.cookie.name}}</label>
@@ -171,6 +178,7 @@
     sites_sel_action = function(site = '', site_field_view = null) {
       let rule = {
           cookie: {name: 'cookie', visible: true, required: false, desc: '', verify: '', reqtext: ''}
+          ,mirror: {name: 'mirror', visible: true, required: false, desc: '', verify: '', reqtext: ''}
           ,passkey: {name: 'passkey', visible: true, required: true, desc: '', verify: 'required', reqtext: ''}
           ,rsskey: {name: 'rsskey', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,torrent_pass: {name: 'torrent_pass', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}

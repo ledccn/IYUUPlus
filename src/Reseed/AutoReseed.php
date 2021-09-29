@@ -588,6 +588,11 @@ class AutoReseed
                 $download_page = str_replace('{}', $torrent_id, self::$sites[$sid]['download_page']);
                 // 辅种检查规则
                 $reseed_check = self::$sites[$sid]['reseed_check'];
+                // 代理或镜像域名
+                if (!empty(self::$_sites[$siteName]['mirror'])) {
+                    echo '您已配置当前站点的镜像域名：' . self::$_sites[$siteName]['mirror'] . PHP_EOL;
+                    self::$sites[$sid]['base_url'] = self::$_sites[$siteName]['mirror'];
+                }
 
                 // 临时种子连接（会写入辅种日志）
                 $_url = $protocol . self::$sites[$sid]['base_url']. '/' .$download_page;
