@@ -3,6 +3,8 @@
 </style>
 <div class="layuimini-container layuimini-page-anim">
   <div class="layuimini-main">
+    <table id="tableId" lay-filter="tableFilter"></table>
+    
     <fieldset class="layui-elem-field">
       <legend>新增/编辑计划任务</legend>
       <div class="layui-field-box">
@@ -49,8 +51,6 @@
         </form>
       </div>
     </fieldset>
-
-    <table id="tableId" lay-filter="tableFilter"></table>
   </div>
 </div>
 
@@ -938,8 +938,6 @@
         //console.log(curr);  //得到当前页码
         //console.log(count); //得到数据总量
       }
-      ,skin: 'line'
-      //,even: true
       ,size: 'sm'
       ,page: false
       ,limit:500
