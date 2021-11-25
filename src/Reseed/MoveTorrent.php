@@ -312,8 +312,21 @@ class MoveTorrent extends AutoReseed
             return '';
         }
         // 2. 检查变化通知开关
-        if (!empty($weixin['notify_on_change']) && self::$wechatMsg['MoveSuccess'] === 0 && self::$wechatMsg['MoveError'] === 0) {
-            return '';
+        if (!empty($weixin['notify_on_change'])) {
+            switch ($weixin['notify_on_change']) {
+                case 'on':
+                    if (self::$wechatMsg['MoveSuccess'] === 0 && self::$wechatMsg['MoveError'] === 0) return '';
+                    break;
+                case 'only_success':
+                    if (self::$wechatMsg['MoveSuccess'] === 0) return '';
+                    break;
+                case 'only_fails':
+                    if (self::$wechatMsg['MoveError'] === 0) return '';
+                    break;
+                case 'off':
+                default:
+                    break;
+            }
         }
         $br = PHP_EOL;
         $text = 'IYUU转移任务-统计报表';

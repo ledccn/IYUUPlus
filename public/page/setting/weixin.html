@@ -16,9 +16,14 @@
       <div class="layui-form-item">
         <label class="layui-form-label">变化通知</label>
         <div class="layui-input-block">
-          <input type="checkbox" name="notify_on_change" lay-skin="switch" lay-text="ON|OFF">
+          <select name="notify_on_change">
+            <option value="off">每次运行都通知</option>
+            <option value="on">成功数+失败数大于0时通知</option>
+            <option value="only_success">成功数大于0</option>
+            <option value="only_fails">失败数大于0</option>
+          </select>
+          <!-- <input type="checkbox" name="notify_on_change" lay-skin="switch" lay-text="ON|OFF"> -->
         </div>
-        <tip>当成功数+失败数大于0，才发送通知。</tip>
       </div>
       <div class="layui-form-item">
         <div class="layui-input-block">
