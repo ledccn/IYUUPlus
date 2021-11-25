@@ -1064,8 +1064,21 @@ class AutoReseed
             return '';
         }
         // 2. 检查变化通知开关
-        if (!empty($weixin['notify_on_change']) && self::$wechatMsg['reseedSuccess'] === 0 && self::$wechatMsg['reseedError'] === 0) {
-            return '';
+        if (!empty($weixin['notify_on_change'])) {
+            switch ($weixin['notify_on_change']) {
+                case 'on':
+                    if (self::$wechatMsg['reseedSuccess'] === 0 && self::$wechatMsg['reseedError'] === 0) return '';
+                    break;
+                case 'only_success':
+                    if (self::$wechatMsg['reseedSuccess'] === 0) return '';
+                    break;
+                case 'only_fails':
+                    if (self::$wechatMsg['reseedError'] === 0) return '';
+                    break;
+                case 'off':
+                default:
+                    break;
+            }
         }
         $br = PHP_EOL;
         $text = 'IYUU自动辅种-统计报表';
