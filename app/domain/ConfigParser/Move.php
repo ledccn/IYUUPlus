@@ -39,6 +39,9 @@ class Move implements ConfigParserInterface
             $iyuu = Config::getIyuu();
             $rs['iyuu.cn'] = $iyuu['iyuu.cn'];
 
+            //微信通知
+            $rs['weixin'] = Config::getWeixin();
+
             //解析下载器
             $clients = Config::getClients();
             if (!empty($cron['form_clients']) && !empty($cron['to_clients']) && !empty($clients)) {
