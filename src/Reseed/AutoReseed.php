@@ -390,6 +390,15 @@ class AutoReseed
                     if (isset(static::$links[$clientKey]['_config']['autoTMM'])) {
                         $extra_options['autoTMM'] = 'false';  //关闭自动种子管理
                     }
+					//如果用户的下载器设置上传限速，需要传入这个参数
+					$upLimit = static::$links[$clientKey]['_config']['upLimit'];
+                    if (isset($upLimit)) {
+                        $extra_options['upLimit'] = convertToBytes($upLimit);  //设置上传速度
+                    }
+					$firstLastPiecePrio = static::$links[$clientKey]['_config']['firstLastPiecePrio'];//优先首尾块
+					if (isset($firstLastPiecePrio)) {
+						$extra_options['firstLastPiecePrio'] = 'true';
+					}
                     // 添加任务校验后是否暂停
                     if (isset($extra_options['paused'])) {
                         $extra_options['paused'] = $extra_options['paused'] ? 'true' : 'false';

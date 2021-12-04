@@ -271,7 +271,17 @@ class Rpc
                             case 'qBittorrent':
                                 $extra_options['name'] = 'torrents';
                                 $extra_options['filename'] = $filename;
-                                $extra_options['autoTMM'] = 'false';	//关闭自动种子管理
+								$upLimit = self::$clients['upLimit'];//设置上传速度
+								if (isset($upLimit)) {
+									$extra_options['upLimit'] = convertToBytes($upLimit);
+								}
+								$firstLastPiecePrio = self::$clients['firstLastPiecePrio'];//优先首尾块
+								if (isset($firstLastPiecePrio)) {
+									$extra_options['firstLastPiecePrio'] = 'true';
+								}
+								if (isset(self::$clients['autoTMM'])) {
+									$extra_options['autoTMM'] = 'false';	//关闭自动种子管理
+								}                                
                                 $ret = static::$links['rpc']->add_torrent($content, $downloadsDir, $extra_options);
                                 break;
                             default:
