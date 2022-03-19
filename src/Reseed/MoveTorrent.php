@@ -142,7 +142,7 @@ class MoveTorrent extends AutoReseed
                 }
                 if (!is_file($torrentPath)) {
                     echo $help_msg;
-                    die("clients_".$k." 的种子文件{$torrentPath}不存在，无法完成转移！");
+                    die("clients_".$k." 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`不存在，无法完成转移！");
                 }
                 echo '存在种子：'.$torrentPath.PHP_EOL;
                 $torrent = file_get_contents($torrentPath);
