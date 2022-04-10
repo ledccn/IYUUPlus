@@ -143,8 +143,7 @@ class Api extends BaseController
         }
 
         //过滤用户已配置站点
-        $filter = $request->get('filter');
-        if ($filter) {
+        if ($request->get('filter')) {
             domainConfig::disabledUserSites($sites);
         }
         ksort($sites);
@@ -162,8 +161,8 @@ class Api extends BaseController
     public function Clear(Request $request): Response
     {
         $config = config('server');
-        $log_file = Config::set($config['log_file'], date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
-        $stdout_file = Config::set($config['stdout_file'], date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
+        Config::set($config['log_file'], date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
+        Config::set($config['stdout_file'], date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
         return json(['code' => 1, 'msg' => '清理成功', 'data' => []]);
     }
 
@@ -178,8 +177,7 @@ class Api extends BaseController
         $sites = domainRss::getAllRssClass();
         $sites = domainRss::formatSites($sites);
         //过滤用户未配置站点
-        $filter = $request->get('filter');
-        if ($filter) {
+        if ($request->get('filter')) {
             domainConfig::disabledNotConfiguredUserSites($sites);
         }
 
@@ -199,8 +197,7 @@ class Api extends BaseController
         $sites = domainSpiders::getAllSpidersClass();
         $sites = domainSpiders::formatSites($sites);
         //过滤用户未配置站点
-        $filter = $request->get('filter');
-        if ($filter) {
+        if ($request->get('filter')) {
             domainConfig::disabledNotConfiguredUserSites($sites);
         }
 

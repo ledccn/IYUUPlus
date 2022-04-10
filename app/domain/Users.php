@@ -21,8 +21,7 @@ class Users
     public static function isLogin(Request $request):bool
     {
         $session = $request->session();
-        $has = $session->has(Constant::Session_Token_Key);
-        return $has ? true : false;
+        return $session->has(Constant::Session_Token_Key);
     }
 
     /**
@@ -40,13 +39,12 @@ class Users
         $api_url = Constant::API_BASE;
         $api_action = Constant::API['sites'];
         $url = sprintf('%s%s?sign=%s&version=%s', $api_url, $api_action, $token, IYUU_VERSION());
-        file_put_contents(db_path().'/_url.json', print_r($url, true));
         $res = $curl->get($url);
         $rs = json_decode($res->response, true);
         if (empty($res->response) || empty($rs) || !is_array($rs)) {
             $rs = Constant::RS;
             $rs['ret'] = 500;
-            $rs['msg'] = "无法访问{$api_url}接口，请检查本地网络；或重新创建容器，网络模式改为HOST模式。";
+            $rs['msg'] = "无法访问{$api_url}接口，请检查本地网络；或重新创建容器，改为HOST网络模式。";
             return $rs;
         }
         file_put_contents(db_path().'/_response.json', print_r($res->response, true));
@@ -86,7 +84,7 @@ class Users
         $data = [
             'token'  => $token,
             'id'     => $request->post('id') + 0,
-            'passkey'=> sha1($request->post('passkey')),     // 避免泄露用户passkey秘钥
+            'passkey'=> sha1($request->post('passkey')),     // 避免泄露用户密钥passkey
             'site'   => $request->post('site'),
         ];
         $res = $curl->get($url, $data);
@@ -94,7 +92,7 @@ class Users
         if (empty($res->response) || empty($rs) || !is_array($rs)) {
             $rs = Constant::RS;
             $rs['ret'] = 500;
-            $rs['msg'] = "无法访问{$url}接口，请检查本地网络；或重新创建容器，网络模式改为HOST模式。";
+            $rs['msg'] = "用户绑定出错，无法访问{$url}接口，请检查本地网络；或重新创建容器，网络模式改为HOST模式。";
             return $rs;
         }
         if (isset($rs['ret']) && ($rs['ret'] === 200) && isset($rs['data']['success']) && $rs['data']['success']) {
