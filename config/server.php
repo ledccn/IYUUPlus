@@ -4,7 +4,7 @@ return [
     'transport'            => 'tcp',
     'context'              => [],
     'name'                 => 'IYUUAutoReseed',
-    'count'                => env('SERVER_PROCESS_COUNT', 1),
+    'count'                => env('SERVER_PROCESS_COUNT', 2),
     'user'                 => env('SERVER_PROCESS_USER', ''),
     'group'                => env('SERVER_PROCESS_GROUP', ''),
     'pid_file'             => runtime_path() . '/webman.pid',

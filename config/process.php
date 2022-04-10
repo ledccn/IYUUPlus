@@ -28,6 +28,7 @@ return [
                 app_path(),
                 config_path(),
                 base_path() . '/process',
+                base_path() . '/src',
                 base_path() . '/support',
                 base_path() . '/resource'
             ],
