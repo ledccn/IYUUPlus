@@ -10,11 +10,6 @@ use app\domain\Crontab as domainCron;
 class Task
 {
     /**
-     * pidFile
-     */
-    const pidFile = 'IYUUTask.pid';
-
-    /**
      * @var string
      */
     private static $cron_dir = '';
@@ -37,17 +32,12 @@ class Task
      */
     public function __construct()
     {
-        // 保存当前进程pid
-        if (function_exists('posix_getpid')) {
-            \file_put_contents(runtime_path() . \DIRECTORY_SEPARATOR . self::pidFile, \posix_getpid());
-        }
         // 初始化cron
         domainCron::onWorkerStart();
         // 初始化计划任务的绝对路径
         self::$cron_dir = cron_path() . DIRECTORY_SEPARATOR . domainCron::cron_dir;
         //添加扫描器
         Timer::add(self::$interval, array($this, 'startScan'));
-
     }
 
     /**
@@ -55,8 +45,6 @@ class Task
      */
     public function __destruct()
     {
-        // 删除当前进程pid文件
-        is_file(runtime_path() . \DIRECTORY_SEPARATOR . self::pidFile) and @\unlink(runtime_path() . \DIRECTORY_SEPARATOR . self::pidFile);
     }
 
     /**
@@ -65,12 +53,12 @@ class Task
     public function onWorkerStart()
     {
         // 每10秒执行
-        new Crontab('*/10 * * * * *', function(){
+        new Crontab('*/10 * * * * *', function () {
             //echo date('Y-m-d H:i:s')."\n";
         });
 
         // 每天的10点10执行，注意这里省略了秒位
-        new Crontab('10 10 * * *', function(){
+        new Crontab('10 10 * * *', function () {
             //echo date('Y-m-d H:i:s')."\n";
         });
     }
@@ -159,6 +147,7 @@ class Task
     public function clearTimer(string $filename = '')
     {
         $_instances = Crontab::getAll();    // Crontab对象数组
+        /** @var Crontab $crontab */
         foreach ($_instances as $id => $crontab) {
             $name = $crontab->getName();
             // 关键条件

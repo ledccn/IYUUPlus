@@ -21,5 +21,4 @@ use Illuminate\Database\Capsule\Manager;
  */
 class Db extends Manager
 {
-
 }

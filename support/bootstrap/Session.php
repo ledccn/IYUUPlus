@@ -22,7 +22,8 @@ use Workerman\Worker;
  * Class Session
  * @package support
  */
-class Session implements Bootstrap {
+class Session implements Bootstrap
+{
 
     /**
      * @param Worker $worker

@@ -37,5 +37,4 @@ class Websocket
     {
         echo "onClose\n";
     }
-    
 }

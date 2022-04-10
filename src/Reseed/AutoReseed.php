@@ -1067,13 +1067,19 @@ class AutoReseed
         if (!empty($weixin['notify_on_change'])) {
             switch ($weixin['notify_on_change']) {
                 case 'on':
-                    if (self::$wechatMsg['reseedSuccess'] === 0 && self::$wechatMsg['reseedError'] === 0) return '';
+                    if (self::$wechatMsg['reseedSuccess'] === 0 && self::$wechatMsg['reseedError'] === 0) {
+                        return '';
+                    }
                     break;
                 case 'only_success':
-                    if (self::$wechatMsg['reseedSuccess'] === 0) return '';
+                    if (self::$wechatMsg['reseedSuccess'] === 0) {
+                        return '';
+                    }
                     break;
                 case 'only_fails':
-                    if (self::$wechatMsg['reseedError'] === 0) return '';
+                    if (self::$wechatMsg['reseedError'] === 0) {
+                        return '';
+                    }
                     break;
                 case 'off':
                 default:
