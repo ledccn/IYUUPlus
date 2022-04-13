@@ -82,6 +82,7 @@ class transmission extends AbstractClient
         $this->curl = new Curl();
         $this->curl->setOpt(CURLOPT_CONNECTTIMEOUT, 60);    // 超时
         $this->curl->setOpt(CURLOPT_TIMEOUT, 600);          // 超时
+        $this->curl->setOpt(CURLOPT_SSL_VERIFYPEER, false);
     }
 
     /**

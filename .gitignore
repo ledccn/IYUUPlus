@@ -11,3 +11,4 @@
 /._.DS_Store
 /.DS_Store
 /php-cs-fixer.phar
+.php_cs.cache

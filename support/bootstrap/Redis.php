@@ -197,7 +197,8 @@ use Illuminate\Redis\RedisManager;
  * @method static mixed getPersistentID()
  * @method static mixed getAuth()
  */
-class Redis implements Bootstrap {
+class Redis implements Bootstrap
+{
 
     /**
      * @var RedisManager
@@ -221,7 +222,8 @@ class Redis implements Bootstrap {
      * @param string $name
      * @return \Illuminate\Redis\Connections\Connection
      */
-    public static function connection($name = 'default') {
+    public static function connection($name = 'default')
+    {
         return static::$_manager->connection($name);
     }
 

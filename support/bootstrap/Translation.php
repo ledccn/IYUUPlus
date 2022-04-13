@@ -24,7 +24,8 @@ use Symfony\Component\Translation\Loader\PhpFileLoader;
  * @method static void setLocale(string $locale)
  * @method static string getLocale()
  */
-class Translation implements Bootstrap {
+class Translation implements Bootstrap
+{
 
     /**
      * @var array

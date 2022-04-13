@@ -21,5 +21,4 @@ use Exception;
  */
 class BusinessException extends Exception
 {
-
 }

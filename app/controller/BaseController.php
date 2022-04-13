@@ -19,10 +19,6 @@ class BaseController
      */
     const RS = Constant::RS;
 
-    public function __construct()
-    {
-    }
-
     /**
      * 默认控制器
      * @descr 检查未登录重定向

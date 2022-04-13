@@ -245,6 +245,7 @@ class Config
         $cron = self::getCrontab();
         return array_key_exists($uuid, $cron) ? $cron[$uuid] : [];
     }
+
     /**
      * 禁用用户已经配置过的站点
      * @param array $sites

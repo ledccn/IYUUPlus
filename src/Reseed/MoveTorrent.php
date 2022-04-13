@@ -315,13 +315,19 @@ class MoveTorrent extends AutoReseed
         if (!empty($weixin['notify_on_change'])) {
             switch ($weixin['notify_on_change']) {
                 case 'on':
-                    if (self::$wechatMsg['MoveSuccess'] === 0 && self::$wechatMsg['MoveError'] === 0) return '';
+                    if (self::$wechatMsg['MoveSuccess'] === 0 && self::$wechatMsg['MoveError'] === 0) {
+                        return '';
+                    }
                     break;
                 case 'only_success':
-                    if (self::$wechatMsg['MoveSuccess'] === 0) return '';
+                    if (self::$wechatMsg['MoveSuccess'] === 0) {
+                        return '';
+                    }
                     break;
                 case 'only_fails':
-                    if (self::$wechatMsg['MoveError'] === 0) return '';
+                    if (self::$wechatMsg['MoveError'] === 0) {
+                        return '';
+                    }
                     break;
                 case 'off':
                 default:
@@ -337,8 +343,7 @@ class MoveTorrent extends AutoReseed
             $desp .= '**移动成功：'.static::$wechatMsg['MoveSuccess']. '**  [会把hash加入移动缓存]' .$br;
             $desp .= '**移动失败：'.static::$wechatMsg['MoveError']. '**  [解决错误提示，可以重试]' .$br;
             $desp .= '**如需重新移动，请删除 ./torrent/cachemove 移动缓存。**'.$br;
-        }
-        else{
+        } else {
             $desp .= $br.'----------'.$br;
             $desp .= $br.'转移任务完成，未发现种子需要转移'.$br;
             $desp .= $br.'----------'.$br;

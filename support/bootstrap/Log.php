@@ -30,7 +30,8 @@ use Monolog\Logger;
  * @method static void alert($message, array $context = [])
  * @method static void emergency($message, array $context = [])
  */
-class Log implements Bootstrap {
+class Log implements Bootstrap
+{
 
     /**
      * @var array
