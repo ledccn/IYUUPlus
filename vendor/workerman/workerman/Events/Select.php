@@ -143,8 +143,9 @@ class Select implements EventInterface
                 $this->_scheduler->insert($timer_id, -$run_time);
                 $this->_eventTimer[$timer_id] = array($func, (array)$args, $flag, $fd);
                 $select_timeout = ($run_time - \microtime(true)) * 1000000;
+                $select_timeout = $select_timeout <= 0 ? 1 : $select_timeout;
                 if( $this->_selectTimeout > $select_timeout ){ 
-                    $this->_selectTimeout = $select_timeout;   
+                    $this->_selectTimeout = (int) $select_timeout;   
                 }  
                 return $timer_id;
         }
@@ -215,7 +216,7 @@ class Select implements EventInterface
             $timer_id             = $scheduler_data['data'];
             $next_run_time        = -$scheduler_data['priority'];
             $time_now             = \microtime(true);
-            $this->_selectTimeout = ($next_run_time - $time_now) * 1000000;
+            $this->_selectTimeout = (int) (($next_run_time - $time_now) * 1000000);
             if ($this->_selectTimeout <= 0) {
                 $this->_scheduler->extract();
 
@@ -261,9 +262,10 @@ class Select implements EventInterface
                 \pcntl_signal_dispatch();
             }
 
-            $read  = $this->_readFds;
-            $write = $this->_writeFds;
+            $read   = $this->_readFds;
+            $write  = $this->_writeFds;
             $except = $this->_exceptFds;
+            $ret    = false;
 
             if ($read || $write || $except) {
                 // Waiting read/write/signal/timeout events.
@@ -272,7 +274,7 @@ class Select implements EventInterface
                 } catch (\Exception $e) {} catch (\Error $e) {}
 
             } else {
-                usleep($this->_selectTimeout);
+                $this->_selectTimeout >= 1 && usleep($this->_selectTimeout);
                 $ret = false;
             }
 

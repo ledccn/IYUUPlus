@@ -28,7 +28,7 @@
     "workerman/webman-framework": "^1.0",
     "monolog/monolog": "^2.0",
     "vlucas/phpdotenv": "5.1.0",
-    "rhilip/bencode": "^1.1",
+    "rhilip/bencode": "^2.1",
     "workerman/crontab": "^1.0",
     "curl/curl": "^2.3",
     "ext-posix": "*",

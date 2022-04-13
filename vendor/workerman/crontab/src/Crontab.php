@@ -12,7 +12,7 @@
  * @license   http://www.opensource.org/licenses/mit-license.php MIT License
  */
 namespace Workerman\Crontab;
-use Workerman\Lib\Timer;
+use Workerman\Timer;
 
 /**
  * Class Crontab

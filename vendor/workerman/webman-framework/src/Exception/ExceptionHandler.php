@@ -72,9 +72,6 @@ class ExceptionHandler implements ExceptionHandlerInterface
      */
     public function render(Request $request, Throwable $exception) : Response
     {
-        if (\method_exists($exception, 'render')) {
-            return $exception->render();
-        }
         $code = $exception->getCode();
         if ($request->expectsJson()) {
             $json = ['code' => $code ? $code : 500, 'msg' => $exception->getMessage()];

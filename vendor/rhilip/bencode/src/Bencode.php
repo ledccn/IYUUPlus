@@ -1,12 +1,30 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Rhilip
- * Date: 1/22/2020
- * Time: 2020
- */
 
 namespace Rhilip\Bencode;
+
+if (!function_exists('array_is_list')) {
+    /**
+     * polyfill of array_key_last for PHP < 8.1.0
+     *
+     * @param array $array
+     */
+    function array_is_list($array)
+    {
+        if ([] === $array || $array === array_values($array)) {
+            return true;
+        }
+
+        $nextKey = -1;
+
+        foreach ($array as $k => $v) {
+            if ($k !== ++$nextKey) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
 
 /**
  * Class Bencode
@@ -32,13 +50,13 @@ class Bencode
      * @param string $data
      * @param int $pos
      * @return mixed
-     * @throws ParseErrorException
+     * @throws ParseException
      */
     public static function decode($data, &$pos = 0)
     {
         $start_decode = ($pos === 0);   // If it is the root call ?
         if ($start_decode && (!is_string($data) || strlen($data) == 0)) {
-            throw new ParseErrorException('Decode Input is not valid String.');
+            throw new ParseException('Decode Input is not valid String.');
         }
 
         if ($data[$pos] === 'd') {
@@ -51,9 +69,9 @@ class Bencode
                     break;
                 }
                 if (!is_string($key)) {
-                    throw new ParseErrorException('Non string key found in the dictionary.');
+                    throw new ParseException('Non string key found in the dictionary.');
                 } elseif (array_key_exists($key, $return)) {
-                    throw new ParseErrorException('Duplicate Dictionary key exist before: ' . $key);
+                    throw new ParseException('Duplicate Dictionary key exist before: ' . $key);
                 }
                 $return[$key] = $value;
             }
@@ -77,38 +95,38 @@ class Bencode
             $digits = strpos($data, ':', $pos) - $pos;
             $len = self::checkInteger(substr($data, $pos, $digits));
             if ($len < 0) {
-                throw new ParseErrorException('Cannot have non-digit values for String length');
+                throw new ParseException('Cannot have non-digit values for String length');
             }
 
             $pos += ($digits + 1);
             $return = substr($data, $pos, $len);
 
             if (strlen($return) != $len) {  // Check for String length is match or not
-                throw new ParseErrorException('String length is not match for: ' . $return . ', want ' . $len);
+                throw new ParseException('String length is not match for: ' . $return . ', want ' . $len);
             }
 
             $pos += $len;
         }
 
         if ($start_decode && $pos !== strlen($data)) {
-            throw new ParseErrorException('Could not fully decode bencode string');
+            throw new ParseException('Could not fully decode bencode string');
         }
         return $return;
     }
 
     /**
      * This private function help us filter value like `-13` `13` will pass the filter and return it's int value
-     * Other value like ``,`-0`, `013`, `-013`, `2.127`, `six` will throw A ParseErrorException
+     * Other value like ``,`-0`, `013`, `-013`, `2.127`, `six` will throw A ParseException
      *
      * @param string $value
      * @return int
-     * @throws ParseErrorException
+     * @throws ParseException
      */
     private static function checkInteger($value)
     {
         $int = (int)$value;
         if ((string)$int !== $value) {
-            throw new ParseErrorException('Invalid integer format or integer overflow: ' . $value);
+            throw new ParseException('Invalid integer format or integer overflow: ' . $value);
         }
         return $int;
     }
@@ -123,15 +141,7 @@ class Bencode
     {
         if (is_array($data)) {
             $return = '';
-            $check = -1;
-            $list = true;
-            foreach ($data as $key => $value) {
-                if ($key !== ++$check) {
-                    $list = false;
-                    break;
-                }
-            }
-            if ($list) {
+            if (array_is_list($data)) {
                 $return .= 'l';
                 foreach ($data as $value) {
                     $return .= self::encode($value);
@@ -158,7 +168,7 @@ class Bencode
      *
      * @param string $path
      * @return mixed
-     * @throws ParseErrorException
+     * @throws ParseException
      */
     public static function load($path)
     {

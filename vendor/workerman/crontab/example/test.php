@@ -3,9 +3,8 @@ use Workerman\Worker;
 require __DIR__ . '/../vendor/autoload.php';
 
 use Workerman\Crontab\Crontab;
-$worker = new Worker();
 
-date_default_timezone_set('PRC');
+$worker = new Worker();
 
 $worker->onWorkerStart = function () {
     // Execute the function in the first second of every minute.

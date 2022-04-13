@@ -1,0 +1,59 @@
+name: Tests
+
+on: [push, pull_request]
+
+env:
+  DEFAULT_COMPOSER_FLAGS: "--prefer-dist --no-interaction"
+  CC_TEST_REPORTER_ID: 40d4890deed3bca8888c04ca67b9768edf11d7a089d2960977997791daea31f6
+jobs:
+  phpunit:
+    name: PHP ${{ matrix.php }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        php: ['5.6', '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1']
+    steps:
+      ## checkout the repoistory §
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Build server image
+        run: docker build . -t localserver
+        working-directory: ./tests/server
+
+      - name: Run test server
+        run: docker run -d -p 1234:80 localserver
+
+      ## Install php
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, mbstring, imagick, gd
+          ini-values: date.timezone='UTC'
+          coverage: xdebug
+
+      ## install composer
+      - name: Install dependencies
+        run: composer install $DEFAULT_COMPOSER_FLAGS
+
+      ## run unit tests
+      - name: PHP Unit tests for PHP 
+        run: vendor/bin/phpunit --verbose --configuration actions.phpunit.xml
+        if: matrix.php == '8.0' || matrix.php == '7.4' || matrix.php == '7.3' || matrix.php == '7.2' || matrix.php == '7.0' || matrix.php == '5.6'
+
+      ## unit test with coverage
+      - name: PHP Unit tests for PHP 7.1
+        run: vendor/bin/phpunit --verbose --coverage-clover=clover.xml --configuration actions.phpunit.xml
+        if: matrix.php == '7.1'
+
+      ## coverage
+      - name: Code coverage
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+          chmod +x ./cc-test-reporter
+          ./cc-test-reporter after-build -t clover
+        if: matrix.php == '7.1'
+        continue-on-error: true # if is fork

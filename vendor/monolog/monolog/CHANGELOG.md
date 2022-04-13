@@ -1,3 +1,64 @@
+### 2.4.0 (2022-03-14)
+
+  * Added `[Monolog\LogRecord](src/Monolog/LogRecord.php)` interface that can be used to type-hint records like `array|\Monolog\LogRecord $record` to be forward compatible with the upcoming Monolog 3 changes
+  * Added `includeStacktraces` constructor params to LineFormatter & JsonFormatter (#1603)
+  * Added `persistent`, `timeout`, `writingTimeout`, `connectionTimeout`, `chunkSize` constructor params to SocketHandler and derivatives (#1600)
+  * Added `AsMonologProcessor` PHP attribute which can help autowiring / autoconfiguration of processors if frameworks / integrations decide to make use of it. This is useless when used purely with Monolog (#1637)
+  * Added support for keeping native BSON types as is in MongoDBFormatter (#1620)
+  * Added support for a `user_agent` key in WebProcessor, disabled by default but you can use it by configuring the $extraFields you want (#1613)
+  * Added support for username/userIcon in SlackWebhookHandler (#1617)
+  * Added extension points to BrowserConsoleHandler (#1593)
+  * Added record message/context/extra info to exceptions thrown when a StreamHandler cannot open its stream to avoid completely losing the data logged (#1630)
+  * Fixed error handler signature to accept a null $context which happens with internal PHP errors (#1614)
+  * Fixed a few setter methods not returning `self` (#1609)
+  * Fixed handling of records going over the max Telegram message length (#1616)
+
+### 2.3.5 (2021-10-01)
+
+  * Fixed regression in StreamHandler since 2.3.3 on systems with the memory_limit set to >=20GB (#1592)
+
+### 2.3.4 (2021-09-15)
+
+  * Fixed support for psr/log 3.x (#1589)
+
+### 2.3.3 (2021-09-14)
+
+  * Fixed memory usage when using StreamHandler and calling stream_get_contents on the resource you passed to it (#1578, #1577)
+  * Fixed support for psr/log 2.x (#1587)
+  * Fixed some type annotations
+
+### 2.3.2 (2021-07-23)
+
+  * Fixed compatibility with PHP 7.2 - 7.4 when experiencing PCRE errors (#1568)
+
+### 2.3.1 (2021-07-14)
+
+  * Fixed Utils::getClass handling of anonymous classes not being fully compatible with PHP 8 (#1563)
+  * Fixed some `@inheritDoc` annotations having the wrong case
+
+### 2.3.0 (2021-07-05)
+
+  * Added a ton of PHPStan type annotations as well as type aliases on Monolog\Logger for Record, Level and LevelName that you can import (#1557)
+  * Added ability to customize date format when using JsonFormatter (#1561)
+  * Fixed FilterHandler not calling reset on its internal handler when reset() is called on it (#1531)
+  * Fixed SyslogUdpHandler not setting the timezone correctly on DateTimeImmutable instances (#1540)
+  * Fixed StreamHandler thread safety - chunk size set to 2GB now to avoid interlacing when doing concurrent writes (#1553)
+
+### 2.2.0 (2020-12-14)
+
+  * Added JSON_PARTIAL_OUTPUT_ON_ERROR to default json encoding flags, to avoid dropping entire context data or even records due to an invalid subset of it somewhere
+  * Added setDateFormat to NormalizerFormatter (and Line/Json formatters by extension) to allow changing this after object creation
+  * Added RedisPubSubHandler to log records to a Redis channel using PUBLISH
+  * Added support for Elastica 7, and deprecated the $type argument of ElasticaFormatter which is not in use anymore as of Elastica 7
+  * Added support for millisecond write timeouts in SocketHandler, you can now pass floats to setWritingTimeout, e.g. 0.2 is 200ms
+  * Added support for unix sockets in SyslogUdpHandler (set $port to 0 to make the $host a unix socket)
+  * Added handleBatch support for TelegramBotHandler
+  * Added RFC5424e extended date format including milliseconds to SyslogUdpHandler
+  * Added support for configuring handlers with numeric level values in strings (coming from e.g. env vars)
+  * Fixed Wildfire/FirePHP/ChromePHP handling of unicode characters
+  * Fixed PHP 8 issues in SyslogUdpHandler
+  * Fixed internal type error when mbstring is missing
+
 ### 2.1.1 (2020-07-23)
 
   * Fixed removing of json encoding options
@@ -85,6 +146,14 @@
   * Added a `$dateFormat` option to the PsrLogMessageProcessor which lets you format DateTime instances nicely
   * Added support for the PHP 7.x `mongodb` extension in the MongoDBHandler
   * Fixed many minor issues in various handlers, and probably added a few regressions too
+
+### 1.26.1 (2021-05-28)
+
+  * Fixed PHP 8.1 deprecation warning
+
+### 1.26.0 (2020-12-14)
+
+  * Added $dateFormat and $removeUsedContextFields arguments to PsrLogMessageProcessor (backport from 2.x)
 
 ### 1.25.5 (2020-07-23)
 

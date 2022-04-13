@@ -34,4 +34,12 @@ class RedisClusterSessionHandler extends RedisSessionHandler
         $this->_redis->setOption(\Redis::OPT_PREFIX, $config['prefix']);
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function read($session_id)
+    {
+        return $this->_redis->get($session_id);
+    }
+
 }

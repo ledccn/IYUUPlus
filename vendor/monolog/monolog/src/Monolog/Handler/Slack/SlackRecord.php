@@ -23,6 +23,9 @@ use Monolog\Formatter\FormatterInterface;
  * @author Haralan Dobrev <hkdobrev@gmail.com>
  * @see    https://api.slack.com/incoming-webhooks
  * @see    https://api.slack.com/docs/message-attachments
+ *
+ * @phpstan-import-type FormattedRecord from \Monolog\Handler\AbstractProcessingHandler
+ * @phpstan-import-type Record from \Monolog\Logger
  */
 class SlackRecord
 {
@@ -72,12 +75,12 @@ class SlackRecord
 
     /**
      * Dot separated list of fields to exclude from slack message. E.g. ['context.field1', 'extra.field2']
-     * @var array
+     * @var string[]
      */
     private $excludeFields;
 
     /**
-     * @var FormatterInterface
+     * @var ?FormatterInterface
      */
     private $formatter;
 
@@ -86,6 +89,9 @@ class SlackRecord
      */
     private $normalizerFormatter;
 
+    /**
+     * @param string[] $excludeFields
+     */
     public function __construct(
         ?string $channel = null,
         ?string $username = null,
@@ -114,6 +120,9 @@ class SlackRecord
     /**
      * Returns required data in format that Slack
      * is expecting.
+     *
+     * @phpstan-param FormattedRecord $record
+     * @phpstan-return mixed[]
      */
     public function getSlackData(array $record): array
     {
@@ -129,6 +138,7 @@ class SlackRecord
         }
 
         if ($this->formatter && !$this->useAttachment) {
+            /** @phpstan-ignore-next-line */
             $message = $this->formatter->format($record);
         } else {
             $message = $record['message'];
@@ -136,12 +146,14 @@ class SlackRecord
 
         if ($this->useAttachment) {
             $attachment = array(
-                'fallback'  => $message,
-                'text'      => $message,
-                'color'     => $this->getAttachmentColor($record['level']),
-                'fields'    => array(),
-                'mrkdwn_in' => array('fields'),
-                'ts'        => $record['datetime']->getTimestamp(),
+                'fallback'    => $message,
+                'text'        => $message,
+                'color'       => $this->getAttachmentColor($record['level']),
+                'fields'      => array(),
+                'mrkdwn_in'   => array('fields'),
+                'ts'          => $record['datetime']->getTimestamp(),
+                'footer'      => $this->username,
+                'footer_icon' => $this->userIcon,
             );
 
             if ($this->useShortAttachment) {
@@ -208,9 +220,12 @@ class SlackRecord
 
     /**
      * Stringifies an array of key/value pairs to be used in attachment fields
+     *
+     * @param mixed[] $fields
      */
     public function stringify(array $fields): string
     {
+        /** @var Record $fields */
         $normalized = $this->normalizerFormatter->format($fields);
 
         $hasSecondDimension = count(array_filter($normalized, 'is_array'));
@@ -226,7 +241,7 @@ class SlackRecord
      *
      * @param ?string $channel
      *
-     * @return SlackHandler
+     * @return static
      */
     public function setChannel(?string $channel = null): self
     {
@@ -240,7 +255,7 @@ class SlackRecord
      *
      * @param ?string $username
      *
-     * @return SlackHandler
+     * @return static
      */
     public function setUsername(?string $username = null): self
     {
@@ -285,6 +300,9 @@ class SlackRecord
         return $this;
     }
 
+    /**
+     * @param string[] $excludeFields
+     */
     public function excludeFields(array $excludeFields = []): self
     {
         $this->excludeFields = $excludeFields;
@@ -302,7 +320,9 @@ class SlackRecord
     /**
      * Generates attachment field
      *
-     * @param string|array $value
+     * @param string|mixed[] $value
+     *
+     * @return array{title: string, value: string, short: false}
      */
     private function generateAttachmentField(string $title, $value): array
     {
@@ -319,11 +339,18 @@ class SlackRecord
 
     /**
      * Generates a collection of attachment fields from array
+     *
+     * @param mixed[] $data
+     *
+     * @return array<array{title: string, value: string, short: false}>
      */
     private function generateAttachmentFields(array $data): array
     {
+        /** @var Record $data */
+        $normalized = $this->normalizerFormatter->format($data);
+
         $fields = array();
-        foreach ($this->normalizerFormatter->format($data) as $key => $value) {
+        foreach ($normalized as $key => $value) {
             $fields[] = $this->generateAttachmentField((string) $key, $value);
         }
 
@@ -332,6 +359,10 @@ class SlackRecord
 
     /**
      * Get a copy of record with fields excluded according to $this->excludeFields
+     *
+     * @phpstan-param FormattedRecord $record
+     *
+     * @return mixed[]
      */
     private function removeExcludedFields(array $record): array
     {

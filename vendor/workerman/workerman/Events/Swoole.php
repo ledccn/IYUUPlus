@@ -13,6 +13,7 @@
  */
 namespace Workerman\Events;
 
+use Workerman\Worker;
 use Swoole\Event;
 use Swoole\Timer;
 
@@ -38,11 +39,8 @@ class Swoole implements EventInterface
      *
      * @see \Workerman\Events\EventInterface::add()
      */
-    public function add($fd, $flag, $func, $args = null)
+    public function add($fd, $flag, $func, $args = array())
     {
-        if (! isset($args)) {
-            $args = array();
-        }
         switch ($flag) {
             case self::EV_SIGNAL:
                 $res = \pcntl_signal($fd, $func, false);
@@ -61,9 +59,19 @@ class Swoole implements EventInterface
                     $this->mapId = 0;
                 }
                 $mapId = $this->mapId++;
-                $timer_id = Timer::$method($fd * 1000,
+                $t = (int)($fd * 1000);
+                if ($t < 1) {
+                   $t = 1;   
+                }
+                $timer_id = Timer::$method($t,
                     function ($timer_id = null) use ($func, $args, $mapId) {
-                        \call_user_func_array($func, $args);
+                        try {
+                            \call_user_func_array($func, (array)$args);
+                        } catch (\Exception $e) {
+                            Worker::stopAll(250, $e);
+                        } catch (\Error $e) {
+                            Worker::stopAll(250, $e);
+                        }
                         // EV_TIMER_ONCE
                         if (! isset($timer_id)) {
                             // may be deleted in $func

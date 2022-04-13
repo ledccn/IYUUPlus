@@ -24,10 +24,14 @@ class NormalizerFormatter implements FormatterInterface
 {
     public const SIMPLE_DATE = "Y-m-d\TH:i:sP";
 
+    /** @var string */
     protected $dateFormat;
+    /** @var int */
     protected $maxNormalizeDepth = 9;
+    /** @var int */
     protected $maxNormalizeItemCount = 1000;
 
+    /** @var int */
     private $jsonEncodeOptions = Utils::DEFAULT_JSON_FLAGS;
 
     /**
@@ -42,7 +46,9 @@ class NormalizerFormatter implements FormatterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
+     *
+     * @param mixed[] $record
      */
     public function format(array $record)
     {
@@ -50,7 +56,7 @@ class NormalizerFormatter implements FormatterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function formatBatch(array $records)
     {
@@ -59,6 +65,18 @@ class NormalizerFormatter implements FormatterInterface
         }
 
         return $records;
+    }
+
+    public function getDateFormat(): string
+    {
+        return $this->dateFormat;
+    }
+
+    public function setDateFormat(string $dateFormat): self
+    {
+        $this->dateFormat = $dateFormat;
+
+        return $this;
     }
 
     /**
@@ -106,8 +124,8 @@ class NormalizerFormatter implements FormatterInterface
     }
 
     /**
-     * @param  mixed                      $data
-     * @return int|bool|string|null|array
+     * @param  mixed                $data
+     * @return null|scalar|array<array|scalar|null>
      */
     protected function normalize($data, int $depth = 0)
     {
@@ -154,17 +172,15 @@ class NormalizerFormatter implements FormatterInterface
             }
 
             if ($data instanceof \JsonSerializable) {
+                /** @var null|scalar|array<array|scalar|null> $value */
                 $value = $data->jsonSerialize();
             } elseif (method_exists($data, '__toString')) {
+                /** @var string $value */
                 $value = $data->__toString();
             } else {
                 // the rest is normalized by json encoding and decoding it
-                $encoded = $this->toJson($data, true);
-                if ($encoded === false) {
-                    $value = 'JSON_ERROR';
-                } else {
-                    $value = json_decode($encoded, true);
-                }
+                /** @var null|scalar|array<array|scalar|null> $value */
+                $value = json_decode($this->toJson($data, true), true);
             }
 
             return [Utils::getClass($data) => $value];
@@ -178,7 +194,7 @@ class NormalizerFormatter implements FormatterInterface
     }
 
     /**
-     * @return array
+     * @return mixed[]
      */
     protected function normalizeException(Throwable $e, int $depth = 0)
     {
@@ -237,6 +253,9 @@ class NormalizerFormatter implements FormatterInterface
         return Utils::jsonEncode($data, $this->jsonEncodeOptions, $ignoreErrors);
     }
 
+    /**
+     * @return string
+     */
     protected function formatDate(\DateTimeInterface $date)
     {
         // in case the date format isn't custom then we defer to the custom DateTimeImmutable
@@ -248,13 +267,17 @@ class NormalizerFormatter implements FormatterInterface
         return $date->format($this->dateFormat);
     }
 
-    public function addJsonEncodeOption($option)
+    public function addJsonEncodeOption(int $option): self
     {
         $this->jsonEncodeOptions |= $option;
+
+        return $this;
     }
 
-    public function removeJsonEncodeOption($option)
+    public function removeJsonEncodeOption(int $option): self
     {
         $this->jsonEncodeOptions &= ~$option;
+
+        return $this;
     }
 }

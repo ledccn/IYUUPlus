@@ -55,6 +55,13 @@ class Response
     protected $_body = null;
 
     /**
+     * Send file info
+     *
+     * @var array
+     */
+    public $file = null;
+
+    /**
      * Mine type map.
      * @var array
      */
@@ -149,14 +156,14 @@ class Response
     ) {
         $this->_status = $status;
         $this->_header = $headers;
-        $this->_body = $body;
+        $this->_body = (string)$body;
     }
 
     /**
      * Set header.
      *
-     * @param $name
-     * @param $value
+     * @param string $name
+     * @param string $value
      * @return $this
      */
     public function header($name, $value) {
@@ -167,8 +174,8 @@ class Response
     /**
      * Set header.
      *
-     * @param $name
-     * @param $value
+     * @param string $name
+     * @param string $value
      * @return Response
      */
     public function withHeader($name, $value) {
@@ -178,18 +185,18 @@ class Response
     /**
      * Set headers.
      *
-     * @param $headers
+     * @param array $headers
      * @return $this
      */
     public function withHeaders($headers) {
-        $this->_header = \array_merge($this->_header, $headers);
+        $this->_header = \array_merge_recursive($this->_header, $headers);
         return $this;
     }
     
     /**
      * Remove header.
      *
-     * @param $name
+     * @param string $name
      * @return $this
      */
     public function withoutHeader($name) {
@@ -200,7 +207,7 @@ class Response
     /**
      * Get header.
      *
-     * @param $name
+     * @param string $name
      * @return null|array|string
      */
     public function getHeader($name) {
@@ -222,8 +229,8 @@ class Response
     /**
      * Set status.
      *
-     * @param $code
-     * @param null $reason_phrase
+     * @param int $code
+     * @param string|null $reason_phrase
      * @return $this
      */
     public function withStatus($code, $reason_phrase = null) {
@@ -233,9 +240,27 @@ class Response
     }
 
     /**
+     * Get status code.
+     *
+     * @return int
+     */
+    public function getStatusCode() {
+        return $this->_status;
+    }
+
+    /**
+     * Get reason phrase.
+     *
+     * @return string
+     */
+    public function getReasonPhrase() {
+        return $this->_reason;
+    }
+
+    /**
      * Set protocol version.
      *
-     * @param $version
+     * @param int $version
      * @return $this
      */
     public function withProtocolVersion($version) {
@@ -246,7 +271,7 @@ class Response
     /**
      * Set http body.
      *
-     * @param $body
+     * @param string $body
      * @return $this
      */
     public function withBody($body) {
@@ -256,6 +281,8 @@ class Response
 
     /**
      * Get http raw body.
+     * 
+     * @return string
      */
     public function rawBody() {
         return $this->_body;
@@ -264,7 +291,7 @@ class Response
     /**
      * Send file.
      *
-     * @param $file
+     * @param string $file
      * @param int $offset
      * @param int $length
      * @return $this
@@ -282,28 +309,30 @@ class Response
      *
      * @param $name
      * @param string $value
-     * @param int $maxage
+     * @param int $max_age
      * @param string $path
      * @param string $domain
      * @param bool $secure
      * @param bool $http_only
+     * @param bool $same_site
      * @return $this
      */
-    public function cookie($name, $value = '', $max_age = 0, $path = '', $domain = '', $secure = false, $http_only = false)
+    public function cookie($name, $value = '', $max_age = 0, $path = '', $domain = '', $secure = false, $http_only = false, $same_site  = false)
     {
         $this->_header['Set-Cookie'][] = $name . '=' . \rawurlencode($value)
             . (empty($domain) ? '' : '; Domain=' . $domain)
             . (empty($max_age) ? '' : '; Max-Age=' . $max_age)
             . (empty($path) ? '' : '; Path=' . $path)
             . (!$secure ? '' : '; Secure')
-            . (!$http_only ? '' : '; HttpOnly');
+            . (!$http_only ? '' : '; HttpOnly')
+            . (empty($same_site ) ? '' : '; SameSite=' . $same_site);
         return $this;
     }
 
     /**
      * Create header for file.
      *
-     * @param $file
+     * @param array $file_info
      * @return string
      */
     protected function createHeadForFile($file_info)
@@ -346,7 +375,7 @@ class Response
 
         if (!isset($headers['Last-Modified'])) {
             if ($mtime = \filemtime($file)) {
-                $head .= 'Last-Modified: '.\date('D, d M Y H:i:s', $mtime) . ' ' . \date_default_timezone_get() ."\r\n";
+                $head .= 'Last-Modified: '. \gmdate('D, d M Y H:i:s', $mtime) . ' GMT' . "\r\n";
             }
         }
 

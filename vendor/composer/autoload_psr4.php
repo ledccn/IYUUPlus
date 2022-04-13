@@ -6,12 +6,17 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'support\\' => array($vendorDir . '/workerman/webman-framework/src/support'),
     'Workerman\\Crontab\\' => array($vendorDir . '/workerman/crontab/src'),
     'Workerman\\' => array($vendorDir . '/workerman/workerman'),
     'Webman\\' => array($vendorDir . '/workerman/webman-framework/src'),
     'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
     'Symfony\\Polyfill\\Mbstring\\' => array($vendorDir . '/symfony/polyfill-mbstring'),
     'Symfony\\Polyfill\\Ctype\\' => array($vendorDir . '/symfony/polyfill-ctype'),
+    'Support\\View\\' => array($vendorDir . '/workerman/webman-framework/src/support/view'),
+    'Support\\Exception\\' => array($vendorDir . '/workerman/webman-framework/src/support/exception'),
+    'Support\\Bootstrap\\' => array($vendorDir . '/workerman/webman-framework/src/support/bootstrap'),
+    'Support\\' => array($vendorDir . '/workerman/webman-framework/src/support'),
     'Rhilip\\Bencode\\' => array($vendorDir . '/rhilip/bencode/src'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
     'Psr\\Container\\' => array($vendorDir . '/psr/container/src'),

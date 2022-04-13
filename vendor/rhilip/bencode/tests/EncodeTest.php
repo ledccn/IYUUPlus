@@ -1,17 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Rhilip
- * Date: 2/27/2020
- * Time: 2020
- */
 
 use Rhilip\Bencode\Bencode;
 use PHPUnit\Framework\TestCase;
 
 class EncodeTest extends TestCase
 {
-
     /**
      * @group integer
      */
@@ -181,8 +174,7 @@ class EncodeTest extends TestCase
         $result1 = Bencode::encode($data1);
         $result2 = Bencode::encode($data2);
 
-        $this->assertEquals($expected,  $result1);
-        $this->assertEquals($result1,   $result2); // different order of dict keys should not change the result
+        $this->assertEquals($expected, $result1);
+        $this->assertEquals($result1, $result2); // different order of dict keys should not change the result
     }
-
 }

@@ -2,7 +2,13 @@
 
 This library provides an object-oriented wrapper of the PHP cURL extension.
 
+[![Maintainability](https://api.codeclimate.com/v1/badges/6c34bb31f3eb6df36c7d/maintainability)](https://codeclimate.com/github/php-mod/curl/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/6c34bb31f3eb6df36c7d/test_coverage)](https://codeclimate.com/github/php-mod/curl/test_coverage)
+[![Total Downloads](https://poser.pugx.org/curl/curl/downloads)](//packagist.org/packages/curl/curl)
+
 If you have questions or problems with installation or usage [create an Issue](https://github.com/php-mod/curl/issues).
+
+
 
 ## Installation
 
@@ -122,4 +128,5 @@ In order to test the library:
 1. Create a fork
 2. Clone the fork to your machine
 3. Install the depencies `composer install`
+4. Build and start the docker image (in `tests/server`) `docker build . -t curlserver` start `docker run -p 1234:80 curlserver`
 4. Run the unit tests `./vendor/bin/phpunit tests`

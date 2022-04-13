@@ -94,11 +94,9 @@ class Websocket implements \Workerman\Protocols\ProtocolInterface
                         try {
                             \call_user_func(isset($connection->onWebSocketClose)?$connection->onWebSocketClose:$connection->worker->onWebSocketClose, $connection);
                         } catch (\Exception $e) {
-                            Worker::log($e);
-                            exit(250);
+                            Worker::stopAll(250, $e);
                         } catch (\Error $e) {
-                            Worker::log($e);
-                            exit(250);
+                            Worker::stopAll(250, $e);
                         }
                     } // Close connection.
                     else {
@@ -157,11 +155,9 @@ class Websocket implements \Workerman\Protocols\ProtocolInterface
                             try {
                                 \call_user_func(isset($connection->onWebSocketPing)?$connection->onWebSocketPing:$connection->worker->onWebSocketPing, $connection, $ping_data);
                             } catch (\Exception $e) {
-                                Worker::log($e);
-                                exit(250);
+                                Worker::stopAll(250, $e);
                             } catch (\Error $e) {
-                                Worker::log($e);
-                                exit(250);
+                                Worker::stopAll(250, $e);
                             }
                         } else {
                             $connection->send($ping_data);
@@ -183,11 +179,9 @@ class Websocket implements \Workerman\Protocols\ProtocolInterface
                             try {
                                 \call_user_func(isset($connection->onWebSocketPong)?$connection->onWebSocketPong:$connection->worker->onWebSocketPong, $connection, $pong_data);
                             } catch (\Exception $e) {
-                                Worker::log($e);
-                                exit(250);
+                                Worker::stopAll(250, $e);
                             } catch (\Error $e) {
-                                Worker::log($e);
-                                exit(250);
+                                Worker::stopAll(250, $e);
                             }
                         }
                         $connection->websocketType = $tmp_connection_type;
@@ -263,11 +257,9 @@ class Websocket implements \Workerman\Protocols\ProtocolInterface
                     try {
                         \call_user_func($connection->onError, $connection, \WORKERMAN_SEND_FAIL, 'send buffer full and drop package');
                     } catch (\Exception $e) {
-                        Worker::log($e);
-                        exit(250);
+                        Worker::stopAll(250, $e);
                     } catch (\Error $e) {
-                        Worker::log($e);
-                        exit(250);
+                        Worker::stopAll(250, $e);
                     }
                 }
                 return '';
@@ -279,11 +271,9 @@ class Websocket implements \Workerman\Protocols\ProtocolInterface
                     try {
                         \call_user_func($connection->onBufferFull, $connection);
                     } catch (\Exception $e) {
-                        Worker::log($e);
-                        exit(250);
+                        Worker::stopAll(250, $e);
                     } catch (\Error $e) {
-                        Worker::log($e);
-                        exit(250);
+                        Worker::stopAll(250, $e);
                     }
                 }
             }
@@ -355,9 +345,8 @@ class Websocket implements \Workerman\Protocols\ProtocolInterface
             if (\preg_match("/Sec-WebSocket-Key: *(.*?)\r\n/i", $buffer, $match)) {
                 $Sec_WebSocket_Key = $match[1];
             } else {
-                $connection->send("HTTP/1.1 200 Websocket\r\nServer: workerman/".Worker::VERSION."\r\n\r\n<div style=\"text-align:center\"><h1>Websocket</h1><hr>powered by <a href=\"https://www.workerman.net\">workerman ".Worker::VERSION."</a></div>",
+                $connection->close("HTTP/1.1 200 WebSocket\r\nServer: workerman/".Worker::VERSION."\r\n\r\n<div style=\"text-align:center\"><h1>WebSocket</h1><hr>workerman/".Worker::VERSION."</div>",
                     true);
-                $connection->close();
                 return 0;
             }
             // Calculation websocket key.
@@ -385,34 +374,16 @@ class Websocket implements \Workerman\Protocols\ProtocolInterface
 
             $has_server_header = false;
 
-            // Try to emit onWebSocketConnect callback.
-            if (isset($connection->onWebSocketConnect) || isset($connection->worker->onWebSocketConnect)) {
-                static::parseHttpHeader($buffer);
-                try {
-                    \call_user_func(isset($connection->onWebSocketConnect)?$connection->onWebSocketConnect:$connection->worker->onWebSocketConnect, $connection, $buffer);
-                } catch (\Exception $e) {
-                    Worker::log($e);
-                    exit(250);
-                } catch (\Error $e) {
-                    Worker::log($e);
-                    exit(250);
-                }
-                if (!empty($_SESSION) && \class_exists('\GatewayWorker\Lib\Context')) {
-                    $connection->session = \GatewayWorker\Lib\Context::sessionEncode($_SESSION);
-                }
-                $_GET = $_SERVER = $_SESSION = $_COOKIE = array();
-
-                if (isset($connection->headers)) {
-                    if (\is_array($connection->headers))  {
-                        foreach ($connection->headers as $header) {
-                            if (\strpos($header, 'Server:') === 0) {
-                                $has_server_header = true;
-                            }
-                            $handshake_message .= "$header\r\n";
+            if (isset($connection->headers)) {
+                if (\is_array($connection->headers))  {
+                    foreach ($connection->headers as $header) {
+                        if (\strpos($header, 'Server:') === 0) {
+                            $has_server_header = true;
                         }
-                    } else {
-                        $handshake_message .= "$connection->headers\r\n";
+                        $handshake_message .= "$header\r\n";
                     }
+                } else {
+                    $handshake_message .= "$connection->headers\r\n";
                 }
             }
             if (!$has_server_header) {
@@ -423,6 +394,25 @@ class Websocket implements \Workerman\Protocols\ProtocolInterface
             $connection->send($handshake_message, true);
             // Mark handshake complete..
             $connection->websocketHandshake = true;
+
+            // Try to emit onWebSocketConnect callback.
+            $on_websocket_connect = isset($connection->onWebSocketConnect) ? $connection->onWebSocketConnect :
+                (isset($connection->worker->onWebSocketConnect) ? $connection->worker->onWebSocketConnect : false);
+            if ($on_websocket_connect) {
+                static::parseHttpHeader($buffer);
+                try {
+                    \call_user_func($on_websocket_connect, $connection, $buffer);
+                } catch (\Exception $e) {
+                    Worker::stopAll(250, $e);
+                } catch (\Error $e) {
+                    Worker::stopAll(250, $e);
+                }
+                if (!empty($_SESSION) && \class_exists('\GatewayWorker\Lib\Context')) {
+                    $connection->session = \GatewayWorker\Lib\Context::sessionEncode($_SESSION);
+                }
+                $_GET = $_SERVER = $_SESSION = $_COOKIE = array();
+            }
+
             // There are data waiting to be sent.
             if (!empty($connection->tmpWebsocketData)) {
                 $connection->send($connection->tmpWebsocketData, true);
@@ -440,9 +430,8 @@ class Websocket implements \Workerman\Protocols\ProtocolInterface
             return 0;
         }
         // Bad websocket handshake request.
-        $connection->send("HTTP/1.1 200 Websocket\r\nServer: workerman/".Worker::VERSION."\r\n\r\n<div style=\"text-align:center\"><h1>Websocket</h1><hr>powered by <a href=\"https://www.workerman.net\">workerman ".Worker::VERSION."</a></div>",
+        $connection->close("HTTP/1.1 200 WebSocket\r\nServer: workerman/".Worker::VERSION."\r\n\r\n<div style=\"text-align:center\"><h1>WebSocket</h1><hr>workerman/".Worker::VERSION."</div>",
             true);
-        $connection->close();
         return 0;
     }
 
