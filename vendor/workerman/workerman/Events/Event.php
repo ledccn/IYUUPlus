@@ -150,7 +150,7 @@ class Event implements EventInterface
     
     /**
      * Timer callback.
-     * @param null $fd
+     * @param int|null $fd
      * @param int $what
      * @param int $timer_id
      */
@@ -166,11 +166,9 @@ class Event implements EventInterface
         try {
             \call_user_func_array($param[0], $param[1]);
         } catch (\Exception $e) {
-            Worker::log($e);
-            exit(250);
+            Worker::stopAll(250, $e);
         } catch (\Error $e) {
-            Worker::log($e);
-            exit(250);
+            Worker::stopAll(250, $e);
         }
     }
     
@@ -202,9 +200,7 @@ class Event implements EventInterface
      */
     public function destroy()
     {
-        foreach ($this->_eventSignal as $event) {
-            $event->del();
-        }
+        $this->_eventBase->exit();
     }
 
     /**

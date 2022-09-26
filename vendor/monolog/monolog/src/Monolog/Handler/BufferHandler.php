@@ -22,23 +22,29 @@ use Monolog\Formatter\FormatterInterface;
  * sending one per log message.
  *
  * @author Christophe Coevoet <stof@notk.org>
+ *
+ * @phpstan-import-type Record from \Monolog\Logger
  */
 class BufferHandler extends AbstractHandler implements ProcessableHandlerInterface, FormattableHandlerInterface
 {
     use ProcessableHandlerTrait;
 
+    /** @var HandlerInterface */
     protected $handler;
+    /** @var int */
     protected $bufferSize = 0;
+    /** @var int */
     protected $bufferLimit;
+    /** @var bool */
     protected $flushOnOverflow;
+    /** @var Record[] */
     protected $buffer = [];
+    /** @var bool */
     protected $initialized = false;
 
     /**
      * @param HandlerInterface $handler         Handler.
      * @param int              $bufferLimit     How many entries should be buffered at most, beyond that the oldest items are removed from the buffer.
-     * @param string|int       $level           The minimum logging level at which this handler will be triggered
-     * @param bool             $bubble          Whether the messages that are handled can bubble up the stack or not
      * @param bool             $flushOnOverflow If true, the buffer is flushed when the max size has been reached, by default oldest entries are discarded
      */
     public function __construct(HandlerInterface $handler, int $bufferLimit = 0, $level = Logger::DEBUG, bool $bubble = true, bool $flushOnOverflow = false)
@@ -50,7 +56,7 @@ class BufferHandler extends AbstractHandler implements ProcessableHandlerInterfa
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function handle(array $record): bool
     {
@@ -74,6 +80,7 @@ class BufferHandler extends AbstractHandler implements ProcessableHandlerInterfa
         }
 
         if ($this->processors) {
+            /** @var Record $record */
             $record = $this->processRecord($record);
         }
 
@@ -101,7 +108,7 @@ class BufferHandler extends AbstractHandler implements ProcessableHandlerInterfa
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function close(): void
     {
@@ -133,20 +140,28 @@ class BufferHandler extends AbstractHandler implements ProcessableHandlerInterfa
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function setFormatter(FormatterInterface $formatter): HandlerInterface
     {
-        $this->handler->setFormatter($formatter);
+        if ($this->handler instanceof FormattableHandlerInterface) {
+            $this->handler->setFormatter($formatter);
 
-        return $this;
+            return $this;
+        }
+
+        throw new \UnexpectedValueException('The nested handler of type '.get_class($this->handler).' does not support formatters.');
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getFormatter(): FormatterInterface
     {
-        return $this->handler->getFormatter();
+        if ($this->handler instanceof FormattableHandlerInterface) {
+            return $this->handler->getFormatter();
+        }
+
+        throw new \UnexpectedValueException('The nested handler of type '.get_class($this->handler).' does not support formatters.');
     }
 }

@@ -22,10 +22,10 @@ $data_mapping = array(
     'server' => '_SERVER',
 );
 
-if(isset($data_mapping[$test])) {
+if (isset($data_mapping[$test])) {
     $data = ${$data_mapping[$test]};
     $value = isset($data[$key]) ? $data[$key] : '';
-echo $value;
+    echo $value;
 } else {
     echo "Error.";
 }

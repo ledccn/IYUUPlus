@@ -6,15 +6,16 @@
     "authors": [
         {
             "name": "Graham Campbell",
-            "email": "graham@alt-three.com"
+            "email": "hello@gjcampbell.co.uk",
+            "homepage": "https://github.com/GrahamCampbell"
         }
     ],
     "require": {
-        "php": "^7.0|^8.0",
-        "phpoption/phpoption": "^1.7.3"
+        "php": "^7.0 || ^8.0",
+        "phpoption/phpoption": "^1.8"
     },
     "require-dev": {
-        "phpunit/phpunit": "^6.5|^7.5|^8.5|^9.0"
+        "phpunit/phpunit": "^6.5.14 || ^7.5.20 || ^8.5.19 || ^9.5.8"
     },
     "autoload": {
         "psr-4": {
@@ -28,12 +29,5 @@
     },
     "config": {
         "preferred-install": "dist"
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.0-dev"
-        }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    }
 }

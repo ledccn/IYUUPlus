@@ -17,7 +17,7 @@ namespace Workerman\Protocols\Http\Session;
  * Class FileSessionHandler
  * @package Workerman\Protocols\Http\Session
  */
-class FileSessionHandler implements \SessionHandlerInterface
+class FileSessionHandler implements SessionHandlerInterface
 {
     /**
      * Session save path.
@@ -89,6 +89,30 @@ class FileSessionHandler implements \SessionHandlerInterface
     }
 
     /**
+     * Update sesstion modify time.
+     * 
+     * @see https://www.php.net/manual/en/class.sessionupdatetimestamphandlerinterface.php
+     * @see https://www.php.net/manual/zh/function.touch.php
+     * 
+     * @param string $id Session id.
+     * @param string $data Session Data.
+     * 
+     * @return bool
+     */
+    public function updateTimestamp($id, $data = "")
+    {
+        $session_file = static::sessionFile($id);
+        if (!file_exists($session_file)) {
+            return false;
+        }
+        // set file modify time to current time
+        $set_modify_time = \touch($session_file);
+        // clear file stat cache
+        \clearstatcache();
+        return $set_modify_time;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function close()
@@ -123,7 +147,7 @@ class FileSessionHandler implements \SessionHandlerInterface
     /**
      * Get session file path.
      *
-     * @param $session_id
+     * @param string $session_id
      * @return string
      */
     protected static function sessionFile($session_id) {
@@ -133,7 +157,7 @@ class FileSessionHandler implements \SessionHandlerInterface
     /**
      * Get or set session file path.
      *
-     * @param $path
+     * @param string $path
      * @return string
      */
     public static function sessionSavePath($path) {

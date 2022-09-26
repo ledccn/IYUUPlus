@@ -13,8 +13,9 @@
  */
 namespace Webman\Http;
 
-use Webman\Http\UploadFile;
 use Webman\App;
+use Webman\Route\Route;
+use Webman\Http\UploadFile;
 
 /**
  * Class Request
@@ -38,6 +39,11 @@ class Request extends \Workerman\Protocols\Http\Request
     public $action = null;
 
     /**
+     * @var Route
+     */
+    public $route = null;
+
+    /**
      * @return mixed|null
      */
     public function all()
@@ -46,9 +52,9 @@ class Request extends \Workerman\Protocols\Http\Request
     }
 
     /**
-     * @param $name
-     * @param null $default
-     * @return null
+     * @param string $name
+     * @param string|null $default
+     * @return mixed|null
      */
     public function input($name, $default = null)
     {
@@ -90,8 +96,8 @@ class Request extends \Workerman\Protocols\Http\Request
     }
 
     /**
-     * @param null $name
-     * @return null| array | UploadFile
+     * @param string|null $name
+     * @return null|array|UploadFile
      */
     public function file($name = null)
     {
@@ -100,11 +106,46 @@ class Request extends \Workerman\Protocols\Http\Request
             return $name === null ? [] : null;
         }
         if ($name !== null) {
-            return new UploadFile($files['tmp_name'], $files['name'], $files['type'], $files['error']);
+            // Multi files
+            if (\is_array(\current($files))) {
+                return $this->parseFiles($files);
+            }
+            return $this->parseFile($files);
         }
         $upload_files = [];
         foreach ($files as $name => $file) {
-            $upload_files[$name] = new UploadFile($file['tmp_name'], $file['name'], $file['type'], $file['error']);
+            // Multi files
+            if (\is_array(\current($file))) {
+                $upload_files[$name] = $this->parseFiles($file);
+            } else {
+                $upload_files[$name] = $this->parseFile($file);
+            }
+        }
+        return $upload_files;
+    }
+
+    /**
+     * @param $file
+     * @return UploadFile
+     */
+    protected function parseFile($file)
+    {
+        return new UploadFile($file['tmp_name'], $file['name'], $file['type'], $file['error']);
+    }
+
+    /**
+     * @param array $files
+     * @return array
+     */
+    protected function parseFiles($files)
+    {
+        $upload_files = [];
+        foreach ($files as $key => $file) {
+            if (\is_array(\current($file))) {
+                $upload_files[$key] = $this->parseFiles($file);
+            } else {
+                $upload_files[$key] = $this->parseFile($file);
+            }
         }
         return $upload_files;
     }
@@ -201,7 +242,7 @@ class Request extends \Workerman\Protocols\Http\Request
      */
     public function acceptJson()
     {
-        return false !== strpos($this->header('accept'), 'json');
+        return false !== strpos($this->header('accept', ''), 'json');
     }
 
     /**

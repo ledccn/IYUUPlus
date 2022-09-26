@@ -22,7 +22,7 @@ use Webman\App;
 class Response extends \Workerman\Protocols\Http\Response
 {
     /**
-     * @param $file
+     * @param string $file
      * @return $this
      */
     public function file($file)
@@ -34,7 +34,7 @@ class Response extends \Workerman\Protocols\Http\Response
     }
 
     /**
-     * @param $file
+     * @param string $file
      * @param string $download_name
      * @return $this
      */
@@ -57,6 +57,6 @@ class Response extends \Workerman\Protocols\Http\Response
         if ($if_modified_since === null || !($mtime = \filemtime($file))) {
             return false;
         }
-        return $if_modified_since === \date('D, d M Y H:i:s', $mtime) . ' ' . \date_default_timezone_get();
+        return $if_modified_since === \gmdate('D, d M Y H:i:s', $mtime) . ' GMT';
     }
 }

@@ -40,13 +40,22 @@ class LogmaticHandler extends SocketHandler
      * @param string     $hostname Host name supplied by Logmatic.
      * @param string     $appname  Application name supplied by Logmatic.
      * @param bool       $useSSL   Whether or not SSL encryption should be used.
-     * @param int|string $level    The minimum logging level to trigger this handler.
-     * @param bool       $bubble   Whether or not messages that are handled should bubble up the stack.
      *
      * @throws MissingExtensionException If SSL encryption is set to true and OpenSSL is missing
      */
-    public function __construct(string $token, string $hostname = '', string $appname = '', bool $useSSL = true, $level = Logger::DEBUG, bool $bubble = true)
-    {
+    public function __construct(
+        string $token,
+        string $hostname = '',
+        string $appname = '',
+        bool $useSSL = true,
+        $level = Logger::DEBUG,
+        bool $bubble = true,
+        bool $persistent = false,
+        float $timeout = 0.0,
+        float $writingTimeout = 10.0,
+        ?float $connectionTimeout = null,
+        ?int $chunkSize = null
+    ) {
         if ($useSSL && !extension_loaded('openssl')) {
             throw new MissingExtensionException('The OpenSSL PHP extension is required to use SSL encrypted connection for LogmaticHandler');
         }
@@ -54,7 +63,16 @@ class LogmaticHandler extends SocketHandler
         $endpoint = $useSSL ? 'ssl://api.logmatic.io:10515' : 'api.logmatic.io:10514';
         $endpoint .= '/v1/';
 
-        parent::__construct($endpoint, $level, $bubble);
+        parent::__construct(
+            $endpoint,
+            $level,
+            $bubble,
+            $persistent,
+            $timeout,
+            $writingTimeout,
+            $connectionTimeout,
+            $chunkSize
+        );
 
         $this->logToken = $token;
         $this->hostname = $hostname;
@@ -62,7 +80,7 @@ class LogmaticHandler extends SocketHandler
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function generateDataStream(array $record): string
     {
@@ -70,7 +88,7 @@ class LogmaticHandler extends SocketHandler
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function getDefaultFormatter(): FormatterInterface
     {

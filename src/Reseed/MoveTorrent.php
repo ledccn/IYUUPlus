@@ -4,6 +4,8 @@ namespace IYUU\Reseed;
 use app\domain\ConfigParser\Move as domainMove;
 use app\domain\Crontab as domainCrontab;
 use IYUU\Client\ClientException;
+use Rhilip\Bencode\Bencode;
+use Rhilip\Bencode\ParseException;
 
 class MoveTorrent extends AutoReseed
 {
@@ -97,6 +99,14 @@ class MoveTorrent extends AutoReseed
                 echo "clients_".$k." 全部转移成功，本次无需转移！".PHP_EOL.PHP_EOL;
                 continue;
             }
+            $qBittorrent_version_lg_4_4 = false;
+            if ($v['type'] == 'qBittorrent') {
+                $arr = explode('.', ltrim($version, "v"), 3);
+                if (count($arr) > 2 && ($arr[0] == '4' && $arr[1] >= '4' ||  $arr[0] > '4')) {
+                    global $qBittorrent_version_lg_4_4;
+                    $qBittorrent_version_lg_4_4 = true;
+                }
+            }
             //遍历当前客户端种子
             foreach ($infohash_Dir as $info_hash => $downloadDir) {
                 // 调用路径过滤器、选择器
@@ -115,6 +125,8 @@ class MoveTorrent extends AutoReseed
                 // 种子目录：脚本要能够读取到
                 $path = self::$links[$k]['BT_backup'];
                 $torrentPath = '';
+                $fast_resumePath = '';
+                $needPatchTorrent = $qBittorrent_version_lg_4_4;
                 // 待删除种子
                 $torrentDelete = '';
                 // 获取种子文件的实际路径
@@ -135,17 +147,64 @@ class MoveTorrent extends AutoReseed
                             die("clients_".$k." IYUUPlus内下载器未设置种子目录，无法完成转移！");
                         }
                         $torrentPath = $path .DS. $info_hash . '.torrent';
+                        $fast_resumePath = $path .DS. $info_hash . '.fastresume';
                         $torrentDelete = $info_hash;
                         break;
                     default:
                         break;
                 }
                 if (!is_file($torrentPath)) {
-                    echo $help_msg;
-                    die("clients_".$k." 的种子文件{$torrentPath}不存在，无法完成转移！");
+                    $v1_path = $path .DS. $move[$info_hash]['infohash_v1'] . '.torrent';
+                    if (is_file($v1_path)) {
+                        $torrentPath = $v1_path;
+                        $fast_resumePath = $path .DS. $move[$info_hash]['infohash_v1'] . '.torrent';
+                    } else {
+                        echo $help_msg;
+                        die("clients_".$k." 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`不存在，无法完成转移！");
+                    }
                 }
                 echo '存在种子：'.$torrentPath.PHP_EOL;
                 $torrent = file_get_contents($torrentPath);
+                $parsed_torrent = [];
+                try {
+                    global $parsed_torrent;
+                    $parsed_torrent = Bencode::decode($torrent);
+                    if (empty($parsed_torrent['announce'])) {
+                        $needPatchTorrent = true;
+                    }
+                } catch (ParseException $e) {}
+                if ($needPatchTorrent) {
+                    echo '未发现tracker信息，尝试补充tracker信息...'.PHP_EOL;
+                    if (empty($parsed_torrent)) {
+                        die("clients_".$k." 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`解析失败，无法完成转移！");
+                    }
+                    if (empty($parsed_torrent['announce'])) {
+                        if (isset($move[$info_hash]['tracker'])) {
+                            $parsed_torrent['announce'] = $move[$info_hash]['tracker'];
+                        } else {
+                            if (!is_file($fast_resumePath)) {
+                                echo $help_msg;
+                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`不存在，无法完成转移！");
+                            }
+                            $parsed_fast_resume = null;
+                            try {
+                                global $parsed_fast_resume;
+                                $parsed_fast_resume = Bencode::load($fast_resumePath);
+                            } catch (ParseException $e) {
+                                die("clients_".$k." 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`解析失败`{$e->getMessage()}`，无法完成转移！");
+                            }
+                            $trackers = $parsed_fast_resume['trackers'];
+                            if (count($trackers) > 0 && !empty($trackers[0])) {
+                                if (is_array($trackers[0]) && count($trackers[0]) > 0 && !empty($trackers[0][0])) {
+                                    $parsed_torrent['announce'] = $trackers[0][0];
+                                }
+                            } else {
+                                die("clients_".$k." 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`不包含tracker地址，无法完成转移！");
+                            }
+                        }
+                    }
+                    $torrent = Bencode::encode($parsed_torrent);
+                }
                 // 正式开始转移
                 echo "种子已推送给下载器，正在转移做种...".PHP_EOL;
 
@@ -166,7 +225,7 @@ class MoveTorrent extends AutoReseed
                 /**
                  * 转移成功的种子写日志
                  */
-                $log = $info_hash.PHP_EOL.$torrentPath.PHP_EOL.$downloadDir.PHP_EOL.PHP_EOL;
+                 $log = $info_hash.PHP_EOL.$torrentPath.PHP_EOL.$downloadDir.PHP_EOL.PHP_EOL;
                 if ($ret) {
                     //转移成功时，删除做种，不删资源
                     if (isset(self::$conf['delete_torrent']) && self::$conf['delete_torrent']) {

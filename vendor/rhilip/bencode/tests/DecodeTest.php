@@ -1,14 +1,8 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Rhilip
- * Date: 2/27/2020
- * Time: 2020
- */
 
 use Rhilip\Bencode\Bencode;
+use Rhilip\Bencode\ParseException;
 use PHPUnit\Framework\TestCase;
-use Rhilip\Bencode\ParseErrorException;
 
 class DecodeTest extends TestCase
 {
@@ -31,7 +25,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeIntegerLeadingZero()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid integer format or integer overflow');
         Bencode::decode('i013e');
     }
@@ -41,7 +35,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeIntegerZeroNegative()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid integer format or integer overflow');
 
         Bencode::decode('i-013e');
@@ -54,7 +48,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeIntegerMinusZero()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid integer format or integer overflow');
         Bencode::decode('i-0e');
     }
@@ -66,7 +60,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeIntegerFakeFloat()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid integer format or integer overflow');
 
         Bencode::decode('i2.71828e');
@@ -79,7 +73,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeIntegerFakeString()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid integer format or integer overflow');
 
         Bencode::decode('iffafwe');
@@ -92,7 +86,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeIntegerOverflow()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid integer format or integer overflow');
 
         $value = PHP_INT_MAX . '0000'; // PHP_INT_MAX * 10000
@@ -121,7 +115,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeStringIncorrectLengthZeroPrefix()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid integer format or integer overflow');
 
         Bencode::decode('06:String');
@@ -132,7 +126,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeStringIncorrectLengthFloat()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid integer format or integer overflow');
 
         Bencode::decode('6.0:String');
@@ -143,7 +137,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeStringIncorrectLengthNotNumeric()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid integer format or integer overflow');
 
         Bencode::decode('six:String');
@@ -154,7 +148,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeStringIncorrectLengthNegative()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Cannot have non-digit values for String length');
 
         Bencode::decode('-6:String');
@@ -165,7 +159,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeStringUnexpectedEof()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('String length is not match');
 
         Bencode::decode('10:String');
@@ -223,7 +217,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeDictionaryKeyNotString()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Non string key found in the dictionary.');
 
         Bencode::decode('di123ei321ee');
@@ -234,7 +228,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeDictionaryDuplicateKey()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Duplicate Dictionary key exist before');
 
         Bencode::decode('d1:a1:b1:a1:de');
@@ -263,13 +257,12 @@ class DecodeTest extends TestCase
         $this->assertEquals($torrent, Bencode::decode($bencode));
     }
 
-
     /**
      * @group all
      */
     public function testDecodeNothing()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Decode Input is not valid String.');
 
         Bencode::decode('');
@@ -280,7 +273,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeNull()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Decode Input is not valid String.');
 
         Bencode::decode(null);
@@ -291,7 +284,7 @@ class DecodeTest extends TestCase
      */
     public function testDecodeWithExtraJunk()
     {
-        $this->expectException(ParseErrorException::class);
+        $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Could not fully decode bencode string');
         Bencode::decode('i0ejunk');
     }

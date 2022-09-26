@@ -4,17 +4,21 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97
+class ComposerStaticInit4dfbd30c142d9169bdd5809ad6beb22e
 {
     public static $files = array (
-        '253c157292f75eb38082b5acb06f3f01' => __DIR__ . '/..' . '/nikic/fast-route/src/functions.php',
-        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
+        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
+        '253c157292f75eb38082b5acb06f3f01' => __DIR__ . '/..' . '/nikic/fast-route/src/functions.php',
         'da5b71a9ad8465d48da441e2f36823b6' => __DIR__ . '/../..' . '/support/helpers.php',
     );
 
     public static $prefixLengthsPsr4 = array (
+        's' => 
+        array (
+            'support\\' => 8,
+        ),
         'W' => 
         array (
             'Workerman\\Crontab\\' => 18,
@@ -26,6 +30,10 @@ class ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97
             'Symfony\\Polyfill\\Php80\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
             'Symfony\\Polyfill\\Ctype\\' => 23,
+            'Support\\View\\' => 13,
+            'Support\\Exception\\' => 18,
+            'Support\\Bootstrap\\' => 18,
+            'Support\\' => 8,
         ),
         'R' => 
         array (
@@ -61,6 +69,10 @@ class ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97
     );
 
     public static $prefixDirsPsr4 = array (
+        'support\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/workerman/webman-framework/src/support',
+        ),
         'Workerman\\Crontab\\' => 
         array (
             0 => __DIR__ . '/..' . '/workerman/crontab/src',
@@ -84,6 +96,22 @@ class ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97
         'Symfony\\Polyfill\\Ctype\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
+        ),
+        'Support\\View\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/workerman/webman-framework/src/support/view',
+        ),
+        'Support\\Exception\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/workerman/webman-framework/src/support/exception',
+        ),
+        'Support\\Bootstrap\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/workerman/webman-framework/src/support/bootstrap',
+        ),
+        'Support\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/workerman/webman-framework/src/support',
         ),
         'Rhilip\\Bencode\\' => 
         array (
@@ -139,6 +167,8 @@ class ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97
 
     public static $classMap = array (
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
         'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
         'ValueError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
@@ -147,10 +177,10 @@ class ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInit687dbaa10a29b36f43b2c9b7d90f4c97::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit4dfbd30c142d9169bdd5809ad6beb22e::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit4dfbd30c142d9169bdd5809ad6beb22e::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit4dfbd30c142d9169bdd5809ad6beb22e::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit4dfbd30c142d9169bdd5809ad6beb22e::$classMap;
 
         }, null, ClassLoader::class);
     }

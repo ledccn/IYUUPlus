@@ -25,9 +25,13 @@ class LineFormatter extends NormalizerFormatter
 {
     public const SIMPLE_FORMAT = "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n";
 
+    /** @var string */
     protected $format;
+    /** @var bool */
     protected $allowInlineLineBreaks;
+    /** @var bool */
     protected $ignoreEmptyContextAndExtra;
+    /** @var bool */
     protected $includeStacktraces;
 
     /**
@@ -36,34 +40,41 @@ class LineFormatter extends NormalizerFormatter
      * @param bool        $allowInlineLineBreaks      Whether to allow inline line breaks in log entries
      * @param bool        $ignoreEmptyContextAndExtra
      */
-    public function __construct(?string $format = null, ?string $dateFormat = null, bool $allowInlineLineBreaks = false, bool $ignoreEmptyContextAndExtra = false)
+    public function __construct(?string $format = null, ?string $dateFormat = null, bool $allowInlineLineBreaks = false, bool $ignoreEmptyContextAndExtra = false, bool $includeStacktraces = false)
     {
         $this->format = $format === null ? static::SIMPLE_FORMAT : $format;
         $this->allowInlineLineBreaks = $allowInlineLineBreaks;
         $this->ignoreEmptyContextAndExtra = $ignoreEmptyContextAndExtra;
+        $this->includeStacktraces($includeStacktraces);
         parent::__construct($dateFormat);
     }
 
-    public function includeStacktraces(bool $include = true)
+    public function includeStacktraces(bool $include = true): self
     {
         $this->includeStacktraces = $include;
         if ($this->includeStacktraces) {
             $this->allowInlineLineBreaks = true;
         }
+
+        return $this;
     }
 
-    public function allowInlineLineBreaks(bool $allow = true)
+    public function allowInlineLineBreaks(bool $allow = true): self
     {
         $this->allowInlineLineBreaks = $allow;
+
+        return $this;
     }
 
-    public function ignoreEmptyContextAndExtra(bool $ignore = true)
+    public function ignoreEmptyContextAndExtra(bool $ignore = true): self
     {
         $this->ignoreEmptyContextAndExtra = $ignore;
+
+        return $this;
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function format(array $record): string
     {
@@ -106,6 +117,10 @@ class LineFormatter extends NormalizerFormatter
         // remove leftover %extra.xxx% and %context.xxx% if any
         if (false !== strpos($output, '%')) {
             $output = preg_replace('/%(?:extra|context)\..+?%/', '', $output);
+            if (null === $output) {
+                $pcreErrorCode = preg_last_error();
+                throw new \RuntimeException('Failed to run preg_replace: ' . $pcreErrorCode . ' / ' . Utils::pcreLastErrorMessage($pcreErrorCode));
+            }
         }
 
         return $output;
@@ -121,14 +136,14 @@ class LineFormatter extends NormalizerFormatter
         return $message;
     }
 
+    /**
+     * @param mixed $value
+     */
     public function stringify($value): string
     {
         return $this->replaceNewlines($this->convertToString($value));
     }
 
-    /**
-     * @suppress PhanParamSignatureMismatch
-     */
     protected function normalizeException(\Throwable $e, int $depth = 0): string
     {
         $str = $this->formatException($e);
@@ -142,6 +157,9 @@ class LineFormatter extends NormalizerFormatter
         return $str;
     }
 
+    /**
+     * @param mixed $data
+     */
     protected function convertToString($data): string
     {
         if (null === $data || is_bool($data)) {
