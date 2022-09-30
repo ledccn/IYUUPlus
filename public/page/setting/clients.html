@@ -128,6 +128,21 @@
       <tip>下载器的种子存放目录，是转移做种客户端功能必须用到的设置。点击查看教程<a href="https://www.iyuu.cn/archives/451/" target="_self">【IYUUPlus使用篇-转移做种客户端】</a><br /><br />如果您的IYUU是Docker安装的，请把路径挂载进IYUU的容器内，并填写到此处；如果是源码安装的，可以直接指定路径；如果您暂时用不到转移做种客户端的功能，此处可以留空。</tip>
     </div>
   </div>
+  {{# if (d.type === 'qBittorrent') { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label">上传限速</label>
+    <div class="layui-input-block">
+      <input type="text" name="upLimit" placeholder="上传速度限制" class="layui-input">
+      <tip>上传速度单位支持：KB、MB、GB</tip>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label">优先首尾块</label>
+    <div class="layui-input-block">
+      <input type="checkbox" name="firstLastPiecePrio" lay-skin="switch" lay-text="YES|NO"><br/><tip>qBittorrent下载服务器的专属配置，如果您不理解此处含义，请保持默认。</tip>
+    </div>
+  </div>
+   {{# } }}
 </script>
 <script>
   layui.use(['table','form','miniPage','laytpl'], function () {
@@ -218,6 +233,11 @@
         ,{field: 'BT_backup', title: '种子目录', minWidth: 180, sort: true
           ,templet: function(d){
             return d.BT_backup || '';
+          }
+        }
+		,{field: 'upLimit', title: '上传限速', minWidth: 180, sort: true
+          ,templet: function(d){
+            return d.upLimit || '';
           }
         }
         ,{title: '操作', width: 120, templet: '#tableRowToolbar', fixed: "right", align: "center"}

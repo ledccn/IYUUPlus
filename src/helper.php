@@ -157,6 +157,29 @@ function convertToMB(string $from)
 }
 
 /**
+ * @brief 文件大小格式化为Bytes
+ * @param string $from 文件大小(如：100GB)
+ * @return int 单位Bytes
+ */
+function convertToBytes(string $from): ?int {
+    $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    $number = substr($from, 0, -2);
+    $suffix = strtoupper(substr($from,-2));
+
+    //B or no suffix
+    if(is_numeric(substr($suffix, 0, 1))) {
+        return preg_replace('/[^\d]/', '', $from);
+    }
+
+    $exponent = array_flip($units)[$suffix] ?? null;
+    if($exponent === null) {
+        return null;
+    }
+
+    return $number * (1024 ** $exponent);
+}
+
+/**
  * @brief 种子过滤器
  * @param array $filter 过滤器规则
  * @param array $torrent 种子数组
