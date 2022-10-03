@@ -6,7 +6,6 @@ echo Docker: https://hub.docker.com/r/iyuucn/iyuuplus
 echo Gitee: https://gitee.com/ledc/iyuuplus
 echo Github: https://github.com/ledccn/IYUUPlus
 echo QQ: 859882209 / 931954050 / 924099912
-echo Wenda: http://wenda.iyuu.cn
 echo Token: https://iyuu.cn
 echo Blog: https://www.iyuu.cn
 echo Docs: http://api.iyuu.cn/docs.php
@@ -29,7 +28,7 @@ goto :end
 %PHP_BINARY% -v
 echo.
 echo "如果您需要停止程序，请按下组合键：CTRL + C"
-%PHP_BINARY% start.php
+%PHP_BINARY% windows.php
 pause
 goto :end
 
