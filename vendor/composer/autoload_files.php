@@ -15,7 +15,7 @@ return array(
     '0d59ee240a4cd96ddbb4ff164fccea4d' => $vendorDir . '/symfony/polyfill-php73/bootstrap.php',
     'b6b991a57620e2fb6b2f66f03fe9ddc2' => $vendorDir . '/symfony/string/Resources/functions.php',
     '253c157292f75eb38082b5acb06f3f01' => $vendorDir . '/nikic/fast-route/src/functions.php',
-    'c5d3c88e3c0e597e8aae3405b5b23100' => $baseDir . '/app/helpers.php',
     'da5b71a9ad8465d48da441e2f36823b6' => $baseDir . '/support/helpers.php',
+    'c5d3c88e3c0e597e8aae3405b5b23100' => $baseDir . '/app/helpers.php',
     '9c1aacd57392ef3c78ee785628cac30f' => $baseDir . '/init.php',
 );
