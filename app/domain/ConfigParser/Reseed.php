@@ -1,4 +1,5 @@
 <?php
+
 namespace app\domain\ConfigParser;
 
 use app\domain\ConfigParserInterface;
@@ -18,10 +19,10 @@ class Reseed implements ConfigParserInterface
      * @param string $uuid
      * @return array
      */
-    public static function parser($uuid = ''):array
+    public static function parser(string $uuid = ''): array
     {
         $rs = [
-            'sites'   => [],
+            'sites' => [],
             'clients' => [],
         ];
         if (empty($uuid)) {
@@ -66,40 +67,40 @@ class Reseed implements ConfigParserInterface
     }
 
     /**
-     * 获取辅种缓存的存放路径
-     * @return string
-     */
-    public static function getReseedCachePath():string
-    {
-        return runtime_path() . DIRECTORY_SEPARATOR . 'torrent' . DIRECTORY_SEPARATOR . 'cachehash';
-    }
-
-    /**
-     * 获取转移缓存的存放路径
-     * @return string
-     */
-    public static function getMoveCachePath():string
-    {
-        return runtime_path() . DIRECTORY_SEPARATOR . 'torrent' . DIRECTORY_SEPARATOR . 'cachemove';
-    }
-
-    /**
      * 清理辅种缓存
      * @return bool
      */
-    public static function clearReseedCache():bool
+    public static function clearReseedCache(): bool
     {
         $dir = self::getReseedCachePath();
-        return is_dir($dir) ? IFile::rmdir($dir, true) : true;
+        return !is_dir($dir) || IFile::rmdir($dir, true);
+    }
+
+    /**
+     * 获取辅种缓存的存放路径
+     * @return string
+     */
+    public static function getReseedCachePath(): string
+    {
+        return runtime_path() . DIRECTORY_SEPARATOR . 'torrent' . DIRECTORY_SEPARATOR . 'cachehash';
     }
 
     /**
      * 清理转移缓存
      * @return bool
      */
-    public static function clearMoveCache():bool
+    public static function clearMoveCache(): bool
     {
         $dir = self::getMoveCachePath();
-        return is_dir($dir) ? IFile::rmdir($dir, true) : true;
+        return !is_dir($dir) || IFile::rmdir($dir, true);
+    }
+
+    /**
+     * 获取转移缓存的存放路径
+     * @return string
+     */
+    public static function getMoveCachePath(): string
+    {
+        return runtime_path() . DIRECTORY_SEPARATOR . 'torrent' . DIRECTORY_SEPARATOR . 'cachemove';
     }
 }

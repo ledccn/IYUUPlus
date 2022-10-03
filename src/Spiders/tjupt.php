@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Spiders;
 
 class tjupt extends mteam
@@ -10,5 +11,5 @@ class tjupt extends mteam
     /**
      * H&R 标志
      */
-    public static $HR = array('class="hitandrun"','alt="H&amp;R"','title="H&amp;R"');
+    public static $HR = array('class="hitandrun"', 'alt="H&amp;R"', 'title="H&amp;R"');
 }

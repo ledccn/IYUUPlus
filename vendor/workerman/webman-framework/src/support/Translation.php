@@ -28,24 +28,24 @@ class Translation
 {
 
     /**
-     * @var Translator
+     * @var Translator[]
      */
-    protected static $_instance;
+    protected static $_instance = [];
 
     /**
      * @return Translator
      * @throws NotFoundException
      */
-    public static function instance()
+    public static function instance(string $plugin = '')
     {
-        if (!static::$_instance) {
-            $config = config('translation', []);
+        if (!isset(static::$_instance[$plugin])) {
+            $config = \config($plugin ? "plugin.$plugin.translation" : 'translation', []);
             // Phar support. Compatible with the 'realpath' function in the phar file.
             if (!$translations_path = \get_realpath($config['path'])) {
                 throw new NotFoundException("File {$config['path']} not found");
             }
 
-            static::$_instance = $translator = new Translator($config['locale']);
+            static::$_instance[$plugin] = $translator = new Translator($config['locale']);
             $translator->setFallbackLocales($config['fallback_locale']);
 
             $classes = [
@@ -61,26 +61,29 @@ class Translation
 
             foreach ($classes as $class => $opts) {
                 $translator->addLoader($opts['format'], new $class);
-                foreach (glob($translations_path . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '*' . $opts['extension']) as $file) {
-                    $domain = basename($file, $opts['extension']);
-                    $dir_name = pathinfo($file, PATHINFO_DIRNAME);
-                    $locale = substr(strrchr($dir_name, DIRECTORY_SEPARATOR), 1);
+                foreach (\glob($translations_path . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '*' . $opts['extension']) as $file) {
+                    $domain = \basename($file, $opts['extension']);
+                    $dir_name = \pathinfo($file, PATHINFO_DIRNAME);
+                    $locale = \substr(strrchr($dir_name, DIRECTORY_SEPARATOR), 1);
                     if ($domain && $locale) {
                         $translator->addResource($opts['format'], $file, $locale, $domain);
                     }
                 }
             }
         }
-        return static::$_instance;
+        return static::$_instance[$plugin];
     }
 
     /**
-     * @param $name
-     * @param $arguments
+     * @param string $name
+     * @param array $arguments
      * @return mixed
+     * @throws NotFoundException
      */
-    public static function __callStatic($name, $arguments)
+    public static function __callStatic(string $name, array $arguments)
     {
-        return static::instance()->{$name}(... $arguments);
+        $request = \request();
+        $plugin = $request->plugin ?? '';
+        return static::instance($plugin)->{$name}(... $arguments);
     }
 }

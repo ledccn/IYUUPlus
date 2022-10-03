@@ -178,7 +178,7 @@ trait TorrentFileCommonTrait
         $this->assertEquals($this->source, $this->torrent->getSource());
 
         $source = "new source";
-        $this->torrent->setSouce($source);
+        $this->torrent->setSource($source);
         $this->assertEquals($source, $this->torrent->getSource());
     }
 
@@ -200,6 +200,62 @@ trait TorrentFileCommonTrait
 
         $this->torrent->setPrivate(false);
         $this->assertFalse($this->torrent->isPrivate());
+    }
+
+    public function testGetMagnetLink()
+    {
+        $xtComponent = '';
+        if ($this->protocol === TorrentFile::PROTOCOL_V1) {
+            $xtComponent = 'xt=urn:btih:' . $this->infoHashs[TorrentFile::PROTOCOL_V1];
+        }
+
+        if ($this->protocol === TorrentFile::PROTOCOL_V2) {
+            $xtComponent = 'xt=urn:btmh:1220' . $this->infoHashs[TorrentFile::PROTOCOL_V2];
+        }
+
+        if ($this->protocol === TorrentFile::PROTOCOL_HYBRID) {
+            $xtComponent = 'xt=urn:btih:' . $this->infoHashs[TorrentFile::PROTOCOL_V1] .
+                '&xt=urn:btmh:1220' . $this->infoHashs[TorrentFile::PROTOCOL_V2];
+        }
+
+        $name = $this->fileMode === TorrentFile::FILEMODE_MULTI ? 'tname' : 'file1.dat';
+        $dnComponent = 'dn=' . rawurlencode($name);
+
+        $trComponent = 'tr=https%3A%2F%2Fexample.com%2Fannounce&tr=https%3A%2F%2Fexample1.com%2Fannounce';
+
+        $this->assertEquals('magnet:?' . implode('&', [$xtComponent, $dnComponent, $trComponent]), $this->torrent->getMagnetLink());
+        $this->assertEquals('magnet:?' . implode('&', [$xtComponent, $dnComponent]), $this->torrent->getMagnetLink(true, false));
+        $this->assertEquals('magnet:?' . implode('&', [$xtComponent, $trComponent]), $this->torrent->getMagnetLink(false, true));
+        $this->assertEquals('magnet:?' . $xtComponent, $this->torrent->getMagnetLink(false, false));
+
+        // torrent without `announce-list` field should use announce field as `&tr=` component in uri.
+        $torrentWithoutAnnounceList = clone $this->torrent;
+        $torrentWithoutAnnounceList->unsetRootField('announce-list');
+        $this->assertEquals('magnet:?' . implode('&', [$xtComponent, $dnComponent, 'tr=https%3A%2F%2Fexample.com%2Fannounce']), $torrentWithoutAnnounceList->getMagnetLink());
+
+        // torrent without `announce` and `announce-list` fields should no `&tr=` component in uri.
+        $torrentWithoutAnnounces = clone $this->torrent;
+        $torrentWithoutAnnounces->unsetRootField('announce')->unsetRootField('announce-list');
+        $this->assertEquals('magnet:?' . implode('&', [$xtComponent, $dnComponent]), $torrentWithoutAnnounces->getMagnetLink());
+
+        /**
+         * Extra Test with Torrent with Multitracker Metadata Extension (BEP0012)
+         * Note:
+         * 1. if the "announce-list" key is present, the client will ignore the "announce" key
+         *    and only use the URLs in "announce-list". ( From BEP )
+         *    So the "announce" field will not exist in magnet link if "announce-list" exists.
+         * 2. dupe tracker will be ignored.
+         */
+        $torrentWithEditAnnounce = clone $this->torrent;
+        $torrentWithEditAnnounce
+            ->setAnnounce('https://127.0.0.1:8888/announce')
+            ->setAnnounceList([
+                ['https://127.0.0.2:8890/announce'],
+                ['https://127.0.0.3:8891/announce', 'https://127.0.0.4:8892/announce'],
+                ['https://127.0.0.2:8890/announce']
+            ]);
+        $trComponent = 'tr=https%3A%2F%2F127.0.0.2%3A8890%2Fannounce&tr=https%3A%2F%2F127.0.0.3%3A8891%2Fannounce&tr=https%3A%2F%2F127.0.0.4%3A8892%2Fannounce';
+        $this->assertEquals('magnet:?' . implode('&', [$xtComponent, $dnComponent, $trComponent]), $torrentWithEditAnnounce->getMagnetLink());
     }
 
     public function testGetSize()

@@ -1,4 +1,5 @@
 <?php
+
 namespace app\domain;
 
 /**
@@ -8,5 +9,5 @@ namespace app\domain;
  */
 interface CommandInterface
 {
-    public function parse(array $param):string;
+    public function parse(array $param): string;
 }

@@ -33,7 +33,7 @@ class Worker
      *
      * @var string
      */
-    const VERSION = '4.0.33';
+    const VERSION = '4.1.3';
 
     /**
      * Status starting.
@@ -64,19 +64,12 @@ class Worker
     const STATUS_RELOADING = 8;
 
     /**
-     * After sending the restart command to the child process KILL_WORKER_TIMER_TIME seconds,
-     * if the process is still living then forced to kill.
-     *
-     * @var int
-     */
-    const KILL_WORKER_TIMER_TIME = 2;
-
-    /**
      * Default backlog. Backlog is the maximum length of the queue of pending connections.
      *
      * @var int
      */
     const DEFAULT_BACKLOG = 102400;
+
     /**
      * Max udp package size.
      *
@@ -190,7 +183,7 @@ class Worker
     public $onBufferDrain = null;
 
     /**
-     * Emitted when worker processes stoped.
+     * Emitted when worker processes stopped.
      *
      * @var callable
      */
@@ -202,6 +195,13 @@ class Worker
      * @var callable
      */
     public $onWorkerReload = null;
+
+    /**
+     * Emitted when worker processes exited.
+     *
+     * @var callable
+     */
+    public $onWorkerExit = null;
 
     /**
      * Transport layer protocol.
@@ -313,6 +313,14 @@ class Worker
      * @var string
      */
     public static $processTitle = 'WorkerMan';
+
+    /**
+     * After sending the stop command to the child process stopTimeout seconds,
+     * if the process is still living then forced to kill.
+     *
+     * @var int
+     */
+    public static $stopTimeout = 2;
 
     /**
      * The PID of master process.
@@ -540,11 +548,13 @@ class Worker
     {
         static::checkSapiEnv();
         static::init();
+        static::lock();
         static::parseCommand();
         static::daemonize();
         static::initWorkers();
         static::installSignal();
         static::saveMasterPid();
+        static::lock(\LOCK_UN);
         static::displayUI();
         static::forkWorkers();
         static::resetStd();
@@ -621,24 +631,16 @@ class Worker
      *
      * @return void
      */
-    protected static function lock()
+    protected static function lock($flag = \LOCK_EX)
     {
-        $fd = \fopen(static::$_startFile, 'r');
-        if ($fd && !flock($fd, LOCK_EX)) {
-            static::log('Workerman['.static::$_startFile.'] already running.');
-            exit;
+        static $fd;
+        if (\DIRECTORY_SEPARATOR !== '/') {
+            return;
         }
-    }
-
-    /**
-     * Unlock.
-     *
-     * @return void
-     */
-    protected static function unlock()
-    {
-        $fd = \fopen(static::$_startFile, 'r');
-        $fd && flock($fd, \LOCK_UN);
+        $fd = $fd ?: \fopen(static::$pidFile . '.lock', 'a+');
+        if ($fd) {
+            flock($fd, $flag);
+        }
     }
 
     /**
@@ -778,7 +780,8 @@ class Worker
         }
 
         //show version
-        $line_version = 'Workerman version:' . static::VERSION . \str_pad('PHP version:', 22, ' ', \STR_PAD_LEFT) . \PHP_VERSION . \PHP_EOL;
+        $line_version = 'Workerman version:' . static::VERSION . \str_pad('PHP version:', 22, ' ', \STR_PAD_LEFT) . \PHP_VERSION;
+        $line_version .= \str_pad('Event-Loop:', 22, ' ', \STR_PAD_LEFT) . static::getEventLoopName() . \PHP_EOL;
         !\defined('LINE_VERSIOIN_LENGTH') && \define('LINE_VERSIOIN_LENGTH', \strlen($line_version));
         $total_length = static::getSingleLineTotalLength();
         $line_one = '<n>' . \str_pad('<w> WORKERMAN </w>', $total_length + \strlen('<w></w>'), '-', \STR_PAD_BOTH) . '</n>'. \PHP_EOL;
@@ -987,7 +990,7 @@ class Worker
                 // Send stop signal to master process.
                 $master_pid && \posix_kill($master_pid, $sig);
                 // Timeout.
-                $timeout    = 5;
+                $timeout    = static::$stopTimeout + 3;
                 $start_time = \time();
                 // Check master process is still alive?
                 while (1) {
@@ -1268,7 +1271,7 @@ class Worker
      */
     public static function resetStd()
     {
-        if (!static::$daemonize || static::$_OS !== \OS_TYPE_LINUX) {
+        if (!static::$daemonize || \DIRECTORY_SEPARATOR !== '/') {
             return;
         }
         global $STDOUT, $STDERR;
@@ -1282,10 +1285,20 @@ class Worker
             if ($STDERR) {
                 \fclose($STDERR);
             }
-            \fclose(\STDOUT);
-            \fclose(\STDERR);
+            if (\is_resource(\STDOUT)) {
+                \fclose(\STDOUT);
+            }
+            if (\is_resource(\STDERR)) {
+                \fclose(\STDERR);
+            }
             $STDOUT = \fopen(static::$stdoutFile, "a");
             $STDERR = \fopen(static::$stdoutFile, "a");
+            // Fix standard output cannot redirect of PHP 8.1.8's bug
+            if (\posix_isatty(2)) {
+                \ob_start(function ($string) {
+                    \file_put_contents(static::$stdoutFile, $string, FILE_APPEND);
+                }, 1);
+            }
             // change output stream
             static::$_outputStream = null;
             static::outputStream($STDOUT);
@@ -1668,7 +1681,16 @@ class Worker
                         $worker = static::$_workers[$worker_id];
                         // Exit status.
                         if ($status !== 0) {
-                            static::log("worker[" . $worker->name . ":$pid] exit with status $status");
+                            static::log("worker[{$worker->name}:$pid] exit with status $status");
+                        }
+
+                        // onWorkerExit
+                        if ($worker->onWorkerExit) {
+                            try {
+                                ($worker->onWorkerExit)($worker, $status, $pid);
+                            } catch (\Throwable $exception) {
+                                static::log("worker[{$worker->name}] onWorkerExit $exception");
+                            }
                         }
 
                         // For Statistics.
@@ -1802,9 +1824,9 @@ class Worker
             $one_worker_pid = \current(static::$_pidsToRestart);
             // Send reload signal to a worker process.
             \posix_kill($one_worker_pid, $sig);
-            // If the process does not exit after static::KILL_WORKER_TIMER_TIME seconds try to kill it.
+            // If the process does not exit after static::$stopTimeout seconds try to kill it.
             if(!static::$_gracefulStop){
-                Timer::add(static::KILL_WORKER_TIMER_TIME, '\posix_kill', array($one_worker_pid, \SIGKILL), false);
+                Timer::add(static::$stopTimeout, '\posix_kill', array($one_worker_pid, \SIGKILL), false);
             }
         } // For child processes.
         else {
@@ -1853,7 +1875,7 @@ class Worker
             foreach ($worker_pid_array as $worker_pid) {
                 \posix_kill($worker_pid, $sig);
                 if(!static::$_gracefulStop){
-                    Timer::add(static::KILL_WORKER_TIMER_TIME, '\posix_kill', array($worker_pid, \SIGKILL), false);
+                    Timer::add(static::$stopTimeout, '\posix_kill', array($worker_pid, \SIGKILL), false);
                 }
             }
             Timer::add(1, "\\Workerman\\Worker::checkIfChildRunning");
@@ -1985,10 +2007,14 @@ class Worker
         }
 
         // For child processes.
+        \gc_collect_cycles();
+        if (\function_exists('gc_mem_caches')) {
+            \gc_mem_caches();
+        }
         \reset(static::$_workers);
         /** @var \Workerman\Worker $worker */
         $worker            = current(static::$_workers);
-        $worker_status_str = \posix_getpid() . "\t" . \str_pad(round(memory_get_usage(true) / (1024 * 1024), 2) . "M", 7)
+        $worker_status_str = \posix_getpid() . "\t" . \str_pad(round(memory_get_usage(false) / (1024 * 1024), 2) . "M", 7)
             . " " . \str_pad($worker->getSocketName(), static::$_maxSocketNameLength) . " "
             . \str_pad(($worker->name === $worker->getSocketName() ? 'none' : $worker->name), static::$_maxWorkerNameLength)
             . " ";

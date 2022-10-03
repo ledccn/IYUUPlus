@@ -1,4 +1,5 @@
 <?php
+
 namespace app\common;
 
 /**
@@ -11,15 +12,15 @@ class Config
      */
     const extMap = [
         'array' => '.php',
-        'json'  => '.json',
-        'object'=> '.data',
+        'json' => '.json',
+        'object' => '.data',
     ];
 
     /**
      * 写入配置
-     * @param string $filename  文件名
-     * @param mixed $data       数据
-     * @param string $type      数据类型
+     * @param string $filename 文件名
+     * @param mixed $data 数据
+     * @param string $type 数据类型
      * @param bool $absolutePath 绝对路径
      * @return bool|int
      */
@@ -49,7 +50,7 @@ class Config
                 $str = json_encode($data, JSON_UNESCAPED_UNICODE);
                 break;
             case 'array':
-                $str = '<?php'.PHP_EOL.'return ' . var_export($data, true) . ';'.PHP_EOL;
+                $str = '<?php' . PHP_EOL . 'return ' . var_export($data, true) . ';' . PHP_EOL;
                 break;
             default:
                 $str = $data;
@@ -61,10 +62,22 @@ class Config
     }
 
     /**
+     * 创建文件路径
+     * @param string $name
+     * @param string $type
+     * @return string
+     */
+    public static function createFilePath(string $name = '', string $type = 'array'): string
+    {
+        $ext = self::extMap[$type] ?? self::extMap['object'];
+        return db_path() . DIRECTORY_SEPARATOR . $name . $ext;
+    }
+
+    /**
      * 读取配置
-     * @param string $filename   文件名
-     * @param string $type       数据类型
-     * @param null $default      默认值
+     * @param string $filename 文件名
+     * @param string $type 数据类型
+     * @param null $default 默认值
      * @param bool $absolutePath 绝对路径
      * @return false|string|null|array
      */
@@ -99,11 +112,11 @@ class Config
 
     /**
      * 删除配置
-     * @param string $name
+     * @param string|null $name
      * @param bool $absolutePath
      * @return bool
      */
-    public static function delete(string $name, bool $absolutePath = false): bool
+    public static function delete(?string $name, bool $absolutePath = false): bool
     {
         if ($name === null || $name === '') {
             return false;
@@ -114,17 +127,5 @@ class Config
             return @unlink($file_name);
         }
         return true;
-    }
-
-    /**
-     * 创建文件路径
-     * @param string $name
-     * @param string $type
-     * @return string
-     */
-    public static function createFilePath(string $name = '', string $type = 'array'):string
-    {
-        $ext = self::extMap[$type] ?? self::extMap['object'];
-        return db_path() . DIRECTORY_SEPARATOR . $name . $ext;
     }
 }

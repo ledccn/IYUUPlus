@@ -271,7 +271,7 @@ class TorrentFile
 
     public function getInfoField($field, $default = null)
     {
-        return isset($this->data['info'][$field]) ? $this->data['info'][$field] : $default;
+        return $this->data['info'][$field] ?? $default;
     }
 
     public function setInfoField($field, $value)
@@ -422,7 +422,7 @@ class TorrentFile
     /**
      * The 20-bytes truncated infohash
      */
-    public function getInfoHashsForAnnnounce()
+    public function getInfoHashsForAnnounce()
     {
         return [
             self::PROTOCOL_V1 => $this->getInfoHashV1ForAnnounce(),
@@ -467,10 +467,10 @@ class TorrentFile
      * clients supporting it natively. Returns a boolean on whether or not the source was changed
      * so that an appropriate screen can be shown to the user.
      */
-    public function setSouce($souce)
+    public function setSource($source)
     {
         $this->unsetInfoField('x_cross_seed')->unsetInfoField('unique');
-        return $this->setInfoField('source', $souce);
+        return $this->setInfoField('source', $source);
     }
 
     public function isPrivate()
@@ -484,6 +484,56 @@ class TorrentFile
     public function setPrivate($private)
     {
         return $private ? $this->setInfoField('private', 1) : $this->unsetInfoField('private');
+    }
+
+    /**
+     * Get Torrent Magnet URI
+     * @return string
+     */
+    public function getMagnetLink($dn = true, $tr = true)
+    {
+        $urlSearchParams = [];
+
+        $infoHashV1 = $this->getInfoHashV1();
+        if ($infoHashV1) {
+            $urlSearchParams[] = 'xt=urn:btih:' . $infoHashV1;
+        }
+
+        $infoHashV2 = $this->getInfoHashV2();
+        if ($infoHashV2) {
+            $urlSearchParams[] = 'xt=urn:btmh:' . '1220' . $infoHashV2;  // 1220 is magic number
+        }
+
+        if ($dn) {
+            $name = $this->getName() ?? '';
+            if ($name !== '') {
+                $urlSearchParams[] = 'dn=' . rawurlencode($name);
+            }
+        }
+
+        if ($tr) {
+            $trackers = [];
+
+            $announceList = $this->getAnnounceList();
+            if ($announceList) {
+                foreach ($announceList as $tier) {
+                    foreach ($tier as $tracker) {
+                        $trackers[] = $tracker;
+                    }
+                }
+            } else {
+                $rootTracker = $this->getAnnounce();
+                if ($rootTracker) {
+                    $trackers[] = $rootTracker;
+                }
+            }
+
+            foreach (array_unique($trackers) as $tracker) {
+                $urlSearchParams[] = 'tr=' . rawurlencode($tracker);
+            }
+        }
+
+        return 'magnet:?' . implode('&', $urlSearchParams);
     }
 
     /**
@@ -667,7 +717,8 @@ class TorrentFile
     }
 
     // Wrapper end function to avoid change the internal pointer of $path,
-    private static function arrayEnd($array) {
+    private static function arrayEnd($array)
+    {
         return end($array);
     }
 }

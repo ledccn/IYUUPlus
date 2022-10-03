@@ -1,4 +1,5 @@
 <?php
+
 namespace app\controller;
 
 use support\Request;
@@ -49,7 +50,7 @@ class Api extends BaseController
     {
         $rs = self::RS;
         $rs['data'] = [
-            'is_login'  => domainUsers::isLogin($request)
+            'is_login' => domainUsers::isLogin($request)
         ];
 
         return json($rs);
@@ -161,8 +162,8 @@ class Api extends BaseController
     public function Clear(Request $request): Response
     {
         $config = config('server');
-        Config::set($config['log_file'], date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
-        Config::set($config['stdout_file'], date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
+        Config::set($config['log_file'], date('Y-m-d H:i:s') . ' 清理日志' . PHP_EOL, 'raw', true);
+        Config::set($config['stdout_file'], date('Y-m-d H:i:s') . ' 清理日志' . PHP_EOL, 'raw', true);
         return json(['code' => 1, 'msg' => '清理成功', 'data' => []]);
     }
 

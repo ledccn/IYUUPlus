@@ -44,21 +44,22 @@ class Log
      * @param string $name
      * @return Logger
      */
-    public static function channel($name = 'default')
+    public static function channel(string $name = 'default')
     {
-        if (!static::$_instance) {
-            $configs = config('log', []);
-            foreach ($configs as $channel => $config) {
-                $handlers = self::handlers($config);
-                $processors = self::processors($config);
-                static::$_instance[$channel] = new Logger($channel,$handlers,$processors);
-            }
+        if (!isset(static::$_instance[$name])) {
+            $config = \config('log', [])[$name];
+            $handlers = self::handlers($config);
+            $processors = self::processors($config);
+            static::$_instance[$name] = new Logger($name, $handlers, $processors);
         }
         return static::$_instance[$name];
     }
 
-
-    protected  static function handlers(array $config): array
+    /**
+     * @param array $config
+     * @return array
+     */
+    protected static function handlers(array $config): array
     {
         $handlerConfigs = $config['handlers'] ?? [[]];
         $handlers = [];
@@ -74,7 +75,13 @@ class Log
         return $handlers;
     }
 
-    protected static function handler($class, $constructor, $formatterConfig): HandlerInterface
+    /**
+     * @param string $class
+     * @param array $constructor
+     * @param array $formatterConfig
+     * @return HandlerInterface
+     */
+    protected static function handler(string $class, array $constructor, array $formatterConfig): HandlerInterface
     {
         /** @var HandlerInterface $handler */
         $handler = new $class(... \array_values($constructor));
@@ -92,29 +99,33 @@ class Log
         return $handler;
     }
 
+    /**
+     * @param array $config
+     * @return array
+     */
     protected static function processors(array $config): array
     {
         $result = [];
-        if (! isset($config['processors']) && isset($config['processor'])) {
+        if (!isset($config['processors']) && isset($config['processor'])) {
             $config['processors'] = [$config['processor']];
         }
 
         foreach ($config['processors'] ?? [] as $value) {
-            if (is_array($value) && isset($value['class'])) {
+            if (\is_array($value) && isset($value['class'])) {
                 $value = new $value['class'](... \array_values($value['constructor'] ?? []));;
             }
-
             $result[] = $value;
         }
 
         return $result;
     }
+
     /**
-     * @param $name
-     * @param $arguments
+     * @param string $name
+     * @param array $arguments
      * @return mixed
      */
-    public static function __callStatic($name, $arguments)
+    public static function __callStatic(string $name, array $arguments)
     {
         return static::channel('default')->{$name}(... $arguments);
     }

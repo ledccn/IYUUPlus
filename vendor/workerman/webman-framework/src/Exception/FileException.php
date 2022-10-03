@@ -11,12 +11,15 @@
  * @link      http://www.workerman.net/
  * @license   http://www.opensource.org/licenses/mit-license.php MIT License
  */
+
 namespace Webman\Exception;
+
+use RuntimeException;
 
 /**
  * Class FileException
  * @package Webman\Exception
  */
-class FileException extends \RuntimeException
+class FileException extends RuntimeException
 {
 }

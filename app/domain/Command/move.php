@@ -1,4 +1,5 @@
 <?php
+
 namespace app\domain\Command;
 
 use app\domain\CommandInterface;
@@ -12,6 +13,6 @@ class move implements CommandInterface
 {
     public function parse(array $param): string
     {
-        return PHP_BINARY . ' ' . BASE_PATH . DIRECTORY_SEPARATOR . 'bin/move.php '.$param['uuid'];
+        return PHP_BINARY . ' ' . BASE_PATH . DIRECTORY_SEPARATOR . 'bin/move.php ' . $param['uuid'];
     }
 }

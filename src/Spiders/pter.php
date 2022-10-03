@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Spiders;
 
 use IYUU\Library\Selector;
@@ -11,7 +12,7 @@ class pter extends mteam
      * @param string $html
      * @return string
      */
-    public static function getTitle(string $html):string
+    public static function getTitle(string $html): string
     {
         $h2StrStart = '<br/>';
         $h2StrEnd = '</td><td class="embedded" width="6px">';
@@ -25,7 +26,7 @@ class pter extends mteam
             //存在副标题
             $h2_len = strlen($temp) - $h2_offset - strlen($h2StrStart);
             $titleTemp = substr($temp, $h2_offset + strlen($h2StrStart), $h2_len);
-            if (strpos($titleTemp, $h2StrStart)!=false) {
+            if (strpos($titleTemp, $h2StrStart) != false) {
                 //过滤已下载、进行中等进度框
                 $titleTemp = substr($titleTemp, 0, strpos($titleTemp, $h2StrStart));
             }
@@ -39,10 +40,10 @@ class pter extends mteam
                         if (empty($vv)) {
                             continue;
                         }
-                        $titleSpan.='['.trim($vv).'] ';
+                        $titleSpan .= '[' . trim($vv) . '] ';
                     }
                 } else {
-                    $titleSpan.='['.trim($span).'] ';
+                    $titleSpan .= '[' . trim($span) . '] ';
                 }
             }
             // 精确适配标签 end

@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Library;
 
 /**
@@ -72,6 +73,39 @@ class Context
     }
 
     /**
+     * 移除指定Session
+     * @param string $key
+     * @return Context
+     */
+    public function unsetSession(string $key): Context
+    {
+        unset($this->session[$key]);
+        return $this;
+    }
+
+    /**
+     * 读取不可访问属性的值时，__get() 会被调用
+     *
+     * @param string $name 参数名字
+     * @return mixed
+     */
+    public function __get(string $name)
+    {
+        return $this->getSession($name, null);
+    }
+
+    /**
+     * 在给不可访问属性赋值时，__set() 会被调用
+     *
+     * @param string $name 参数名字
+     * @param mixed $value 参数解析后的值
+     */
+    public function __set(string $name, $value)
+    {
+        $this->setSession($name, $value);
+    }
+
+    /**
      * 获取Session
      * @param string|null $key
      * @param mixed $default
@@ -103,39 +137,6 @@ class Context
     {
         $this->session[$key] = $value;
         return $this;
-    }
-
-    /**
-     * 移除指定Session
-     * @param string $key
-     * @return Context
-     */
-    public function unsetSession(string $key): Context
-    {
-        unset($this->session[$key]);
-        return $this;
-    }
-
-    /**
-     * 读取不可访问属性的值时，__get() 会被调用
-     *
-     * @param string $name 参数名字
-     * @return mixed
-     */
-    public function __get(string $name)
-    {
-        return $this->getSession($name, null);
-    }
-
-    /**
-     * 在给不可访问属性赋值时，__set() 会被调用
-     *
-     * @param string $name 参数名字
-     * @param mixed $value 参数解析后的值
-     */
-    public function __set(string $name, $value)
-    {
-        $this->setSession($name, $value);
     }
 
     /**

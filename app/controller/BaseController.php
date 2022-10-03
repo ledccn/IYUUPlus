@@ -1,7 +1,7 @@
 <?php
+
 namespace app\controller;
 
-use app\common\exception\BusinessException;
 use app\common\Constant;
 use app\domain\Users as domainUsers;
 use support\Request;

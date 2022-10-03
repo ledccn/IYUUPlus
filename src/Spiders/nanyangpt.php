@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Spiders;
 
 class nanyangpt extends mteam
@@ -9,11 +10,11 @@ class nanyangpt extends mteam
      * @param string $html
      * @return string
      */
-    public static function getTitle(string $html):string
+    public static function getTitle(string $html): string
     {
         $h2StrStart = '<br />';
-        $h2StrEnd1 = '</td><td width="34" class="embedded"';	// 置顶
-        $h2StrEnd2 = '</td><td class="embedded" width="40px"';	// 普通
+        $h2StrEnd1 = '</td><td width="34" class="embedded"';    // 置顶
+        $h2StrEnd2 = '</td><td class="embedded" width="40px"';    // 普通
         $h2_endOffset = strpos($html, $h2StrEnd1) === false ? strpos($html, $h2StrEnd2) : strpos($html, $h2StrEnd1);
         $temp = substr($html, 0, $h2_endOffset);
         $h2_offset = strrpos($temp, $h2StrStart);
@@ -30,7 +31,7 @@ class nanyangpt extends mteam
             $title = $titleTemp;
 
             //最后过滤
-            $title = str_replace('&nbsp;', "", $title);	// 过滤
+            $title = str_replace('&nbsp;', "", $title);    // 过滤
             $title = strip_tags($title);
         }
 

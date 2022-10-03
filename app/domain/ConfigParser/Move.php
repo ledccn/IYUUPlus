@@ -1,4 +1,5 @@
 <?php
+
 namespace app\domain\ConfigParser;
 
 use app\domain\ConfigParserInterface;
@@ -10,24 +11,25 @@ class Move implements ConfigParserInterface
      * 路径分隔符
      */
     const Delimiter = '{#**#}';
+
     /**
      * 根据参数，解析转移做种的运行时配置
      * @param string $uuid
      * @return array
      */
-    public static function parser($uuid = ''):array
+    public static function parser(string $uuid = ''): array
     {
         $rs = [
-            'clients'       => [],
-            'form_clients'  => [],
-            'to_clients'    => [],
-            'path_filter'   => [],
+            'clients' => [],
+            'form_clients' => [],
+            'to_clients' => [],
+            'path_filter' => [],
             'path_selector' => [],
-            'path_type'     => 0,
-            'path_rule'     => [],
-            'skip_check'    => 0,
-            'paused'        => 1,
-            'delete_torrent'=> 0,
+            'path_type' => 0,
+            'path_rule' => [],
+            'skip_check' => 0,
+            'paused' => 1,
+            'delete_torrent' => 0,
         ];
         if (empty($uuid)) {
             return $rs;
@@ -102,10 +104,10 @@ class Move implements ConfigParserInterface
 
     /**
      * 从目录配置中挑选需要的数据
-     * @param string $key       配置的键
-     * @param array  $cron      定时任务配置
-     * @param array  $folder    目录配置
-     * @param array  $rs        返回的转移做种配置
+     * @param string $key 配置的键
+     * @param array $cron 定时任务配置
+     * @param array $folder 目录配置
+     * @param array $rs 返回的转移做种配置
      */
     private static function getDir($key, $cron, $folder, &$rs)
     {
@@ -131,7 +133,7 @@ class Move implements ConfigParserInterface
      * @param string $str
      * @return string
      */
-    private static function replaceBr(string $str = ''):string
+    private static function replaceBr(string $str = ''): string
     {
         while (strpos($str, "\r\n") !== false) {
             $str = str_replace("\r\n", "\n", $str);
@@ -144,7 +146,7 @@ class Move implements ConfigParserInterface
      * @param array $path_rule
      * @return array
      */
-    private static function getPathRule(array $path_rule = []):array
+    private static function getPathRule(array $path_rule = []): array
     {
         $rule = [];
         if (count($path_rule)) {

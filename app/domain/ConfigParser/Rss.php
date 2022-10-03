@@ -1,4 +1,5 @@
 <?php
+
 namespace app\domain\ConfigParser;
 
 use app\domain\ConfigParserInterface;
@@ -11,13 +12,13 @@ class Rss implements ConfigParserInterface
      * @param string $uuid
      * @return array
      */
-    public static function parser($uuid = ''):array
+    public static function parser(string $uuid = ''): array
     {
         $rs = [
-            'site'   => [],
-            'sites'   => [],
+            'site' => [],
+            'sites' => [],
             'clients' => [],
-            'filter'  => [],
+            'filter' => [],
         ];
         if (empty($uuid)) {
             return $rs;
@@ -75,7 +76,7 @@ class Rss implements ConfigParserInterface
      * @descr 步骤：1.获取Rss目录下的全部类文件名； 2.实例化类为对象； 3.获取对象的成员变量site
      * @return array
      */
-    public static function getAllRssClass():array
+    public static function getAllRssClass(): array
     {
         $data = [];
         //排除的类
@@ -86,7 +87,7 @@ class Rss implements ConfigParserInterface
             if (in_array($filename, $filter)) {
                 continue;
             }
-            $classname = "IYUU\\Rss\\".$filename;
+            $classname = "IYUU\\Rss\\" . $filename;
             if (class_exists($classname)) {
                 $obj = new $classname(false);
                 $data[] = $obj->site;
@@ -102,7 +103,7 @@ class Rss implements ConfigParserInterface
      * @param array $data
      * @return array
      */
-    public static function formatSites(array $data = []):array
+    public static function formatSites(array $data = []): array
     {
         $sites = Config::getSites();
         $sites = array_filter($sites, function ($k) use ($data) {

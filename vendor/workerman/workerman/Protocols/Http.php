@@ -16,6 +16,7 @@ namespace Workerman\Protocols;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
 use Workerman\Protocols\Http\Response;
+use Workerman\Protocols\Http\Session;
 use Workerman\Protocols\Websocket;
 use Workerman\Worker;
 
@@ -31,13 +32,6 @@ class Http
      * @var string
      */
     protected static $_requestClass = 'Workerman\Protocols\Http\Request';
-
-    /**
-     * Session name.
-     *
-     * @var string
-     */
-    protected static $_sessionName = 'PHPSID';
 
     /**
      * Upload tmp dir.
@@ -62,9 +56,9 @@ class Http
     public static function sessionName($name = null)
     {
         if ($name !== null && $name !== '') {
-            static::$_sessionName = (string)$name;
+            Session::$name = (string)$name;
         }
-        return static::$_sessionName;
+        return Session::$name;
     }
 
     /**
@@ -100,60 +94,58 @@ class Http
      */
     public static function input($recv_buffer, TcpConnection $connection)
     {
-        static $input = array();
+        static $input = [];
         if (!isset($recv_buffer[512]) && isset($input[$recv_buffer])) {
             return $input[$recv_buffer];
         }
         $crlf_pos = \strpos($recv_buffer, "\r\n\r\n");
         if (false === $crlf_pos) {
             // Judge whether the package length exceeds the limit.
-            if ($recv_len = \strlen($recv_buffer) >= 16384) {
-                $connection->close("HTTP/1.1 413 Request Entity Too Large\r\n\r\n");
+            if (\strlen($recv_buffer) >= 16384) {
+                $connection->close("HTTP/1.1 413 Request Entity Too Large\r\n\r\n", true);
                 return 0;
             }
             return 0;
         }
 
-        $head_len = $crlf_pos + 4;
+        $length = $crlf_pos + 4;
         $method = \strstr($recv_buffer, ' ', true);
 
-        if ($method === 'GET' || $method === 'OPTIONS' || $method === 'HEAD' || $method === 'DELETE') {
-            if (!isset($recv_buffer[512])) {
-                $input[$recv_buffer] = $head_len;
-                if (\count($input) > 512) {
-                    unset($input[key($input)]);
-                }
-            }
-            return $head_len;
-        } else if ($method !== 'POST' && $method !== 'PUT' && $method !== 'PATCH') {
+        if (!\in_array($method, ['GET', 'POST', 'OPTIONS', 'HEAD', 'DELETE', 'PUT', 'PATCH'])) {
             $connection->close("HTTP/1.1 400 Bad Request\r\n\r\n", true);
             return 0;
         }
 
         $header = \substr($recv_buffer, 0, $crlf_pos);
-        $length = false;
         if ($pos = \strpos($header, "\r\nContent-Length: ")) {
-            $length = $head_len + (int)\substr($header, $pos + 18, 10);
+            $length = $length + (int)\substr($header, $pos + 18, 10);
+            $has_content_length = true;
         } else if (\preg_match("/\r\ncontent-length: ?(\d+)/i", $header, $match)) {
-            $length = $head_len + $match[1];
-        }
-
-        if ($length !== false) {
-            if (!isset($recv_buffer[512])) {
-                $input[$recv_buffer] = $length;
-                if (\count($input) > 512) {
-                    unset($input[key($input)]);
-                }
-            }
-            if ($length > $connection->maxPackageSize) {
-                $connection->close("HTTP/1.1 413 Request Entity Too Large\r\n\r\n");
+            $length = $length + $match[1];
+            $has_content_length = true;
+        } else {
+            $has_content_length = false;
+            if (false !== stripos($header, "\r\nTransfer-Encoding:")) {
+                $connection->close("HTTP/1.1 400 Bad Request\r\n\r\n", true);
                 return 0;
             }
-            return $length;
         }
 
-        $connection->close("HTTP/1.1 400 Bad Request\r\n\r\n", true);
-        return 0;
+        if ($has_content_length) {
+            if ($length > $connection->maxPackageSize) {
+                $connection->close("HTTP/1.1 413 Request Entity Too Large\r\n\r\n", true);
+                return 0;
+            }
+        }
+
+        if (!isset($recv_buffer[512])) {
+            $input[$recv_buffer] = $length;
+            if (\count($input) > 512) {
+                unset($input[key($input)]);
+            }
+        }
+
+        return $length;
     }
 
     /**
@@ -227,6 +219,7 @@ class Http
             $file = $response->file['file'];
             $offset = $response->file['offset'];
             $length = $response->file['length'];
+            clearstatcache();
             $file_size = (int)\filesize($file);
             $body_len = $length > 0 ? $length : $file_size - $offset;
             $response->withHeaders(array(

@@ -11,6 +11,7 @@
  * @link      http://www.workerman.net/
  * @license   http://www.opensource.org/licenses/mit-license.php MIT License
  */
+
 namespace Webman\Http;
 
 use Webman\File;
@@ -38,12 +39,13 @@ class UploadFile extends File
 
     /**
      * UploadFile constructor.
-     * @param $file_name
-     * @param $upload_name
-     * @param $upload_mime_type
-     * @param $upload_error_code
+     *
+     * @param string $file_name
+     * @param string $upload_name
+     * @param string $upload_mime_type
+     * @param int $upload_error_code
      */
-    public function __construct($file_name, $upload_name, $upload_mime_type, $upload_error_code)
+    public function __construct(string $file_name, string $upload_name, string $upload_mime_type, int $upload_error_code)
     {
         $this->_uploadName = $upload_name;
         $this->_uploadMimeType = $upload_mime_type;
@@ -62,7 +64,7 @@ class UploadFile extends File
     /**
      * @return string
      */
-    public function getUploadMineType()
+    public function getUploadMimeType()
     {
         return $this->_uploadMimeType;
     }
@@ -72,7 +74,7 @@ class UploadFile extends File
      */
     public function getUploadExtension()
     {
-        return pathinfo($this->_uploadName, PATHINFO_EXTENSION);
+        return \pathinfo($this->_uploadName, PATHINFO_EXTENSION);
     }
 
     /**
@@ -91,4 +93,12 @@ class UploadFile extends File
         return $this->_uploadErrorCode === UPLOAD_ERR_OK;
     }
 
+    /**
+     * @deprecated
+     * @return string
+     */
+    public function getUploadMineType()
+    {
+        return $this->_uploadMimeType;
+    }
 }

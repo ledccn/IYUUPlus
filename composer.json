@@ -25,8 +25,9 @@
   },
   "require": {
     "php": ">=7.2",
-    "workerman/webman-framework": "^1.0",
+    "workerman/webman-framework": "^1.4.7",
     "monolog/monolog": "^2.0",
+    "webman/console": "^1.2.12",
     "vlucas/phpdotenv": "5.1.0",
     "rhilip/bencode": "^2.1",
     "workerman/crontab": "^1.0",
@@ -37,22 +38,36 @@
     "ext-mbstring": "*",
     "ext-curl": "*",
     "ext-dom": "*",
-    "ledccn/bittorrentclient": "dev-master"
+    "ledccn/bittorrentclient": "dev-master",
+    "webman/event": "^1.0",
+    "ext-simplexml": "*"
   },
   "suggest": {
     "ext-event": "For better performance. "
   },
   "autoload": {
     "psr-4": {
+      "": "./",
       "IYUU\\": "src/"
     },
     "files": [
-      "./support/helpers.php"
+      "./init.php",
+      "./support/helpers.php",
+      "./app/helpers.php"
     ]
   },
   "scripts": {
     "post-autoload-dump": [
       "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+    ],
+    "post-package-install": [
+      "support\\Plugin::install"
+    ],
+    "post-package-update": [
+      "support\\Plugin::install"
+    ],
+    "pre-package-uninstall": [
+      "support\\Plugin::uninstall"
     ]
   }
 }

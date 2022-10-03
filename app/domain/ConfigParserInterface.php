@@ -1,4 +1,5 @@
 <?php
+
 namespace app\domain;
 
 /**
@@ -8,5 +9,5 @@ namespace app\domain;
  */
 interface ConfigParserInterface
 {
-    public static function parser(string $uuid):array;
+    public static function parser(string $uuid): array;
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Rss;
 
 use DOMDocument;
@@ -22,6 +23,7 @@ class hdbits extends AbstractRss
      * RSS订阅页面
      */
     public $rss_page = 'rss/feed?passkey={}';
+
     /**
      * 抽象方法，在类中实现
      * 请求url，获取html页面
@@ -34,7 +36,7 @@ class hdbits extends AbstractRss
             $url = $this->rss_page;
         }
         $url = str_replace("{}", $this->passkey, $url);
-        echo $this->site." 正在请求RSS... {$url}". PHP_EOL;
+        echo $this->site . " 正在请求RSS... {$url}" . PHP_EOL;
         $res = $this->curl->get($this->host . $url);
         if ($res->http_status_code == 200) {
             if (strpos((string)$res->response, 'Authentication failed') !== false) {
@@ -57,7 +59,7 @@ class hdbits extends AbstractRss
      */
     public function decode($html = '')
     {
-        echo "正在解码RSS资源...". PHP_EOL;
+        echo "正在解码RSS资源..." . PHP_EOL;
         try {
             $items = [];
             $xml = new DOMDocument();
@@ -75,7 +77,7 @@ class hdbits extends AbstractRss
                 $torrent['title'] = '';
                 $torrent['details'] = $details;
                 $torrent['download'] = $link;
-                $torrent['filename'] = $id.'.torrent';
+                $torrent['filename'] = $id . '.torrent';
                 $torrent['type'] = 0;   // 免费0
                 $torrent['time'] = date("Y-m-d H:i:s", $time);
                 $torrent['guid'] = $guid;

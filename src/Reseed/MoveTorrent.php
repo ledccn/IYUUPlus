@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Reseed;
 
 use app\domain\ConfigParser\Move as domainMove;
@@ -29,9 +30,10 @@ class MoveTorrent extends AutoReseed
      * @var array
      */
     protected static $wechatMsg = array(
-        'MoveSuccess'       =>  0,      // 移动成功
-        'MoveError'         =>  0,      // 移动失败
+        'MoveSuccess' => 0,      // 移动成功
+        'MoveError' => 0,      // 移动失败
     );
+
     /**
      * 初始化
      */
@@ -53,7 +55,7 @@ class MoveTorrent extends AutoReseed
         self::$conf = domainMove::parser($cron_name);
         // 用户选择的下载器
         self::$clients = self::$conf['clients'];
-        echo microtime(true).' 命令行参数解析完成！'.PHP_EOL;
+        echo microtime(true) . ' 命令行参数解析完成！' . PHP_EOL;
     }
 
     /**
@@ -75,14 +77,14 @@ class MoveTorrent extends AutoReseed
         //遍历客户端
         foreach (self::$links as $k => $v) {
             if ($k === self::$conf['to_clients']['uuid']) {
-                echo "clients_".$k."是目标转移客户端，避免冲突，已跳过！".PHP_EOL.PHP_EOL;
+                echo "clients_" . $k . "是目标转移客户端，避免冲突，已跳过！" . PHP_EOL . PHP_EOL;
                 continue;
             }
             if (empty(self::$links[$k])) {
-                echo "clients_".$k." 用户名或密码未配置，已跳过".PHP_EOL.PHP_EOL;
+                echo "clients_" . $k . " 用户名或密码未配置，已跳过" . PHP_EOL . PHP_EOL;
                 continue;
             }
-            echo "正在从下载器 clients_".$k." 获取种子哈希……".PHP_EOL;
+            echo "正在从下载器 clients_" . $k . " 获取种子哈希……" . PHP_EOL;
             $move = [];     // 客户端做种列表 传址
             $hashArray = static::getRpc($k)->all($move);
             if (empty($hashArray)) {
@@ -91,18 +93,18 @@ class MoveTorrent extends AutoReseed
             } else {
                 $infohash_Dir = $hashArray['hashString'];
                 // 写日志
-                static::wLog($hashArray, 'move'.$k);
+                static::wLog($hashArray, 'move' . $k);
             }
             // 前置过滤：移除转移成功的hash
             $rs = self::hashFilter($infohash_Dir);
             if ($rs) {
-                echo "clients_".$k." 全部转移成功，本次无需转移！".PHP_EOL.PHP_EOL;
+                echo "clients_" . $k . " 全部转移成功，本次无需转移！" . PHP_EOL . PHP_EOL;
                 continue;
             }
             $qBittorrent_version_lg_4_4 = false;
             if ($v['type'] == 'qBittorrent') {
                 $arr = explode('.', ltrim($version, "v"), 3);
-                if (count($arr) > 2 && ($arr[0] == '4' && $arr[1] >= '4' ||  $arr[0] > '4')) {
+                if (count($arr) > 2 && ($arr[0] == '4' && $arr[1] >= '4' || $arr[0] > '4')) {
                     global $qBittorrent_version_lg_4_4;
                     $qBittorrent_version_lg_4_4 = true;
                 }
@@ -114,13 +116,13 @@ class MoveTorrent extends AutoReseed
                     continue;
                 }
                 // 做种实际路径与相对路径之间互转
-                echo '转换前：'.$downloadDir.PHP_EOL;
+                echo '转换前：' . $downloadDir . PHP_EOL;
                 $downloadDir = self::pathReplace($downloadDir);
-                echo '转换后：'.$downloadDir.PHP_EOL;
-                $help_msg = 'IYUU自动转移做种客户端--使用教程'.PHP_EOL.'https://www.iyuu.cn/archives/451/'.PHP_EOL.'https://www.iyuu.cn/archives/465/'.PHP_EOL;
+                echo '转换后：' . $downloadDir . PHP_EOL;
+                $help_msg = 'IYUU自动转移做种客户端--使用教程' . PHP_EOL . 'https://www.iyuu.cn/archives/451/' . PHP_EOL . 'https://www.iyuu.cn/archives/465/' . PHP_EOL;
                 if (is_null($downloadDir)) {
                     echo $help_msg;
-                    die("路径转换参数配置错误，请重新配置！！！".PHP_EOL);
+                    die("路径转换参数配置错误，请重新配置！！！" . PHP_EOL);
                 }
                 // 种子目录：脚本要能够读取到
                 $path = self::$links[$k]['BT_backup'];
@@ -144,26 +146,26 @@ class MoveTorrent extends AutoReseed
                     case 'qBittorrent':
                         if (empty($path)) {
                             echo $help_msg;
-                            die("clients_".$k." IYUUPlus内下载器未设置种子目录，无法完成转移！");
+                            die("clients_" . $k . " IYUUPlus内下载器未设置种子目录，无法完成转移！");
                         }
-                        $torrentPath = $path .DS. $info_hash . '.torrent';
-                        $fast_resumePath = $path .DS. $info_hash . '.fastresume';
+                        $torrentPath = $path . DS . $info_hash . '.torrent';
+                        $fast_resumePath = $path . DS . $info_hash . '.fastresume';
                         $torrentDelete = $info_hash;
                         break;
                     default:
                         break;
                 }
                 if (!is_file($torrentPath)) {
-                    $v1_path = $path .DS. $move[$info_hash]['infohash_v1'] . '.torrent';
+                    $v1_path = $path . DS . $move[$info_hash]['infohash_v1'] . '.torrent';
                     if (is_file($v1_path)) {
                         $torrentPath = $v1_path;
-                        $fast_resumePath = $path .DS. $move[$info_hash]['infohash_v1'] . '.torrent';
+                        $fast_resumePath = $path . DS . $move[$info_hash]['infohash_v1'] . '.torrent';
                     } else {
                         echo $help_msg;
-                        die("clients_".$k." 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`不存在，无法完成转移！");
+                        die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`不存在，无法完成转移！");
                     }
                 }
-                echo '存在种子：'.$torrentPath.PHP_EOL;
+                echo '存在种子：' . $torrentPath . PHP_EOL;
                 $torrent = file_get_contents($torrentPath);
                 $parsed_torrent = [];
                 try {
@@ -172,11 +174,12 @@ class MoveTorrent extends AutoReseed
                     if (empty($parsed_torrent['announce'])) {
                         $needPatchTorrent = true;
                     }
-                } catch (ParseException $e) {}
+                } catch (ParseException $e) {
+                }
                 if ($needPatchTorrent) {
-                    echo '未发现tracker信息，尝试补充tracker信息...'.PHP_EOL;
+                    echo '未发现tracker信息，尝试补充tracker信息...' . PHP_EOL;
                     if (empty($parsed_torrent)) {
-                        die("clients_".$k." 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`解析失败，无法完成转移！");
+                        die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`解析失败，无法完成转移！");
                     }
                     if (empty($parsed_torrent['announce'])) {
                         if (isset($move[$info_hash]['tracker'])) {
@@ -191,7 +194,7 @@ class MoveTorrent extends AutoReseed
                                 global $parsed_fast_resume;
                                 $parsed_fast_resume = Bencode::load($fast_resumePath);
                             } catch (ParseException $e) {
-                                die("clients_".$k." 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`解析失败`{$e->getMessage()}`，无法完成转移！");
+                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`解析失败`{$e->getMessage()}`，无法完成转移！");
                             }
                             $trackers = $parsed_fast_resume['trackers'];
                             if (count($trackers) > 0 && !empty($trackers[0])) {
@@ -199,14 +202,14 @@ class MoveTorrent extends AutoReseed
                                     $parsed_torrent['announce'] = $trackers[0][0];
                                 }
                             } else {
-                                die("clients_".$k." 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`不包含tracker地址，无法完成转移！");
+                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`不包含tracker地址，无法完成转移！");
                             }
                         }
                     }
                     $torrent = Bencode::encode($parsed_torrent);
                 }
                 // 正式开始转移
-                echo "种子已推送给下载器，正在转移做种...".PHP_EOL;
+                echo "种子已推送给下载器，正在转移做种..." . PHP_EOL;
 
                 // 目标下载器类型
                 $clientKey = self::$conf['to_clients']['uuid'];
@@ -225,7 +228,7 @@ class MoveTorrent extends AutoReseed
                 /**
                  * 转移成功的种子写日志
                  */
-                 $log = $info_hash.PHP_EOL.$torrentPath.PHP_EOL.$downloadDir.PHP_EOL.PHP_EOL;
+                $log = $info_hash . PHP_EOL . $torrentPath . PHP_EOL . $downloadDir . PHP_EOL . PHP_EOL;
                 if ($ret) {
                     //转移成功时，删除做种，不删资源
                     if (isset(self::$conf['delete_torrent']) && self::$conf['delete_torrent']) {
@@ -233,11 +236,11 @@ class MoveTorrent extends AutoReseed
                     }
                     // 转移成功的种子，以infohash为文件名，写入缓存
                     static::wLog($log, $info_hash, self::$cacheMove);
-                    static::wLog($log, 'MoveSuccess'.$k);
+                    static::wLog($log, 'MoveSuccess' . $k);
                     static::$wechatMsg['MoveSuccess']++;
                 } else {
                     // 失败的种子
-                    static::wLog($log, 'MoveError'.$k);
+                    static::wLog($log, 'MoveError' . $k);
                     static::$wechatMsg['MoveError']++;
                 }
             }
@@ -246,15 +249,15 @@ class MoveTorrent extends AutoReseed
 
     /**
      * 过滤已转移的种子hash
-     * @param array $infohash_Dir       infohash与路径对应的字典
+     * @param array $infohash_Dir infohash与路径对应的字典
      * @return bool     true 过滤 | false 不过滤
      */
     private static function hashFilter(&$infohash_Dir = array())
     {
         foreach ($infohash_Dir as $info_hash => $dir) {
-            if (is_file(self::$cacheMove . $info_hash.'.txt')) {
+            if (is_file(self::$cacheMove . $info_hash . '.txt')) {
                 unset($infohash_Dir[$info_hash]);
-                echo '-------当前种子上次已成功转移，前置过滤已跳过！ 如需再次转移，可以清理转移缓存。' .PHP_EOL.PHP_EOL;
+                echo '-------当前种子上次已成功转移，前置过滤已跳过！ 如需再次转移，可以清理转移缓存。' . PHP_EOL . PHP_EOL;
             }
         }
         return empty($infohash_Dir) ? true : false;
@@ -279,19 +282,19 @@ class MoveTorrent extends AutoReseed
             //选择器
             if (\is_array($path_selector)) {
                 foreach ($path_selector as $pathName) {
-                    if (strpos($path, $pathName)===0) {      // 没用$path == $key判断，是为了提高兼容性
+                    if (strpos($path, $pathName) === 0) {      // 没用$path == $key判断，是为了提高兼容性
                         return false;
                     }
                 }
-                echo '已跳过！转移选择器未匹配到：'.$path.PHP_EOL;
+                echo '已跳过！转移选择器未匹配到：' . $path . PHP_EOL;
                 return true;
             }
         } elseif (\is_null($path_selector)) {
             //过滤器
             if (\is_array($path_filter)) {
                 foreach ($path_filter as $pathName) {
-                    if (strpos($path, $pathName)===0) {      // 没用$path == $key判断，是为了提高兼容性
-                        echo '已跳过！转移过滤器匹配到：'.$path.PHP_EOL;
+                    if (strpos($path, $pathName) === 0) {      // 没用$path == $key判断，是为了提高兼容性
+                        echo '已跳过！转移过滤器匹配到：' . $path . PHP_EOL;
                         return true;
                     }
                 }
@@ -302,18 +305,18 @@ class MoveTorrent extends AutoReseed
             if (\is_array($path_filter) && \is_array($path_selector)) {
                 //先过滤器
                 foreach ($path_filter as $pathName) {
-                    if (strpos($path, $pathName)===0) {
-                        echo '已跳过！转移过滤器匹配到：'.$path.PHP_EOL;
+                    if (strpos($path, $pathName) === 0) {
+                        echo '已跳过！转移过滤器匹配到：' . $path . PHP_EOL;
                         return true;
                     }
                 }
                 //后选择器
                 foreach ($path_selector as $pathName) {
-                    if (strpos($path, $pathName)===0) {
+                    if (strpos($path, $pathName) === 0) {
                         return false;
                     }
                 }
-                echo '已跳过！转移选择器未匹配到：'.$path.PHP_EOL;
+                echo '已跳过！转移选择器未匹配到：' . $path . PHP_EOL;
                 return true;
             }
         }
@@ -333,21 +336,21 @@ class MoveTorrent extends AutoReseed
         switch ($type) {
             case 1:         // 减
                 foreach ($pathArray as $key => $val) {
-                    if (strpos($path, $key)===0) {
+                    if (strpos($path, $key) === 0) {
                         return substr($path, strlen($key));
                     }
                 }
                 break;
             case 2:         // 加
                 foreach ($pathArray as $key => $val) {
-                    if (strpos($path, $key)===0) {      // 没用$path == $key判断，是为了提高兼容性
+                    if (strpos($path, $key) === 0) {      // 没用$path == $key判断，是为了提高兼容性
                         return $val . $path;
                     }
                 }
                 break;
             case 3:         // 替换
                 foreach ($pathArray as $key => $val) {
-                    if (strpos($path, $key)===0) {      // 没用$path == $key判断，是为了提高兼容性
+                    if (strpos($path, $key) === 0) {      // 没用$path == $key判断，是为了提高兼容性
                         return $val . substr($path, strlen($key));
                     }
                 }
@@ -395,19 +398,19 @@ class MoveTorrent extends AutoReseed
         }
         $br = PHP_EOL;
         $text = 'IYUU转移任务-统计报表';
-        $desp = '### 版本号：'. IYUU_VERSION() . $br;
+        $desp = '### 版本号：' . IYUU_VERSION() . $br;
         // 移动做种
         if (static::$wechatMsg['MoveSuccess'] || static::$wechatMsg['MoveError']) {
-            $desp .= $br.'----------'.$br;
-            $desp .= '**移动成功：'.static::$wechatMsg['MoveSuccess']. '**  [会把hash加入移动缓存]' .$br;
-            $desp .= '**移动失败：'.static::$wechatMsg['MoveError']. '**  [解决错误提示，可以重试]' .$br;
-            $desp .= '**如需重新移动，请删除 ./torrent/cachemove 移动缓存。**'.$br;
+            $desp .= $br . '----------' . $br;
+            $desp .= '**移动成功：' . static::$wechatMsg['MoveSuccess'] . '**  [会把hash加入移动缓存]' . $br;
+            $desp .= '**移动失败：' . static::$wechatMsg['MoveError'] . '**  [解决错误提示，可以重试]' . $br;
+            $desp .= '**如需重新移动，请删除 ./torrent/cachemove 移动缓存。**' . $br;
         } else {
-            $desp .= $br.'----------'.$br;
-            $desp .= $br.'转移任务完成，未发现种子需要转移'.$br;
-            $desp .= $br.'----------'.$br;
+            $desp .= $br . '----------' . $br;
+            $desp .= $br . '转移任务完成，未发现种子需要转移' . $br;
+            $desp .= $br . '----------' . $br;
         }
-        $desp .= $br.'*此消息将在3天后过期*。';
+        $desp .= $br . '*此消息将在3天后过期*。';
         return static::ff($text, $desp);
     }
 }

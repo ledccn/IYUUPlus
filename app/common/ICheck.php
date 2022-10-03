@@ -1,4 +1,5 @@
 <?php
+
 namespace app\common;
 
 /**
@@ -72,7 +73,7 @@ class ICheck
     ];
 
     /**
-     *  解析检查运行环境
+     * 解析检查运行环境
      * @param string $currentOs
      */
     public static function analysis(string $currentOs)

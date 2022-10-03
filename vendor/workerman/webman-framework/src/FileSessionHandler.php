@@ -13,15 +13,13 @@
  */
 namespace Webman;
 
-use FastRoute\Dispatcher\GroupCountBased;
-use FastRoute\RouteCollector;
-use Workerman\Protocols\Http\Session\FileSessionHandler as SessionHandler;
-
 /**
- * Class FileSessionHandler
+ * This deprecated class will certainly be removed in the future.
+ * Please use Webman\Session\FileSessionHandler
+ * @deprecated
  * @package Webman
  */
-class FileSessionHandler extends SessionHandler
+class FileSessionHandler extends Session\FileSessionHandler
 {
 
 }

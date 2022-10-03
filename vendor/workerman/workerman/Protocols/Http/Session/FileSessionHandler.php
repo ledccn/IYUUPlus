@@ -13,6 +13,8 @@
  */
 namespace Workerman\Protocols\Http\Session;
 
+use Workerman\Protocols\Http\Session;
+
 /**
  * Class FileSessionHandler
  * @package Workerman\Protocols\Http\Session
@@ -70,6 +72,10 @@ class FileSessionHandler implements SessionHandlerInterface
         $session_file = static::sessionFile($session_id);
         \clearstatcache();
         if (\is_file($session_file)) {
+            if (\time() - \filemtime($session_file) > Session::$lifetime) {
+                \unlink($session_file);
+                return '';
+            }
             $data = \file_get_contents($session_file);
             return $data ? $data : '';
         }
@@ -81,7 +87,7 @@ class FileSessionHandler implements SessionHandlerInterface
      */
     public function write($session_id, $session_data)
     {
-        $temp_file = static::$_sessionSavePath.uniqid(mt_rand(), true);
+        $temp_file = static::$_sessionSavePath . uniqid(bin2hex(random_bytes(8)), true);
         if (!\file_put_contents($temp_file, $session_data)) {
             return false;
         }

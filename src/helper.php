@@ -1,4 +1,5 @@
 <?php
+
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
 
@@ -7,33 +8,33 @@ use IYUU\Library\Table;
  * @param string $site
  * @param array $torrent 种子数组
  * Array
-    (
-        [id] => 118632
-        [h1] => CCTV5+ 2019 ATP Men's Tennis Final 20191115B HDTV 1080i H264-HDSTV
-        [title] => 央视体育赛事频道 2019年ATP男子网球年终总决赛 单打小组赛 纳达尔VS西西帕斯 20191115[优惠剩余时间：4时13分]
-        [details] => https://xxx.me/details.php?id=118632
-        [download] => https://xxx.me/download.php?id=118632
-        [filename] => 118632.torrent
-        [type] => 0
-        [sticky] => 1
-        [time] => Array
-            (
-                [0] => "2019-11-16 20:41:53">4时13分
-                [1] => "2019-11-16 14:41:53">1时<br />46分
-            )
-        [comments] => 0
-        [size] => 5232.64MB
-        [seeders] => 69
-        [leechers] => 10
-        [completed] => 93
-        [percentage] => 100%
-        [owner] => 匿名
-    )
+ * (
+ * [id] => 118632
+ * [h1] => CCTV5+ 2019 ATP Men's Tennis Final 20191115B HDTV 1080i H264-HDSTV
+ * [title] => 央视体育赛事频道 2019年ATP男子网球年终总决赛 单打小组赛 纳达尔VS西西帕斯 20191115[优惠剩余时间：4时13分]
+ * [details] => https://xxx.me/details.php?id=118632
+ * [download] => https://xxx.me/download.php?id=118632
+ * [filename] => 118632.torrent
+ * [type] => 0
+ * [sticky] => 1
+ * [time] => Array
+ * (
+ * [0] => "2019-11-16 20:41:53">4时13分
+ * [1] => "2019-11-16 14:41:53">1时<br />46分
+ * )
+ * [comments] => 0
+ * [size] => 5232.64MB
+ * [seeders] => 69
+ * [leechers] => 10
+ * [completed] => 93
+ * [percentage] => 100%
+ * [owner] => 匿名
+ * )
  * @return false|string
  */
 function send(string $site = '', array $torrent = array())
 {
-    $text = $site. ' 免费：' .$torrent['filename']. '，添加成功';
+    $text = $site . ' 免费：' . $torrent['filename'] . '，添加成功';
     $desp = torrent_text($torrent);
     return ff($text, $desp);
 }
@@ -70,22 +71,22 @@ function send(string $site = '', array $torrent = array())
 function torrent_text(array $torrent = array()): string
 {
     $br = "\r\n";
-    $desp = '主标题：'.($torrent['h1'] ?? '') . $br;
-    $desp.= '详情页：'.($torrent['details'] ?? '') . $br;
+    $desp = '主标题：' . ($torrent['h1'] ?? '') . $br;
+    $desp .= '详情页：' . ($torrent['details'] ?? '') . $br;
     if (isset($torrent['title'])) {
-        $desp .= '副标题：'.$torrent['title']. $br;
+        $desp .= '副标题：' . $torrent['title'] . $br;
     }
     if (isset($torrent['size'])) {
-        $desp .= '大小：'.$torrent['size']. $br;
+        $desp .= '大小：' . $torrent['size'] . $br;
     }
     if (isset($torrent['seeders'])) {
-        $desp .= '做种数：'.$torrent['seeders']. $br;
+        $desp .= '做种数：' . $torrent['seeders'] . $br;
     }
     if (isset($torrent['leechers'])) {
-        $desp .= '下载数：'.$torrent['leechers']. $br;
+        $desp .= '下载数：' . $torrent['leechers'] . $br;
     }
     if (isset($torrent['owner'])) {
-        $desp .= '发布者：'.$torrent['owner']. $br;
+        $desp .= '发布者：' . $torrent['owner'] . $br;
     }
     return $desp;
 }
@@ -102,10 +103,10 @@ function download(string $url, string $cookies = '', string $useragent = '', str
 {
     $header = array(
         "Content-Type:application/x-www-form-urlencoded",
-        'User-Agent: '.$useragent);
+        'User-Agent: ' . $useragent);
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
-    if ($method === 'POST') {
+    if (strtoupper($method) === 'POST') {
         curl_setopt($ch, CURLOPT_POST, true);
     }
     if (stripos($url, 'https://') === 0) {
@@ -142,15 +143,15 @@ function convertToMB(string $from)
     $number = $number + 0;
     switch (strtoupper(substr($from, -2))) {
         case "KB":
-            return $number/1024;
+            return $number / 1024;
         case "MB":
             return $number;
         case "GB":
-            return $number*pow(1024, 1);
+            return $number * pow(1024, 1);
         case "TB":
-            return $number*pow(1024, 2);
+            return $number * pow(1024, 2);
         case "PB":
-            return $number*pow(1024, 3);
+            return $number * pow(1024, 3);
         default:
             return $from;
     }
@@ -160,30 +161,30 @@ function convertToMB(string $from)
  * @brief 种子过滤器
  * @param array $filter 过滤器规则
  * @param array $torrent 种子数组
- * 	Array
-    * (
-        * [id] => 118632
-        * [h1] => CCTV5+ 2019 ATP Men's Tennis Final 20191115B HDTV 1080i H264-HDSTV
-        * [title] => 央视体育赛事频道 2019年ATP男子网球年终总决赛 单打小组赛 纳达尔VS西西帕斯 20191115[优惠剩余时间：4时13分]
-        * [details] => https://xxx.me/details.php?id=118632
-        * [download] => https://xxx.me/download.php?id=118632
-        * [filename] => 118632.torrent
-        * [type] => 0
-        * [sticky] => 1
-        * [time] => Array
-        * (
-        * [0] => "2019-11-16 20:41:53">4时13分
-        * [1] => "2019-11-16 14:41:53">1时<br />46分
-        * )
-        * [comments] => 0
-        * [size] => 5232.64MB
-        * [seeders] => 69
-        * [leechers] => 10
-        * [completed] => 93
-        * [percentage] => 100%
-        * [owner] => 匿名
-    * )
- * @return bool 或 string 	false不过滤
+ *    Array
+ * (
+ * [id] => 118632
+ * [h1] => CCTV5+ 2019 ATP Men's Tennis Final 20191115B HDTV 1080i H264-HDSTV
+ * [title] => 央视体育赛事频道 2019年ATP男子网球年终总决赛 单打小组赛 纳达尔VS西西帕斯 20191115[优惠剩余时间：4时13分]
+ * [details] => https://xxx.me/details.php?id=118632
+ * [download] => https://xxx.me/download.php?id=118632
+ * [filename] => 118632.torrent
+ * [type] => 0
+ * [sticky] => 1
+ * [time] => Array
+ * (
+ * [0] => "2019-11-16 20:41:53">4时13分
+ * [1] => "2019-11-16 14:41:53">1时<br />46分
+ * )
+ * [comments] => 0
+ * [size] => 5232.64MB
+ * [seeders] => 69
+ * [leechers] => 10
+ * [completed] => 93
+ * [percentage] => 100%
+ * [owner] => 匿名
+ * )
+ * @return bool 或 string    false不过滤
  */
 function filter(array $filter = [], array $torrent = array())
 {
@@ -196,39 +197,39 @@ function filter(array $filter = [], array $torrent = array())
     if (!empty($torrent['size'])) {
         $size = convertToMB($torrent['size']);
         $min = isset($filter['size']['min']) ? convertToMB($filter['size']['min']) : 0;
-        $max = isset($filter['size']['max']) ? convertToMB($filter['size']['max']) : 2097152;	//默认 2097152MB = 2TB
+        $max = isset($filter['size']['max']) ? convertToMB($filter['size']['max']) : 2097152;    //默认 2097152MB = 2TB
         if ($size < $min || $size > $max) {
-            return $filename. ' ' .$size. 'MB，被大小过滤';
+            return $filename . ' ' . $size . 'MB，被大小过滤';
         }
     }
 
     // 种子数过滤
     if (!empty($torrent['seeders'])) {
         $seeders = $torrent['seeders'];
-        $min = $filter['seeders']['min'] ?? 1;	//默认 1
-        $max = $filter['seeders']['max'] ?? 3;	//默认 3
+        $min = $filter['seeders']['min'] ?? 1;    //默认 1
+        $max = $filter['seeders']['max'] ?? 3;    //默认 3
         if ($seeders < $min || $seeders > $max) {
-            return $filename. ' 当前做种' .$seeders. '人，被过滤';
+            return $filename . ' 当前做种' . $seeders . '人，被过滤';
         }
     }
 
     // 下载数过滤
     if (!empty($torrent['leechers'])) {
         $leechers = $torrent['leechers'];
-        $min = $filter['leechers']['min'] ?? 0;		//默认
-        $max = $filter['leechers']['max'] ?? 30000;	//默认
+        $min = $filter['leechers']['min'] ?? 0;        //默认
+        $max = $filter['leechers']['max'] ?? 30000;    //默认
         if ($leechers < $min || $leechers > $max) {
-            return $filename. ' 当前下载' .$leechers. '人，被过滤';
+            return $filename . ' 当前下载' . $leechers . '人，被过滤';
         }
     }
 
     // 完成数过滤
     if (!empty($torrent['completed'])) {
         $completed = $torrent['completed'];
-        $min = $filter['completed']['min'] ?? 0;		//默认
-        $max = $filter['completed']['max'] ?? 30000;	//默认
+        $min = $filter['completed']['min'] ?? 0;        //默认
+        $max = $filter['completed']['max'] ?? 30000;    //默认
         if ($completed < $min || $completed > $max) {
-            return $filename. ' 已完成数' .$completed. '人，被过滤';
+            return $filename . ' 已完成数' . $completed . '人，被过滤';
         }
     }
 
@@ -240,11 +241,11 @@ function filter(array $filter = [], array $torrent = array())
 
         // 正则表达式过滤
         if (!empty($filter['regex'])) {
-            $pattern = '/'.$filter['regex'].'/i';
+            $pattern = '/' . $filter['regex'] . '/i';
             if (!preg_match($pattern, $subject, $matches)) {
-                return $filename. ' 未匹配到正则表达式[ '. $filter['regex']. ' ]，被过滤';
+                return $filename . ' 未匹配到正则表达式[ ' . $filter['regex'] . ' ]，被过滤';
             } else {
-                echo '匹配到正则表达式：[ '. $filter['regex'] .' ]'. PHP_EOL;
+                echo '匹配到正则表达式：[ ' . $filter['regex'] . ' ]' . PHP_EOL;
             }
         }
 
@@ -280,22 +281,22 @@ function filter(array $filter = [], array $torrent = array())
                     }
                     // 匹配后判断
                     if ($count) {
-                        $msg = count($keywords).'个关键字：[ '. join(' ,', $keywords) .' ]， 匹配到'.$count.'个；';
+                        $msg = count($keywords) . '个关键字：[ ' . join(' ,', $keywords) . ' ]， 匹配到' . $count . '个；';
                         if ($mode === 'AND' && $count < count($keywords)) {
-                            return $msg.'未匹配：[ '. join(' ,', $no) .' ]，被过滤';
+                            return $msg . '未匹配：[ ' . join(' ,', $no) . ' ]，被过滤';
                         } else {
-                            echo $msg.'匹配到关键字：[ '. join(' ,', $yes) .' ]'. PHP_EOL;
+                            echo $msg . '匹配到关键字：[ ' . join(' ,', $yes) . ' ]' . PHP_EOL;
                         }
                     } else {
-                        return '未匹配到关键字：[ '. join(' ,', $keywords) .' ]，被过滤';
+                        return '未匹配到关键字：[ ' . join(' ,', $keywords) . ' ]，被过滤';
                     }
                 }
             } else {
                 // 匹配字符串
                 if (stripos($subject, $keyword) === false) {
-                    return '未匹配到关键字：[ '. $keyword .' ]，被过滤';
+                    return '未匹配到关键字：[ ' . $keyword . ' ]，被过滤';
                 } else {
-                    echo '匹配到关键字：[ '. $keyword .' ]'. PHP_EOL;
+                    echo '匹配到关键字：[ ' . $keyword . ' ]' . PHP_EOL;
                 }
             }
         }
@@ -326,13 +327,13 @@ function ShowTableSites(string $dir = 'Spiders', array $filter = array())
     }
     $data = [];
     $i = $j = $k = 0;   //i列、j序号、k行
-    foreach (glob(__DIR__.DS.$dir.DS.'*.php') as $key => $start_file) {
+    foreach (glob(__DIR__ . DS . $dir . DS . '*.php') as $key => $start_file) {
         $start_file = str_replace("\\", "/", $start_file);
         $offset = strripos($start_file, '/');
-        if ($offset===false) {
+        if ($offset === false) {
             $start_file = substr($start_file, 0, -4);
         } else {
-            $start_file = substr($start_file, $offset+1, -4);
+            $start_file = substr($start_file, $offset + 1, -4);
         }
         // 过滤示例、过滤解码接口
         if (in_array($start_file, $filter)) {
@@ -345,7 +346,7 @@ function ShowTableSites(string $dir = 'Spiders', array $filter = array())
         }
         $i++;
         $j++;
-        $data[$k][] = $j.". ".$start_file;
+        $data[$k][] = $j . ". " . $start_file;
     }
     //输出表格
     $table = new Table();
@@ -361,7 +362,7 @@ function sleepIYUU($t, $msg)
 {
     echo $msg . PHP_EOL;
     do {
-        echo microtime(true).$msg.' '.$t.'秒后继续...'.PHP_EOL;
+        echo microtime(true) . $msg . ' ' . $t . '秒后继续...' . PHP_EOL;
         sleep(1);
     } while (--$t > 0);
 }

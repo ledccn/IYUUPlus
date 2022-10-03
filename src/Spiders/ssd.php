@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Spiders;
 
 use IYUU\Library\Selector;
@@ -11,7 +12,7 @@ class ssd extends mteam
      * @param string $html
      * @return string
      */
-    public static function getTitle(string $html):string
+    public static function getTitle(string $html): string
     {
         $h2_offset = strpos($html, '<br />') + strlen('<br />');
         $h2_len = strpos($html, '</td><td width="60" class="embedded"', $h2_offset) - $h2_offset;

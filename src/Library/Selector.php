@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Library;
 
 use DOMDocument;
@@ -6,10 +7,10 @@ use DOMXpath;
 
 class Selector
 {
+    public static $error = null;
     private static $dom = null;
     private static $dom_auth = '';
     private static $xpath = null;
-    public static $error = null;
 
     /**
      * @param $html
@@ -37,36 +38,6 @@ class Selector
     }
 
     /**
-     * @param $html
-     * @param string $selector
-     * @param string $selector_type
-     * @return mixed|null
-     */
-    public static function remove($html, $selector, $selector_type = 'xpath')
-    {
-        if (empty($html) || empty($selector)) {
-            return null;
-        }
-
-        $selector_type = strtolower($selector_type);
-        switch ($selector_type) {
-            case 'xpath':
-                $remove_html = self::_xpath_select($html, $selector, true);
-                break;
-            case 'regex':
-                $remove_html = self::_regex_select($html, $selector, true);
-                break;
-            case 'css':
-                $remove_html =  self::_css_select($html, $selector, true);
-                break;
-            default:
-                return null;
-        }
-
-        return str_replace($remove_html, '', $html);
-    }
-
-    /**
      * xpath选择器
      *
      * @param $html
@@ -85,7 +56,7 @@ class Selector
         // 如果加载的不是之前的HTML内容，替换一下验证标识
         if (self::$dom_auth !== md5($html)) {
             self::$dom_auth = md5($html);
-            @self::$dom->loadHTML('<?xml encoding="UTF-8">'.$html);
+            @self::$dom->loadHTML('<?xml encoding="UTF-8">' . $html);
             // 清空 libxml 错误缓冲
             libxml_clear_errors();
             self::$xpath = new DOMXpath(self::$dom);
@@ -111,15 +82,14 @@ class Selector
                     // 如果是img标签，直接取src值
                     if ($nodeType == 1 && in_array($nodeName, array('img'))) {
                         $content = $element->getAttribute('src');
-                    }
-                    // 如果是标签属性，直接取节点值
+                    } // 如果是标签属性，直接取节点值
                     elseif ($nodeType == 2 || $nodeType == 3 || $nodeType == 4) {
                         $content = $element->nodeValue;
                     } else {
                         // 保留nodeValue里的html符号，给children二次提取
                         $content = self::$dom->saveXml($element);
                         //$content = trim(self::$dom->saveHtml($element));
-                        $content = preg_replace(array("#^<{$nodeName}.*>#isU","#</{$nodeName}>$#isU"), array('', ''), $content);
+                        $content = preg_replace(array("#^<{$nodeName}.*>#isU", "#</{$nodeName}>$#isU"), array('', ''), $content);
                     }
                 }
                 $result[] = $content;
@@ -130,20 +100,6 @@ class Selector
         }
         // 如果只有一个元素就直接返回string，否则返回数组
         return count($result) > 1 ? $result : $result[0];
-    }
-
-    /**
-     * css选择器
-     *
-     * @param $html
-     * @param string $selector
-     * @param bool $remove
-     * @return array|string|null
-     */
-    private static function _css_select($html, $selector, $remove = false)
-    {
-        $selector = self::css_to_xpath($selector);
-        return self::_xpath_select($html, $selector, $remove);
     }
 
     /**
@@ -165,8 +121,7 @@ class Selector
         // 一个都没有匹配到
         if ($count === 0) {
             return null;
-        }
-        // 只匹配一个，就是只有一个 ()
+        } // 只匹配一个，就是只有一个 ()
         elseif ($count == 2) {
             // 删除的话取匹配到的所有内容
             if ($remove) {
@@ -188,6 +143,20 @@ class Selector
     }
 
     /**
+     * css选择器
+     *
+     * @param $html
+     * @param string $selector
+     * @param bool $remove
+     * @return array|string|null
+     */
+    private static function _css_select($html, $selector, $remove = false)
+    {
+        $selector = self::css_to_xpath($selector);
+        return self::_xpath_select($html, $selector, $remove);
+    }
+
+    /**
      * CSS表达式转换为Xpath表达式
      * @param string $selectors
      * @return string
@@ -202,24 +171,21 @@ class Selector
             $is_tag = preg_match('@^[\w|\||-]+$@', $s) || $s == '*';
             if ($is_tag) {
                 $xquery .= $s;
-            }
-            // ID
+            } // ID
             elseif ($s[0] == '#') {
                 if ($delimiter_before) {
                     $xquery .= '*';
                 }
                 // ID用精确查询
-                $xquery .= "[@id='".substr($s, 1)."']";
-            }
-            // CLASSES
+                $xquery .= "[@id='" . substr($s, 1) . "']";
+            } // CLASSES
             elseif ($s[0] == '.') {
                 if ($delimiter_before) {
                     $xquery .= '*';
                 }
                 // CLASS用模糊查询
-                $xquery .= "[contains(@class,'".substr($s, 1)."')]";
-            }
-            // ATTRIBUTES
+                $xquery .= "[contains(@class,'" . substr($s, 1) . "')]";
+            } // ATTRIBUTES
             elseif ($s[0] == '[') {
                 if ($delimiter_before) {
                     $xquery .= '*';
@@ -238,32 +204,25 @@ class Selector
                     } else {
                         $xquery .= "[@{$attr}='{$value}']";
                     }
-                }
-                // attr without specified value
+                } // attr without specified value
                 else {
                     $xquery .= "[@{$attr}]";
                 }
-            }
-            // ~ General Sibling Selector
+            } // ~ General Sibling Selector
             elseif ($s[0] == '~') {
-            }
-            // + Adjacent sibling selectors
+            } // + Adjacent sibling selectors
             elseif ($s[0] == '+') {
-            }
-            // PSEUDO CLASSES
+            } // PSEUDO CLASSES
             elseif ($s[0] == ':') {
-            }
-            // DIRECT DESCENDANDS
+            } // DIRECT DESCENDANDS
             elseif ($s == '>') {
                 $xquery .= '/';
                 $delimiter_before = 2;
-            }
-            // ALL DESCENDANDS
+            } // ALL DESCENDANDS
             elseif ($s == ' ') {
                 $xquery .= '//';
                 $delimiter_before = 2;
-            }
-            // ERRORS
+            } // ERRORS
             else {
                 exit("Unrecognized token '$s'");
             }
@@ -284,7 +243,7 @@ class Selector
             return $queries;
         }
 
-        $special_chars = array('>',' ');
+        $special_chars = array('>', ' ');
         $special_chars_mapping = array();
         $strlen = mb_strlen($query);
         $class_chars = array('.', '-');
@@ -293,7 +252,7 @@ class Selector
         // split multibyte string
         // http://code.google.com/p/phpquery/issues/detail?id=76
         $_query = array();
-        for ($i=0; $i<$strlen; $i++) {
+        for ($i = 0; $i < $strlen; $i++) {
             $_query[] = mb_substr($query, $i, 1);
         }
         $query = $_query;
@@ -309,46 +268,40 @@ class Selector
                     $i++;
                 }
                 $queries[] = $tmp;
-            }
-            // IDs
+            } // IDs
             elseif ($c == '#') {
                 $i++;
                 while (isset($query[$i]) && (self::is_char($query[$i]) || $query[$i] == '-')) {
                     $tmp .= $query[$i];
                     $i++;
                 }
-                $queries[] = '#'.$tmp;
-            }
-            // SPECIAL CHARS
+                $queries[] = '#' . $tmp;
+            } // SPECIAL CHARS
             elseif (in_array($c, $special_chars)) {
                 $queries[] = $c;
                 $i++;
-            // MAPPED SPECIAL MULTICHARS
+                // MAPPED SPECIAL MULTICHARS
                 //			} else if ( $c.$query[$i+1] == '//') {
                 //				$return[] = ' ';
                 //				$i = $i+2;
-            }
-            // MAPPED SPECIAL CHARS
+            } // MAPPED SPECIAL CHARS
             elseif (isset($special_chars_mapping[$c])) {
                 $queries[] = $special_chars_mapping[$c];
                 $i++;
-            }
-            // COMMA
+            } // COMMA
             elseif ($c == ',') {
                 $i++;
                 while (isset($query[$i]) && $query[$i] == ' ') {
                     $i++;
                 }
-            }
-            // CLASSES
+            } // CLASSES
             elseif ($c == '.') {
                 while (isset($query[$i]) && (self::is_char($query[$i]) || in_array($query[$i], $class_chars))) {
                     $tmp .= $query[$i];
                     $i++;
                 }
                 $queries[] = $tmp;
-            }
-            // ~ General Sibling Selector
+            } // ~ General Sibling Selector
             elseif ($c == '~') {
                 $space_allowed = true;
                 $tmp .= $query[$i++];
@@ -366,8 +319,7 @@ class Selector
                     $i++;
                 }
                 $queries[] = $tmp;
-            }
-            // + Adjacent sibling selectors
+            } // + Adjacent sibling selectors
             elseif ($c == '+') {
                 $space_allowed = true;
                 $tmp .= $query[$i++];
@@ -385,8 +337,7 @@ class Selector
                     $i++;
                 }
                 $queries[] = $tmp;
-            }
-            // ATTRS
+            } // ATTRS
             elseif ($c == '[') {
                 $stack = 1;
                 $tmp .= $c;
@@ -396,15 +347,14 @@ class Selector
                         $stack++;
                     } elseif ($query[$i] == ']') {
                         $stack--;
-                        if (! $stack) {
+                        if (!$stack) {
                             break;
                         }
                     }
                 }
                 $queries[] = $tmp;
                 $i++;
-            }
-            // PSEUDO CLASSES
+            } // PSEUDO CLASSES
             elseif ($c == ':') {
                 $stack = 1;
                 $tmp .= $query[$i++];
@@ -422,7 +372,7 @@ class Selector
                             $stack++;
                         } elseif ($query[$i] == ')') {
                             $stack--;
-                            if (! $stack) {
+                            if (!$stack) {
                                 break;
                             }
                         }
@@ -469,6 +419,36 @@ class Selector
      */
     protected static function is_regexp($pattern)
     {
-        return in_array($pattern[ mb_strlen($pattern)-1 ], array('^','*','$'));
+        return in_array($pattern[mb_strlen($pattern) - 1], array('^', '*', '$'));
+    }
+
+    /**
+     * @param $html
+     * @param string $selector
+     * @param string $selector_type
+     * @return mixed|null
+     */
+    public static function remove($html, $selector, $selector_type = 'xpath')
+    {
+        if (empty($html) || empty($selector)) {
+            return null;
+        }
+
+        $selector_type = strtolower($selector_type);
+        switch ($selector_type) {
+            case 'xpath':
+                $remove_html = self::_xpath_select($html, $selector, true);
+                break;
+            case 'regex':
+                $remove_html = self::_regex_select($html, $selector, true);
+                break;
+            case 'css':
+                $remove_html = self::_css_select($html, $selector, true);
+                break;
+            default:
+                return null;
+        }
+
+        return str_replace($remove_html, '', $html);
     }
 }

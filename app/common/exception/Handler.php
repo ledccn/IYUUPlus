@@ -1,4 +1,5 @@
 <?php
+
 namespace app\common\exception;
 
 use Throwable;
@@ -31,19 +32,19 @@ class Handler extends ExceptionHandler
      * @param Throwable $exception
      * @return Response
      */
-    public function render(Request $request, Throwable $exception) : Response
+    public function render(Request $request, Throwable $exception): Response
     {
         $header = [
-            'Content-Type'  =>  'application/json; charset=utf-8',
-            'Connection'    =>  'close',
-            'Pragma'        =>  'no-cache'
+            'Content-Type' => 'application/json; charset=utf-8',
+            'Connection' => 'close',
+            'Pragma' => 'no-cache'
         ];
         $code = $exception->getCode();
         $error = $exception->getMessage();
         $rs = [
-            'ret'   =>  $code,
-            'data'  =>  [],
-            'msg'   =>  $error
+            'ret' => $code,
+            'data' => [],
+            'msg' => $error
         ];
 
         if ($this->_debug) {

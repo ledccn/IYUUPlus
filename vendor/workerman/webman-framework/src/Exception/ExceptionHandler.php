@@ -11,10 +11,11 @@
  * @link      http://www.workerman.net/
  * @license   http://www.opensource.org/licenses/mit-license.php MIT License
  */
+
 namespace Webman\Exception;
 
-use Throwable;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use Webman\Http\Request;
 use Webman\Http\Response;
 
@@ -37,9 +38,7 @@ class ExceptionHandler implements ExceptionHandlerInterface
     /**
      * @var array
      */
-    public $dontReport = [
-
-    ];
+    public $dontReport = [];
 
     /**
      * ExceptionHandler constructor.
@@ -61,8 +60,11 @@ class ExceptionHandler implements ExceptionHandlerInterface
         if ($this->shouldntReport($exception)) {
             return;
         }
-
-        $this->_logger->error($exception->getMessage(), ['exception' => (string)$exception]);
+        $logs = '';
+        if ($request = \request()) {
+            $logs = $request->getRealIp() . ' ' . $request->method() . ' ' . \trim($request->fullUrl(), '/');
+        }
+        $this->_logger->error($logs . PHP_EOL . $exception);
     }
 
     /**
@@ -70,16 +72,16 @@ class ExceptionHandler implements ExceptionHandlerInterface
      * @param Throwable $exception
      * @return Response
      */
-    public function render(Request $request, Throwable $exception) : Response
+    public function render(Request $request, Throwable $exception): Response
     {
         $code = $exception->getCode();
         if ($request->expectsJson()) {
-            $json = ['code' => $code ? $code : 500, 'msg' => $exception->getMessage()];
+            $json = ['code' => $code ? $code : 500, 'msg' => $this->_debug ? $exception->getMessage() : 'Server internal error'];
             $this->_debug && $json['traces'] = (string)$exception;
             return new Response(200, ['Content-Type' => 'application/json'],
-                json_encode($json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                \json_encode($json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
-        $error = $this->_debug ? nl2br((string)$exception) : 'Server internal error';
+        $error = $this->_debug ? \nl2br((string)$exception) : 'Server internal error';
         return new Response(500, [], $error);
     }
 
@@ -87,7 +89,8 @@ class ExceptionHandler implements ExceptionHandlerInterface
      * @param Throwable $e
      * @return bool
      */
-    protected function shouldntReport(Throwable $e) {
+    protected function shouldntReport(Throwable $e)
+    {
         foreach ($this->dontReport as $type) {
             if ($e instanceof $type) {
                 return true;

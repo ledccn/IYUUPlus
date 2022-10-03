@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Library;
 
 /**
@@ -104,23 +105,6 @@ class Table
     }
 
     /**
-     * 设置输出表格数据 及对齐方式
-     * @access public
-     * @param array $rows 要输出的表格数据（二维数组）
-     * @param int $align 对齐方式 默认1 ALGIN_LEFT 0 ALIGN_RIGHT 2 ALIGN_CENTER
-     * @return void
-     */
-    public function setRows($rows, $align = self::ALIGN_LEFT)
-    {
-        $this->rows = $rows;
-        $this->cellAlign = $align;
-
-        foreach ($rows as $row) {
-            $this->checkColWidth($row);
-        }
-    }
-
-    /**
      * 检查列数据的显示宽度
      * @access public
      * @param mixed $row 行数据
@@ -156,32 +140,65 @@ class Table
     }
 
     /**
-     * 设置输出表格的样式
+     * 输出表格
      * @access public
-     * @param string $style 样式名
-     * @return void
+     * @param array $dataList 表格数据
+     * @return string
      */
-    public function setStyle($style)
+    public function render($dataList = [])
     {
-        $this->style = isset($this->format[$style]) ? $style : 'default';
+        if ($dataList) {
+            $this->setRows($dataList);
+        }
+
+        // 输出头部
+        $content = $this->renderHeader();
+        $style = $this->getStyle('cell');
+
+        if ($this->rows) {
+            foreach ($this->rows as $row) {
+                if (is_string($row) && '-' === $row) {
+                    $content .= $this->renderSeparator('middle');
+                } elseif (is_scalar($row)) {
+                    $content .= $this->renderSeparator('cross-top');
+                    $array = str_pad($row, 3 * (count($this->colWidth) - 1) + array_reduce($this->colWidth, function ($a, $b) {
+                            return $a + $b;
+                        }));
+
+                    $content .= $style[0] . ' ' . $array . ' ' . $style[3] . PHP_EOL;
+                    $content .= $this->renderSeparator('cross-bottom');
+                } else {
+                    $array = [];
+
+                    foreach ($row as $key => $val) {
+                        $array[] = ' ' . str_pad($val, $this->colWidth[$key], ' ', $this->cellAlign);
+                    }
+
+                    $content .= $style[0] . implode(' ' . $style[2], $array) . ' ' . $style[3] . PHP_EOL;
+                }
+            }
+        }
+
+        $content .= $this->renderSeparator('bottom');
+
+        return $content;
     }
 
     /**
-     * 输出分隔行
+     * 设置输出表格数据 及对齐方式
      * @access public
-     * @param string $pos 位置
-     * @return string
+     * @param array $rows 要输出的表格数据（二维数组）
+     * @param int $align 对齐方式 默认1 ALGIN_LEFT 0 ALIGN_RIGHT 2 ALIGN_CENTER
+     * @return void
      */
-    protected function renderSeparator($pos)
+    public function setRows($rows, $align = self::ALIGN_LEFT)
     {
-        $style = $this->getStyle($pos);
-        $array = [];
+        $this->rows = $rows;
+        $this->cellAlign = $align;
 
-        foreach ($this->colWidth as $width) {
-            $array[] = str_repeat($style[1], $width + 2);
+        foreach ($rows as $row) {
+            $this->checkColWidth($row);
         }
-
-        return $style[0] . implode($style[2], $array) . $style[3] . PHP_EOL;
     }
 
     /**
@@ -221,47 +238,31 @@ class Table
     }
 
     /**
-     * 输出表格
+     * 设置输出表格的样式
      * @access public
-     * @param array $dataList 表格数据
+     * @param string $style 样式名
+     * @return void
+     */
+    public function setStyle($style)
+    {
+        $this->style = isset($this->format[$style]) ? $style : 'default';
+    }
+
+    /**
+     * 输出分隔行
+     * @access public
+     * @param string $pos 位置
      * @return string
      */
-    public function render($dataList = [])
+    protected function renderSeparator($pos)
     {
-        if ($dataList) {
-            $this->setRows($dataList);
+        $style = $this->getStyle($pos);
+        $array = [];
+
+        foreach ($this->colWidth as $width) {
+            $array[] = str_repeat($style[1], $width + 2);
         }
 
-        // 输出头部
-        $content = $this->renderHeader();
-        $style = $this->getStyle('cell');
-
-        if ($this->rows) {
-            foreach ($this->rows as $row) {
-                if (is_string($row) && '-' === $row) {
-                    $content .= $this->renderSeparator('middle');
-                } elseif (is_scalar($row)) {
-                    $content .= $this->renderSeparator('cross-top');
-                    $array = str_pad($row, 3 * (count($this->colWidth) - 1) + array_reduce($this->colWidth, function ($a, $b) {
-                        return $a + $b;
-                    }));
-
-                    $content .= $style[0] . ' ' . $array . ' ' . $style[3] . PHP_EOL;
-                    $content .= $this->renderSeparator('cross-bottom');
-                } else {
-                    $array = [];
-
-                    foreach ($row as $key => $val) {
-                        $array[] = ' ' . str_pad($val, $this->colWidth[$key], ' ', $this->cellAlign);
-                    }
-
-                    $content .= $style[0] . implode(' ' . $style[2], $array) . ' ' . $style[3] . PHP_EOL;
-                }
-            }
-        }
-
-        $content .= $this->renderSeparator('bottom');
-
-        return $content;
+        return $style[0] . implode($style[2], $array) . $style[3] . PHP_EOL;
     }
 }

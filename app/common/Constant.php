@@ -1,4 +1,5 @@
 <?php
+
 namespace app\common;
 
 /**
@@ -26,13 +27,13 @@ class Constant
      */
     const API_BASE = 'https://api.iyuu.cn';
     const API = [
-        'login'     => '/App.Api.Bind',
-        'sites'     => '/App.Api.Sites',
-        'infohash'  => '/App.Api.Infohash',
-        'hash'      => '/App.Api.Hash',
-        'notify'    => '/App.Api.Notify',
+        'login' => '/App.Api.Bind',
+        'sites' => '/App.Api.Sites',
+        'infohash' => '/App.Api.Infohash',
+        'hash' => '/App.Api.Hash',
+        'notify' => '/App.Api.Notify',
         'recommend' => '/App.Api.GetRecommendSites',
-        'getSign'   => '/App.Api.GetSign',
+        'getSign' => '/App.Api.GetSign',
     ];
 
     /**
@@ -60,9 +61,9 @@ class Constant
      * @var array
      */
     const RS = [
-        'ret'   =>  200,
-        'data'  =>  [],
-        'msg'   =>  ''
+        'ret' => 200,
+        'data' => [],
+        'msg' => ''
     ];
 
     /**
@@ -70,9 +71,9 @@ class Constant
      */
     const SITENAME_TO_FILENAME_MAP = [
         '1ptba' => 'ptba',
-        '52pt'  => 'site52pt',
-        'm-team'=> 'mteam',
-        'hd-torrents'=> 'hdtorrents',
+        '52pt' => 'site52pt',
+        'm-team' => 'mteam',
+        'hd-torrents' => 'hdtorrents',
     ];
 
     /**

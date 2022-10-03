@@ -16,8 +16,8 @@
  * 静态文件设置
  */
 return [
-    'enable'     => true, // 是否支持静态文件
+    'enable' => true, // 是否支持静态文件
     'middleware' => [     // 静态文件中间件
-        support\middleware\StaticFile::class,
+        app\middleware\StaticFile::class,
     ],
 ];

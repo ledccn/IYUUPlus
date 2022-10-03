@@ -103,7 +103,7 @@ $torrent->cleanRootFields(?$allowedKeys);  // remove fields which is not allowed
 $torrent->setAnnounce('udp://example.com/announce');
 $announce = $torrent->getAnnounce();
 
-$torrent->setAnnounceList([['https://example1.com/announce'], ['https://example2.com/announce'], 'https://example3.com/announce']);
+$torrent->setAnnounceList([['https://example1.com/announce'], ['https://example2.com/announce', 'https://example3.com/announce']]);
 $announceList = $torrent->getAnnounceList();
 
 $torrent->setComment('Rhilip\'s Torrent');
@@ -144,7 +144,7 @@ $torrent->getInfoHash(?$binary);   // return v2-infohash if there is one, otherw
 $torrent->getInfoHashs(?$binary);  // return [TorrentFile::PROTOCOL_V1 => v1-infohash, TorrentFile::PROTOCOL_V2 => v2-infohash]
 $torrent->getInfoHashV1ForAnnounce();  // return the v1 info-hash in announce ( 20-bytes string )
 $torrent->getInfoHashV2ForAnnounce();  // return the v2 (truncated) info-hash in announce
-$torrent->getInfoHashsForAnnnounce();  // same as getInfoHashs() but in announce
+$torrent->getInfoHashsForAnnounce();  // same as getInfoHashs() but in announce
 
 $torrent->getPieceLength();  // int
 
@@ -155,11 +155,13 @@ try {
 }
 $name = $torrent->getName();
 
-$torrent->setSouce('Rhilip\'s blog');
+$torrent->setSource('Rhilip\'s blog');
 $source = $torrent->getSource();
 
 $private = $torrent->isPrivate();  // true or false
 $torrent->setPrivate(true);
+
+$magnetLink = $torrent->getMagnetLink();
 
 // 5. Work with torrent, it will try to parse torrent ( cost time )
 $torrent->setParseValidator(function ($filename, $paths) {
@@ -200,8 +202,17 @@ $torrent
     ['https://example.com/announce'],
     ['https://example1.com/announce']
   ])
-  ->setSouce('example.com')
+  ->setSource('example.com')
   ->setPrivate(true);
+
+// Note 2: parse method may fail when get a deep invalid torrent, so it can wrapper like this
+try {
+    $torrent = TorrentFile::load($_POST['torrent']['tmp_name']);
+    $torrent/** ->setParseValidator(function () {}) */->parse();
+} catch (ParseException $e) {
+    // do something to notice user.
+}
+print($torrent->getFileCount()); // safe to use other method without any ParseException
 ```
 
 ## License

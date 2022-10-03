@@ -16,10 +16,16 @@ namespace support;
 
 class View
 {
+    /**
+     * @param mixed $name
+     * @param mixed $value
+     * @return void
+     */
     public static function assign($name, $value = null)
     {
-        static $handler;
-        $handler = $handler ?: config('view.handler');
+        $request = \request();
+        $plugin =  $request->plugin ?? '';
+        $handler = \config($plugin ? "plugin.$plugin.view.handler" : 'view.handler');
         $handler::assign($name, $value);
     }
 }

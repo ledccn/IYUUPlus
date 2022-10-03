@@ -1,4 +1,5 @@
 <?php
+
 namespace app\common\components;
 
 use app\common\Constant;
@@ -34,6 +35,18 @@ class Curl
     }
 
     /**
+     * GET请求
+     * @param string $url
+     * @param array $data 数据
+     * @param bool $reset 是否重置Curl(默认true)
+     * @return ICurl
+     */
+    public static function get(string $url, array $data = array(), bool $reset = true): ICurl
+    {
+        return static::one($reset)->get($url, $data);
+    }
+
+    /**
      * 单例
      * @param bool $reset
      * @return ICurl
@@ -59,23 +72,11 @@ class Curl
     }
 
     /**
-     * GET请求
-     * @param string $url
-     * @param array $data   数据
-     * @param bool $reset   是否重置Curl(默认true)
-     * @return ICurl
-     */
-    public static function get(string $url, array $data = array(), bool $reset = true): ICurl
-    {
-        return static::one($reset)->get($url, $data);
-    }
-
-    /**
      * POST请求
      * @param string $url
-     * @param array|object|string $data   数据
-     * @param bool $asJson  是否Json
-     * @param bool $reset   是否重置Curl(默认true)
+     * @param array|object|string $data 数据
+     * @param bool $asJson 是否Json
+     * @param bool $reset 是否重置Curl(默认true)
      * @return ICurl
      */
     public static function post(string $url, $data = array(), bool $asJson = false, bool $reset = true): ICurl
@@ -100,8 +101,8 @@ class Curl
     {
         $opts = array(
             'http' => array(
-                'method'  => 'POST',
-                'header'  => 'Content-type: ' . ($asJson ? static::CONTENT_TYPE_JSON : static::CONTENT_TYPE_DEFAULT),
+                'method' => 'POST',
+                'header' => 'Content-type: ' . ($asJson ? static::CONTENT_TYPE_JSON : static::CONTENT_TYPE_DEFAULT),
                 'content' => (is_array($data) || is_object($data)) ? ($asJson ? json_encode($data, JSON_UNESCAPED_UNICODE) : http_build_query($data)) : $data,
                 'timeout' => 5
             ),
@@ -111,7 +112,7 @@ class Curl
                 'verify_peer_name' => false,
             )
         );
-        $context  = stream_context_create($opts);
+        $context = stream_context_create($opts);
         return file_get_contents($url, false, $context);
     }
 
@@ -128,6 +129,6 @@ class Curl
         if (method_exists(self::$_instance, $method) && is_callable([self::$_instance, $method])) {
             return self::$_instance->{$method}(... $arguments);
         }
-        throw new BusinessException($method. '不存在或不可调用');
+        throw new BusinessException($method . '不存在或不可调用');
     }
 }

@@ -14,8 +14,12 @@
 
 namespace support;
 
-use Workerman\Timer;
+use Illuminate\Events\Dispatcher;
+use Illuminate\Redis\Events\CommandExecuted;
 use Illuminate\Redis\RedisManager;
+use Workerman\Timer;
+use Workerman\Worker;
+
 
 /**
  * Class Redis
@@ -208,13 +212,38 @@ class Redis
     protected static $_instance = null;
 
     /**
+     * need to install phpredis extension
+     */
+    const PHPREDIS_CLIENT = 'phpredis';
+
+    /**
+     * need to install the 'predis/predis' packgage.
+     * cmd: composer install predis/predis
+     */
+    const PREDIS_CLIENT = 'predis';
+
+    /**
+     * Support client collection
+     */
+    static $_allowClient = [
+        self::PHPREDIS_CLIENT,
+        self::PREDIS_CLIENT
+    ];
+
+    /**
      * @return RedisManager
      */
     public static function instance()
     {
         if (!static::$_instance) {
-            $config = config('redis');
-            static::$_instance = new RedisManager('', 'phpredis', $config);
+            $config = \config('redis');
+            $client = $config['client'] ?? self::PHPREDIS_CLIENT;
+
+            if (!\in_array($client, static::$_allowClient)) {
+                $client = self::PHPREDIS_CLIENT;
+            }
+
+            static::$_instance = new RedisManager('', $client, $config);
         }
         return static::$_instance;
     }
@@ -223,24 +252,27 @@ class Redis
      * @param string $name
      * @return \Illuminate\Redis\Connections\Connection
      */
-    public static function connection($name = 'default')
+    public static function connection(string $name = 'default')
     {
         static $timers = [];
         $connection = static::instance()->connection($name);
         if (!isset($timers[$name])) {
-            $timers[$name] = Timer::add(55, function() use ($connection) {
+            $timers[$name] = Worker::getAllWorkers() ? Timer::add(55, function () use ($connection) {
                 $connection->get('ping');
-            });
+            }) : 1;
+            if (\class_exists(Dispatcher::class)) {
+                $connection->setEventDispatcher(new Dispatcher());
+            }
         }
         return $connection;
     }
 
     /**
-     * @param $name
-     * @param $arguments
+     * @param string $name
+     * @param array $arguments
      * @return mixed
      */
-    public static function __callStatic($name, $arguments)
+    public static function __callStatic(string $name, array $arguments)
     {
         return static::connection('default')->{$name}(... $arguments);
     }

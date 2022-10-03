@@ -1,4 +1,5 @@
 <?php
+
 namespace app\common\exception;
 
 use Exception;

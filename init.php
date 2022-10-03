@@ -18,15 +18,12 @@ I::::::::I    Y:::::::::::Y        UU:::::::::UU        UU:::::::::UU
 IIIIIIIIII    YYYYYYYYYYYYY          UUUUUUUUU            UUUUUUUUU
 
 EOF;
-echo microtime(true).' 当前时间：'.date('Y-m-d H:i:s').PHP_EOL;
-echo microtime(true).' 当前操作系统：'.PHP_OS.PHP_EOL;
-echo microtime(true).' 当前运行环境：'.PHP_OS_FAMILY.PHP_EOL;
-echo microtime(true).' 当前接口类型：'.PHP_SAPI.PHP_EOL;
-echo microtime(true).' PHP二进制文件：'.PHP_BINARY.PHP_EOL;
-echo microtime(true).' PHP版本号：'.PHP_VERSION.PHP_EOL;
-echo microtime(true).' 正在加载composer包管理器...'.PHP_EOL;
-require_once __DIR__ . '/vendor/autoload.php';
-echo microtime(true).' composer依赖载入完成！'.PHP_EOL;
+echo microtime(true) . ' 当前时间：' . date('Y-m-d H:i:s') . PHP_EOL;
+echo microtime(true) . ' 当前操作系统：' . PHP_OS . PHP_EOL;
+echo microtime(true) . ' 当前运行环境：' . PHP_OS_FAMILY . PHP_EOL;
+echo microtime(true) . ' 当前接口类型：' . PHP_SAPI . PHP_EOL;
+echo microtime(true) . ' PHP二进制文件：' . PHP_BINARY . PHP_EOL;
+echo microtime(true) . ' PHP版本号：' . PHP_VERSION . PHP_EOL;
 
 // 定义目录
 defined('ROOT_PATH') or define('ROOT_PATH', __DIR__);
@@ -54,7 +51,7 @@ if (PHP_SAPI != 'cli') {
 
 // 设置时区
 date_default_timezone_set('Asia/Shanghai');
-echo microtime(true).' 环境变量初始化完成！'.PHP_EOL.PHP_EOL;
+echo microtime(true) . ' 环境变量初始化完成！' . PHP_EOL . PHP_EOL;
 
 // 命令行参数
 global $argv;

@@ -1,4 +1,5 @@
 <?php
+
 namespace app\domain;
 
 /**
@@ -12,10 +13,10 @@ class Command
      * @param array $param
      * @return string
      */
-    public static function parse(array $param):string
+    public static function parse(array $param): string
     {
         $taskType = $param['type'] ?? 'default';
-        $className = "app\\domain\\Command\\".$taskType;
+        $className = "app\\domain\\Command\\" . $taskType;
         if (\class_exists($className)) {
             $obj = new $className;
             if ($obj instanceof CommandInterface) {
@@ -23,6 +24,6 @@ class Command
             }
         }
 
-        return '计划任务命令解析类 '. $className .' 不存在';
+        return '计划任务命令解析类 ' . $className . ' 不存在';
     }
 }

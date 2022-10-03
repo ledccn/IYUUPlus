@@ -11,6 +11,7 @@
  * @link      http://www.workerman.net/
  * @license   http://www.opensource.org/licenses/mit-license.php MIT License
  */
+
 namespace Webman\Exception;
 
 use Throwable;
@@ -30,5 +31,5 @@ interface ExceptionHandlerInterface
      * @param Throwable $e
      * @return Response
      */
-    public function render(Request $request, Throwable $e) : Response;
+    public function render(Request $request, Throwable $e): Response;
 }

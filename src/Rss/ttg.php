@@ -2,6 +2,7 @@
 /**
  * totheglory RSS解码类
  */
+
 namespace IYUU\Rss;
 
 use Curl\Curl;
@@ -35,10 +36,10 @@ class ttg extends AbstractRss
         $this->passkey = !empty($config['passkey']) ? $config['passkey'] : '';
         $this->down_hash = !empty($config['downHash']) ? $config['downHash'] : '';
         if (empty($this->down_hash)) {
-            die($this->site.' 没有配置RSS专用密钥，请去RSS订阅页面生成[putrss.php?par={密钥在这里}&ssl=yes]，初始化错误。'.PHP_EOL);
+            die($this->site . ' 没有配置RSS专用密钥，请去RSS订阅页面生成[putrss.php?par={密钥在这里}&ssl=yes]，初始化错误。' . PHP_EOL);
         }
         if (empty($this->passkey)) {
-            die($this->site.' 没有配置密钥，初始化错误。'.PHP_EOL);
+            die($this->site . ' 没有配置密钥，初始化错误。' . PHP_EOL);
         }
         $this->rss_page = str_replace("{}", $this->down_hash, $this->rss_page);
     }
@@ -46,12 +47,12 @@ class ttg extends AbstractRss
     /**
      * 抽象方法，在类中实现
      * 解码html为种子数组
-     * @param string    $html
+     * @param string $html
      * @return array
      */
     public function decode($html = '')
     {
-        echo "正在解码RSS资源...". PHP_EOL;
+        echo "正在解码RSS资源..." . PHP_EOL;
         return $this->NexusPHP($html);
     }
 
@@ -60,7 +61,7 @@ class ttg extends AbstractRss
      * @param array $items
      * @return array
      */
-    public function formatTorrent(array $items):array
+    public function formatTorrent(array $items): array
     {
         $host = static::getHost();
         $passkey = static::getConfig('site.passkey');

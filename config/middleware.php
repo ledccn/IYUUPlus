@@ -5,8 +5,6 @@
 return [
     '' => [
         app\middleware\AuthCheck::class,
-        app\middleware\ActionHook::class,
-        //support\middleware\AuthCheckTest::class,
         //support\middleware\AccessControlTest::class,
     ]
 ];

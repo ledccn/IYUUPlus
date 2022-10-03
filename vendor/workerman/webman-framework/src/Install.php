@@ -1,4 +1,5 @@
 <?php
+
 namespace Webman;
 
 class Install
@@ -10,9 +11,9 @@ class Install
      */
     protected static $pathRelation = [
         'start.php' => 'start.php',
-        'support/helpers.php' => 'support/helpers.php',
+        'windows.php' => 'windows.php',
         'support/bootstrap.php' => 'support/bootstrap.php',
-        'support/Plugin.php' => 'support/Plugin.php',
+        'support/helpers.php' => 'support/helpers.php',
     ];
 
     /**
@@ -21,10 +22,6 @@ class Install
      */
     public static function install()
     {
-        $support_dir = __DIR__ . '/../../../../support';
-        if (is_dir($support_dir)) {
-            //remove_dir($support_dir);
-        }
         static::installByRelation();
     }
 
@@ -45,15 +42,18 @@ class Install
     {
         foreach (static::$pathRelation as $source => $dest) {
             if ($pos = strrpos($dest, '/')) {
-                $parent_dir = base_path().'/'.substr($dest, 0, $pos);
+                $parent_dir = base_path() . '/' . substr($dest, 0, $pos);
                 if (!is_dir($parent_dir)) {
                     mkdir($parent_dir, 0777, true);
                 }
             }
-            copy_dir(__DIR__ . "/$source", base_path()."/$dest", true);
-            echo "Create $dest
-";
+            $source_file = __DIR__ . "/$source";
+            copy_dir($source_file, base_path() . "/$dest", true);
+            echo "Create $dest\r\n";
+            if (is_file($source_file)) {
+                @unlink($source_file);
+            }
         }
     }
-    
+
 }

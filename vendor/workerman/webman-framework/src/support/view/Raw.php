@@ -15,6 +15,7 @@
 namespace support\view;
 
 use Webman\View;
+use Throwable;
 
 /**
  * Class Raw
@@ -28,8 +29,8 @@ class Raw implements View
     protected static $_vars = [];
 
     /**
-     * @param $name
-     * @param null $value
+     * @param string|array $name
+     * @param mixed $value
      */
     public static function assign($name, $value = null)
     {
@@ -37,29 +38,31 @@ class Raw implements View
     }
 
     /**
-     * @param $template
-     * @param $vars
-     * @param null $app
-     * @return string
+     * @param string $template
+     * @param array $vars
+     * @param string|null $app
+     * @return false|string
      */
-    public static function render($template, $vars, $app = null)
+    public static function render(string $template, array $vars, string $app = null)
     {
-        static $view_suffix;
-        $view_suffix = $view_suffix ?: \config('view.view_suffix', 'html');
-        $app = $app === null ? \request()->app : $app;
-        if ($app === '') {
-            $view_path = \app_path() . "/view/$template.$view_suffix";
-        } else {
-            $view_path = \app_path() . "/$app/view/$template.$view_suffix";
-        }
+        $request = \request();
+        $plugin = $request->plugin ?? '';
+        $config_prefix = $plugin ? "plugin.$plugin." : '';
+        $view_suffix = \config("{$config_prefix}view.options.view_suffix", 'html');
+        $app = $app === null ? $request->app : $app;
+        $base_view_path = $plugin ? \base_path() . "/plugin/$plugin/app" : \app_path();
+        $__template_path__ = $app === '' ? "$base_view_path/view/$template.$view_suffix" : "$base_view_path/$app/view/$template.$view_suffix";
+
         \extract(static::$_vars);
         \extract($vars);
         \ob_start();
         // Try to include php file.
         try {
-            include $view_path;
-        } catch (\Throwable $e) {
-            echo $e;
+            include $__template_path__;
+        } catch (Throwable $e) {
+            static::$_vars = [];
+            \ob_end_clean();
+            throw $e;
         }
         static::$_vars = [];
         return \ob_get_clean();

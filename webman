@@ -1,0 +1,44 @@
+#!/usr/bin/env php
+<?php
+
+use Webman\Config;
+use Webman\Console\Command;
+use Webman\Console\Util;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+if (!in_array($argv[1] ?? '', ['start', 'restart', 'stop', 'status', 'reload', 'connections'])) {
+    require_once __DIR__ . '/support/bootstrap.php';
+} else {
+    if (class_exists('Support\App')) {
+        Support\App::loadAllConfig(['route']);
+    } else {
+        Config::reload(config_path(), ['route', 'container']);
+    }
+}
+
+$cli = new Command();
+$cli->setName('webman cli');
+$cli->installInternalCommands();
+if (is_dir($command_path = Util::guessPath(app_path(), '/command', true))) {
+    $cli->installCommands($command_path);
+}
+
+foreach (config('plugin', []) as $firm => $projects) {
+    if (isset($projects['app'])) {
+        if ($command_str = Util::guessPath(base_path() . "/plugin/$firm", 'command')) {
+            $command_path = base_path() . "/plugin/$firm/$command_str";
+            $cli->installCommands($command_path, "plugin\\$firm\\$command_str");
+        }
+    }
+    foreach ($projects as $name => $project) {
+        if (!is_array($project)) {
+            continue;
+        }
+        foreach ($project['command'] ?? [] as $command) {
+            $cli->add(new $command);
+        }
+    }
+}
+
+$cli->run();

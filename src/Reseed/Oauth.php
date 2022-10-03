@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Reseed;
 
 use Curl\Curl;
@@ -8,9 +9,9 @@ use Curl\Curl;
  */
 class Oauth
 {
-    private static $conf = [];
-    // 登录缓存路径
     const SiteLoginCache = RUNTIME_PATH . DS . 'db' . DS . 'siteLoginCache_{}.json';
+    // 登录缓存路径
+    private static $conf = [];
 
     /**
      * 初始化
@@ -21,20 +22,6 @@ class Oauth
         $dir = dirname(self::SiteLoginCache);
         is_dir($dir) or mkdir($dir, 0777, true);
         self::$conf = $config;
-    }
-
-    /**
-     * 从配置文件内读取爱语飞飞token作为鉴权参数
-     */
-    public static function getSign()
-    {
-        $token = empty(self::$conf['iyuu.cn'])  ? '' : self::$conf['iyuu.cn'];
-        if (empty($token) || strlen($token) < 46) {
-            echo "缺少辅种接口请求参数：爱语飞飞token ".PHP_EOL;
-            echo "请访问https://iyuu.cn 用微信扫码申请。".PHP_EOL.PHP_EOL;
-            exit(1);
-        }
-        return $token;
     }
 
     /**
@@ -62,15 +49,15 @@ class Oauth
             }
             if (isset(self::$conf['sites'][$site]['passkey']) && self::$conf['sites'][$site]['passkey'] && isset(self::$conf['sites'][$site]['id']) && self::$conf['sites'][$site]['id']) {
                 $user_id = self::$conf['sites'][$site]['id'];
-                $passkey =  self::$conf['sites'][$site]['passkey'];
+                $passkey = self::$conf['sites'][$site]['passkey'];
 
                 $curl = new Curl();
                 $curl->setOpt(CURLOPT_SSL_VERIFYPEER, false);
                 $data = [
-                    'token'  => $token,
-                    'id'     => $user_id,
-                    'passkey'=> sha1($passkey),     // 避免泄露用户passkey秘钥
-                    'site'   => $site,
+                    'token' => $token,
+                    'id' => $user_id,
+                    'passkey' => sha1($passkey),     // 避免泄露用户passkey秘钥
+                    'site' => $site,
                 ];
                 $res = $curl->get($apiUrl, $data);
                 cli($res->response);
@@ -85,11 +72,25 @@ class Oauth
                     echo $msg . PHP_EOL;
                 }
             } else {
-                echo $site.'合作站点参数配置不完整，请同时填写passkey和用户id。' . PHP_EOL;
-                echo '合作站点鉴权配置，请查阅：https://www.iyuu.cn/archives/337/'. PHP_EOL. PHP_EOL;
+                echo $site . '合作站点参数配置不完整，请同时填写passkey和用户id。' . PHP_EOL;
+                echo '合作站点鉴权配置，请查阅：https://www.iyuu.cn/archives/337/' . PHP_EOL . PHP_EOL;
             }
         }
         return $ret;
+    }
+
+    /**
+     * 从配置文件内读取爱语飞飞token作为鉴权参数
+     */
+    public static function getSign()
+    {
+        $token = empty(self::$conf['iyuu.cn']) ? '' : self::$conf['iyuu.cn'];
+        if (empty($token) || strlen($token) < 46) {
+            echo "缺少辅种接口请求参数：爱语飞飞token " . PHP_EOL;
+            echo "请访问https://iyuu.cn 用微信扫码申请。" . PHP_EOL . PHP_EOL;
+            exit(1);
+        }
+        return $token;
     }
 
     /**

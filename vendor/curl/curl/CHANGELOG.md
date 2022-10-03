@@ -2,11 +2,22 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## 2.4.0 (in progress)
+## 2.4.0 (29. August 2022)
 
++ [#84](https://github.com/php-mod/curl/pull/84) Added `.gitattributes`.
++ [#85](https://github.com/php-mod/curl/pull/85) Added `CURLOPT_CUSTOMREQUEST` for get and post methods.
++ [#91](https://github.com/php-mod/curl/pull/91) Added `$asJson` param for `put()` and `patch()` requests.
 + [#61](https://github.com/php-mod/curl/issues/61) Adjust user agent version to latest version.
 + [#74](https://github.com/php-mod/curl/pull/75) Fixed PHPDoc Block, Added more Unit Tests.
-+ Added GitHub Actions Tests (from 5.6 - 8.0)
++ Added GitHub Actions Tests (from 5.6 - 8.1)
+
+## 2.3.3 (30. November 2021)
+
++ Support php 8.1
+
+## 2.3.2 (11. April 2021)
+
++ Fix a security issue in the test files. Thanks to Erwan from wpscan.com.
 
 ## 2.3.1 (21. January 2021)
 

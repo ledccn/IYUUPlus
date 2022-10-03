@@ -1,4 +1,5 @@
 <?php
+
 namespace app\domain;
 
 use app\common\Config as Conf;
@@ -35,24 +36,22 @@ class Crontab
     const pid_suffix = '.pid';
 
     // 管理员用户名,用户名密码都为空字符串时说明不用验证
-    public static $adminName = '';
-
-    // 管理员密码,用户名密码都为空字符串时说明不用验证
-    public static $adminPassword = '';
-
     /**
      * linux系统的crontab任务永远在第1秒执行,且添加定时任务后的1分钟之内是不会执行该任务(即使语法上完全满足)
      * @var mixed
      */
     const cron_minute = '%s %s %s %s %s';
-    const cron_second = '%s %s %s %s %s %s';
 
+    // 管理员密码,用户名密码都为空字符串时说明不用验证
+    const cron_second = '%s %s %s %s %s %s';
     /**
      * where可能的值
      */
     const WHERE = [
-        'day','day_n','hour','hour_n','minute','minute_n','second','second_n','week','month'
+        'day', 'day_n', 'hour', 'hour_n', 'minute', 'minute_n', 'second', 'second_n', 'week', 'month'
     ];
+    public static $adminName = '';
+    public static $adminPassword = '';
 
     /**
      * 构造方法
@@ -98,26 +97,8 @@ class Crontab
     }
 
     /**
-     * 删除计划任务 钩子
-     * @param string $uuid      uuid或文件名
-     * @return bool
-     */
-    public static function deleteHock(string $uuid):bool
-    {
-        if (empty($uuid)) {
-            return false;
-        }
-        $file_name = self::getFilePath($uuid, self::cron_dir, self::cron_suffix);
-        clearstatcache();
-        if (is_file($file_name)) {
-            return @unlink($file_name);
-        }
-        return true;
-    }
-
-    /**
      * 转换为Linux的Crontab语法
-     * @param array $param      数据
+     * @param array $param 数据
      * array(
      *      'where' => ''
      *      'weeks' => ''
@@ -137,15 +118,15 @@ class Crontab
      *   |    +----------- min (0 - 59)
      *   +------------- sec (0-59)
      */
-    public static function parseCron(array $param):string
+    public static function parseCron(array $param): string
     {
         $cron = '';
-        $where = isset($param['where']) ? $param['where'] : null;       //条件
-        $weeks = isset($param['weeks']) ? $param['weeks'] : null;       //星期
-        $day   = isset($param['day']) ? $param['day'] : null;           //天
-        $hour  = isset($param['hour'])   ? $param['hour'] : null;       //时
-        $minute= isset($param['minute']) ? $param['minute'] : null;     //分
-        $second= isset($param['second']) ? $param['second'] : '*';      //秒
+        $where = $param['where'] ?? null;       //条件
+        $weeks = $param['weeks'] ?? null;       //星期
+        $day = $param['day'] ?? null;         //天
+        $hour = $param['hour'] ?? null;        //时
+        $minute = $param['minute'] ?? null;      //分
+        $second = $param['second'] ?? '*';       //秒
         if ($where === null || !in_array($where, self::WHERE)) {
             throw new \InvalidArgumentException('Invalid cron param where');
         }
@@ -157,25 +138,25 @@ class Crontab
                 $cron = sprintf(self::cron_minute, $minute, $hour, '*', '*', '*');
                 break;
             case 'day_n':       //N天
-                $cron = sprintf(self::cron_minute, $minute, $hour, '*/'.$day, '*', '*');
+                $cron = sprintf(self::cron_minute, $minute, $hour, '*/' . $day, '*', '*');
                 break;
             case 'hour':        //每小时
                 $cron = sprintf(self::cron_minute, $minute, '*', '*', '*', '*');
                 break;
             case 'hour_n':      //N小时
-                $cron = sprintf(self::cron_minute, $minute, '*/'.$hour, '*', '*', '*');
+                $cron = sprintf(self::cron_minute, $minute, '*/' . $hour, '*', '*', '*');
                 break;
             case 'minute':      //每分钟
                 $cron = sprintf(self::cron_minute, '*', '*', '*', '*', '*');
                 break;
             case 'minute_n':    //N分钟
-                $cron = sprintf(self::cron_minute, '*/'.$minute, '*', '*', '*', '*');
+                $cron = sprintf(self::cron_minute, '*/' . $minute, '*', '*', '*', '*');
                 break;
             case 'second':      //每秒
                 $cron = sprintf(self::cron_second, '*', '*', '*', '*', '*', '*');
                 break;
             case 'second_n':    //N秒
-                $cron = sprintf(self::cron_second, '*/'.$second, '*', '*', '*', '*', '*');
+                $cron = sprintf(self::cron_second, '*/' . $second, '*', '*', '*', '*', '*');
                 break;
             case 'week':        //每周
                 $cron = sprintf(self::cron_minute, $minute, $hour, '*', '*', $weeks);
@@ -193,36 +174,54 @@ class Crontab
      * @param array $param
      * @return string
      */
-    public static function parseCommand(array $param):string
+    public static function parseCommand(array $param): string
     {
         return Command::parse($param);
     }
 
     /**
-     * 创建计划任务文件
-     * @param string $filename      文件的完整路径
-     * @param mixed  $param         数据
-     * @return bool|int             结果
-     */
-    public static function writeCronFile($filename, $param)
-    {
-        return Conf::set($filename, $param, 'json', true);
-    }
-
-    /**
      * 获取文件路径
-     * @param string $filename  文件名
-     * @param string $dir       子目录
-     * @param string $suffix    扩展名
+     * @param string $filename 文件名
+     * @param string $dir 子目录
+     * @param string $suffix 扩展名
      * @return string           文件的完整路径
      */
-    public static function getFilePath($filename = '', $dir = 'cron_dir', $suffix = '.crontab'):string
+    public static function getFilePath(string $filename = '', string $dir = 'cron_dir', string $suffix = '.crontab'): string
     {
         clearstatcache();
         $_dir = cron_path() . DIRECTORY_SEPARATOR . $dir;
         is_dir($_dir) or mkdir($_dir, 0777, true);
 
-        return $_dir . DIRECTORY_SEPARATOR  . $filename . $suffix;
+        return $_dir . DIRECTORY_SEPARATOR . $filename . $suffix;
+    }
+
+    /**
+     * 创建计划任务文件
+     * @param string $filename 文件的完整路径
+     * @param mixed $param 数据
+     * @return bool|int             结果
+     */
+    public static function writeCronFile(string $filename, $param)
+    {
+        return Conf::set($filename, $param, 'json', true);
+    }
+
+    /**
+     * 删除计划任务 钩子
+     * @param string $uuid uuid或文件名
+     * @return bool
+     */
+    public static function deleteHock(string $uuid): bool
+    {
+        if (empty($uuid)) {
+            return false;
+        }
+        $file_name = self::getFilePath($uuid, self::cron_dir, self::cron_suffix);
+        clearstatcache();
+        if (is_file($file_name)) {
+            return @unlink($file_name);
+        }
+        return true;
     }
 
     /**
@@ -230,7 +229,7 @@ class Crontab
      * @param string $filename
      * @return string
      */
-    public static function getLockFile($filename = ''):string
+    public static function getLockFile(string $filename = ''): string
     {
         return self::getFilePath($filename, self::lock_dir, self::lock_suffix);
     }
@@ -240,19 +239,9 @@ class Crontab
      * @param string $filename
      * @return string
      */
-    public static function getPidFile($filename = ''):string
+    public static function getPidFile(string $filename = ''): string
     {
         return self::getFilePath($filename, self::pid_dir, self::pid_suffix);
-    }
-
-    /**
-     * 拼接任务log文件的完整路径
-     * @param string $filename
-     * @return string
-     */
-    public static function getLogFile($filename = ''):string
-    {
-        return self::getFilePath($filename, self::log_dir, '.log');
     }
 
     /**
@@ -260,7 +249,7 @@ class Crontab
      * @param string $uuid
      * @return bool
      */
-    public static function runCron(string $uuid = ''):bool
+    public static function runCron(string $uuid = ''): bool
     {
         $cronFilename = Config::filename['crontab'];
         $cronAll = Conf::get($cronFilename, Constant::config_format, []);
@@ -273,14 +262,33 @@ class Crontab
     }
 
     /**
-     * 读取计划任务的日志
-     * @param string $uuid
-     * @return string
+     * 异步执行命令
+     * @descr 原理为php的程序执行函数后台执行
+     * @param string $cmd 任务执行的命令
+     * @param string $uuid 任务的UUID，通常作为唯一的日志文件名
      */
-    public static function readLogs(string $uuid = ''):string
+    public static function execute(string $cmd = '', string $uuid = '')
     {
         $logFile = self::getLogFile($uuid);
-        return Conf::get($logFile, 'raw', '', true);
+        // 清理上次的日志
+        self::clearLogs($uuid);
+        // 运行命令
+        if (DIRECTORY_SEPARATOR === '\\') {
+            pclose(popen('start /B ' . $cmd . ' >> ' . $logFile, 'r'));
+        } else {
+            pclose(popen($cmd . ' >> ' . $logFile . ' 2>&1 &', 'r'));
+            //exec($cmd.' >> '.$logFile.' 2>&1 &');
+        }
+    }
+
+    /**
+     * 拼接任务log文件的完整路径
+     * @param string $filename
+     * @return string
+     */
+    public static function getLogFile(string $filename = ''): string
+    {
+        return self::getFilePath($filename, self::log_dir, '.log');
     }
 
     /**
@@ -288,18 +296,29 @@ class Crontab
      * @param string $uuid
      * @return bool
      */
-    public static function clearLogs(string $uuid = ''):bool
+    public static function clearLogs(string $uuid = ''): bool
     {
         $logFile = self::getLogFile($uuid);
-        $ret = Conf::set($logFile, date('Y-m-d H:i:s').' 清理日志'.PHP_EOL, 'raw', true);
+        $ret = Conf::set($logFile, date('Y-m-d H:i:s') . ' 清理日志' . PHP_EOL, 'raw', true);
         return is_bool($ret) ? $ret : ($ret >= 10);
+    }
+
+    /**
+     * 读取计划任务的日志
+     * @param string $uuid
+     * @return string
+     */
+    public static function readLogs(string $uuid = ''): string
+    {
+        $logFile = self::getLogFile($uuid);
+        return Conf::get($logFile, 'raw', '', true);
     }
 
     /**
      * 清理所有计划任务的日志
      * @return int
      */
-    public static function clearAllLogs():int
+    public static function clearAllLogs(): int
     {
         $cron = Config::getCrontab();
         $count = 0;
@@ -310,25 +329,5 @@ class Crontab
         });
 
         return $count;
-    }
-
-    /**
-     * 异步执行命令
-     * @descr 原理为php的程序执行函数后台执行
-     * @param string $cmd       任务执行的命令
-     * @param string $uuid      任务的UUID，通常作为唯一的日志文件名
-     */
-    public static function execute($cmd = '', $uuid = '')
-    {
-        $logFile = self::getLogFile($uuid);
-        // 清理上次的日志
-        self::clearLogs($uuid);
-        // 运行命令
-        if (DIRECTORY_SEPARATOR === '\\') {
-            pclose(popen('start /B '.$cmd.' >> '.$logFile, 'r'));
-        } else {
-            pclose(popen($cmd.' >> '.$logFile.' 2>&1 &', 'r'));
-            //exec($cmd.' >> '.$logFile.' 2>&1 &');
-        }
     }
 }

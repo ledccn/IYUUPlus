@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Spiders;
 
 use IYUU\Library\Selector;
@@ -11,7 +12,7 @@ class btschool extends mteam
      * @param string $html
      * @return string
      */
-    public static function getTitle(string $html):string
+    public static function getTitle(string $html): string
     {
         $h2StrStart = '<br/>';
         $h2StrEnd = '</td><td width="50" class="embedded"';
@@ -26,8 +27,8 @@ class btschool extends mteam
             //存在副标题
             $titleTemp = substr($temp, $h2_offset + strlen($h2StrStart), $h2_len);
             //二次过滤
-            $titleTemp = Selector::remove($titleTemp, "//a");	//编码标签
-            $titleTemp = Selector::remove($titleTemp, "//div");	//做种标签
+            $titleTemp = Selector::remove($titleTemp, "//a");    //编码标签
+            $titleTemp = Selector::remove($titleTemp, "//div");    //做种标签
             if (strpos($titleTemp, '<div ') != false) {
                 $titleTemp = substr($titleTemp, 0, strpos($titleTemp, '<div '));
             }
@@ -41,10 +42,10 @@ class btschool extends mteam
                         if (empty($vv)) {
                             continue;
                         }
-                        $titleSpan.='['.$vv.'] ';
+                        $titleSpan .= '[' . $vv . '] ';
                     }
                 } else {
-                    $titleSpan.='['.$span.'] ';
+                    $titleSpan .= '[' . $span . '] ';
                 }
             }
             // 精确适配标签 end

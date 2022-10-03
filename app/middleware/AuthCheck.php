@@ -1,4 +1,5 @@
 <?php
+
 namespace app\middleware;
 
 use Webman\MiddlewareInterface;
@@ -12,7 +13,7 @@ use app\common\Constant;
  */
 class AuthCheck implements MiddlewareInterface
 {
-    public function process(Request $request, callable $next) : Response
+    public function process(Request $request, callable $next): Response
     {
         $session = $request->session();
         $action = $request->action;

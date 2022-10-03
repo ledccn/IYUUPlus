@@ -19,9 +19,9 @@ use support\view\ThinkPHP;
 
 return [
     // 文件更新检测
-    'IYUUFileMonitor' => [
-        'handler'     => process\FileMonitor::class,
-        'reloadable'  => false,
+    'monitor' => [
+        'handler' => process\Monitor::class,
+        'reloadable' => false,
         'constructor' => [
             // 监控这些目录
             'monitor_dir' => [
@@ -30,12 +30,13 @@ return [
                 base_path() . '/process',
                 base_path() . '/src',
                 base_path() . '/support',
-                base_path() . '/resource'
+                base_path() . '/resource',
+                base_path() . '/.env',
             ],
-            // 监控这些后缀的文件
-            'monitor_extenstions' => [
-                'php', 'html', 'htm'
-            ]
+            // Files with these suffixes will be monitored
+            'monitor_extensions' => [
+                'php', 'html', 'htm', 'env'
+            ],
         ]
     ],
     // 其它进程
@@ -44,7 +45,7 @@ return [
         'listen' => 'websocket://0.0.0.0:8888',
         'count'  => 1,
     ],*/
-    'IYUUTask'  => [
-        'handler'  => process\Task::class
+    'IYUUTask' => [
+        'handler' => process\Task::class
     ],
 ];

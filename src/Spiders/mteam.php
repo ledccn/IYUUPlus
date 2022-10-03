@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Spiders;
 
 use IYUU\Library\Selector;
@@ -25,7 +26,7 @@ class mteam extends SitesBase
     /**
      * H&R 标志
      */
-    public static $HR = array('class="hitandrun"','alt="H&amp;R"','title="H&amp;R"');
+    public static $HR = array('class="hitandrun"', 'alt="H&amp;R"', 'title="H&amp;R"');
     /**
      * 解码后种子列表数组
      */
@@ -34,7 +35,7 @@ class mteam extends SitesBase
     /**
      * 请求页面
      *
-     * @param string        $url
+     * @param string $url
      * @return array|null
      */
     public static function get($url = 'torrents.php')
@@ -61,7 +62,7 @@ class mteam extends SitesBase
             $arr['id'] = static::getId($v);
 
             // 种子地址
-            $arr['url'] = self::downloadPrefix.$arr['id'];
+            $arr['url'] = self::downloadPrefix . $arr['id'];
             // 获取主标题
             $arr['h1'] = static::getH1($v);
 
@@ -74,7 +75,7 @@ class mteam extends SitesBase
             static::$TorrentList[$k]['title'] = isset($arr['title']) && $arr['title'] ? $arr['title'] : '';
             static::$TorrentList[$k]['details'] = static::getHost() . static::detailsPrefix . $arr['id'];
             static::$TorrentList[$k]['download'] = static::getHost() . $arr['url'] . $url_join;
-            static::$TorrentList[$k]['filename'] = $arr['id'].'.torrent';
+            static::$TorrentList[$k]['filename'] = $arr['id'] . '.torrent';
 
             // 种子促销类型解码
             if (strpos($v, static::$getTorrent[0]) === false) {
@@ -107,7 +108,7 @@ class mteam extends SitesBase
      * @param string $html
      * @return int
      */
-    public static function getId(string $html):int
+    public static function getId(string $html): int
     {
         // 种子id
         $regex = "/details.php\?id\=(\d+)/i";
@@ -123,7 +124,7 @@ class mteam extends SitesBase
      * @param string $html
      * @return string
      */
-    public static function getH1(string $html):string
+    public static function getH1(string $html): string
     {
         $regex = '/<a title=[\'|\"](.*?)[\'|\"]/';
         $h1 = '';
@@ -139,7 +140,7 @@ class mteam extends SitesBase
      * @param string $html
      * @return string
      */
-    public static function getTitle(string $html):string
+    public static function getTitle(string $html): string
     {
         $h2StrStart = '<br />';
         $h2StrEnd = '</td><td width="80"';

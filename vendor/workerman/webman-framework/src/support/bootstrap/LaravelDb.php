@@ -14,18 +14,21 @@
 
 namespace support\bootstrap;
 
-use Webman\Bootstrap;
-use Illuminate\Database\Capsule\Manager as Capsule;
-use Illuminate\Events\Dispatcher;
 use Illuminate\Container\Container;
-use Jenssegers\Mongodb\Connection;
-use Workerman\Worker;
-use Workerman\Timer;
+use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Connection;
+use Illuminate\Events\Dispatcher;
+use Illuminate\Pagination\Paginator;
+use Jenssegers\Mongodb\Connection as MongodbConnection;
 use support\Db;
+use Throwable;
+use Webman\Bootstrap;
+use Workerman\Timer;
+use Workerman\Worker;
 
 /**
  * Class Laravel
- * @package support\bootstrap
+ * @package support\Bootstrap
  */
 class LaravelDb implements Bootstrap
 {
@@ -36,26 +39,26 @@ class LaravelDb implements Bootstrap
      */
     public static function start($worker)
     {
-        if (!class_exists('\Illuminate\Database\Capsule\Manager')) {
+        if (!class_exists(Capsule::class)) {
             return;
         }
 
-        $connections = config('database.connections');
+        $config = \config('database', []);
+        $connections = $config['connections'] ?? [];
         if (!$connections) {
             return;
         }
 
         $capsule = new Capsule;
-        $configs = config('database');
 
         $capsule->getDatabaseManager()->extend('mongodb', function ($config, $name) {
             $config['name'] = $name;
-
-            return new Connection($config);
+            return new MongodbConnection($config);
         });
 
-        if (isset($configs['default'])) {
-            $default_config = $connections[$configs['default']];
+        $default = $config['default'] ?? false;
+        if ($default) {
+            $default_config = $connections[$config['default']];
             $capsule->addConnection($default_config);
         }
 
@@ -63,7 +66,7 @@ class LaravelDb implements Bootstrap
             $capsule->addConnection($config, $name);
         }
 
-        if (class_exists('\Illuminate\Events\Dispatcher')) {
+        if (\class_exists(Dispatcher::class)) {
             $capsule->setEventDispatcher(new Dispatcher(new Container));
         }
 
@@ -73,12 +76,36 @@ class LaravelDb implements Bootstrap
 
         // Heartbeat
         if ($worker) {
-            Timer::add(55, function () use ($connections) {
+            Timer::add(55, function () use ($default, $connections) {
+                if (!class_exists(Connection::class, false)) {
+                    return;
+                }
                 foreach ($connections as $key => $item) {
                     if ($item['driver'] == 'mysql') {
-                        Db::connection($key)->select('select 1');
+                        try {
+                            if ($key == $default) {
+                                Db::select('select 1');
+                            } else {
+                                Db::connection($key)->select('select 1');
+                            }
+                        } catch (Throwable $e) {
+                        }
                     }
                 }
+            });
+        }
+
+        // Paginator
+        if (class_exists(Paginator::class)) {
+            Paginator::queryStringResolver(function () {
+                return request()->queryString();
+            });
+            Paginator::currentPathResolver(function () {
+                return request()->path();
+            });
+            Paginator::currentPageResolver(function ($page_name = 'page') {
+                $page = (int)request()->input($page_name, 1);
+                return $page > 0 ? $page : 1;
             });
         }
     }

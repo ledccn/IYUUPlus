@@ -1,4 +1,5 @@
 <?php
+
 namespace IYUU\Rss;
 
 use DOMDocument;
@@ -34,7 +35,7 @@ class hdpost extends AbstractRss
     /**
      * 抽象方法，在类中实现
      * 请求url，获取html页面
-     * @param string    $url
+     * @param string $url
      * @return string
      */
     public function get($url = '')
@@ -48,7 +49,7 @@ class hdpost extends AbstractRss
 
         // 2. 替换
         $url = str_replace("{rsskey}", static::getConfig('site.rsskey', ''), $url);
-        echo $this->site." 正在请求RSS... {$url}". PHP_EOL;
+        echo $this->site . " 正在请求RSS... {$url}" . PHP_EOL;
         $url = (stripos($url, 'http://') === 0 || stripos($url, 'https://') === 0) ? $url : $this->host . $url;
         $res = $this->curl->get($url);
         if ($res->http_status_code == 200) {
@@ -62,12 +63,12 @@ class hdpost extends AbstractRss
     /**
      * 抽象方法，在类中实现
      * 解码html为种子数组
-     * @param string    $html
+     * @param string $html
      * @return array
      */
     public function decode($html = '')
     {
-        echo "正在解码RSS资源...". PHP_EOL;
+        echo "正在解码RSS资源..." . PHP_EOL;
         return $this->NexusPHP($html);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 namespace app\common\event;
 
 use Throwable;
@@ -8,7 +9,7 @@ use Throwable;
  * 事件调度器
  * Class EventDispatcher
  */
-class EventDispatcher implements ListenerProviderInterface, EventDispatcherInterface
+class EventDispatcher
 {
     /**
      * @var EventListenerInterface
@@ -17,9 +18,9 @@ class EventDispatcher implements ListenerProviderInterface, EventDispatcherInter
 
     /**
      * EventDispatcher constructor.
-     * @param EventListenerInterface ...$listeners
+     * @param EventListenerInterface[] $listeners
      */
-    public function __construct($listeners)
+    public function __construct(array $listeners)
     {
         $eventListeners = [];
         foreach ($listeners as $listener) {
@@ -31,29 +32,9 @@ class EventDispatcher implements ListenerProviderInterface, EventDispatcherInter
     }
 
     /**
-     * 检出当前事件的所有监听器
-     *
-     * @param object $event
-     *   An event for which to return the relevant listeners.
-     * @return iterable[callable]
-     *   An iterable (array, iterator, or generator) of callables.  Each
-     *   callable MUST be type-compatible with $event.
-     */
-    public function getListenersForEvent(object $event): iterable
-    {
-        $class     = get_class($event);
-        $listeners = $this->eventListeners[$class] ?? [];
-        $iterable  = [];
-        foreach ($listeners as $listener) {
-            $iterable[] = [$listener, 'process'];
-        }
-        return $iterable;
-    }
-
-    /**
      * 派发当前事件到所有监听器的process处理方法
      *
-     * @param object $event     当前事件对象
+     * @param object $event 当前事件对象
      * @return string
      *   The Event that was passed, now modified by listeners.
      */
@@ -70,5 +51,25 @@ class EventDispatcher implements ListenerProviderInterface, EventDispatcherInter
             }
         }
         return $event;
+    }
+
+    /**
+     * 检出当前事件的所有监听器
+     *
+     * @param object $event
+     *   An event for which to return the relevant listeners.
+     * @return iterable[callable]
+     *   An iterable (array, iterator, or generator) of callables.  Each
+     *   callable MUST be type-compatible with $event.
+     */
+    public function getListenersForEvent(object $event): iterable
+    {
+        $class = get_class($event);
+        $listeners = $this->eventListeners[$class] ?? [];
+        $iterable = [];
+        foreach ($listeners as $listener) {
+            $iterable[] = [$listener, 'process'];
+        }
+        return $iterable;
     }
 }

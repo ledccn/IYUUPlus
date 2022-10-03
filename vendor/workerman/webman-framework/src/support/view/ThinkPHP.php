@@ -29,8 +29,8 @@ class ThinkPHP implements View
     protected static $_vars = [];
 
     /**
-     * @param $name
-     * @param null $value
+     * @param string|array $name
+     * @param mixed $value
      */
     public static function assign($name, $value = null)
     {
@@ -38,21 +38,26 @@ class ThinkPHP implements View
     }
 
     /**
-     * @param $template
-     * @param $vars
-     * @param string $app
-     * @return mixed
+     * @param string $template
+     * @param array $vars
+     * @param string|null $app
+     * @return false|string
      */
-    public static function render($template, $vars, $app = null)
+    public static function render(string $template, array $vars, string $app = null)
     {
-        $app = $app === null ? \request()->app : $app;
-        $view_path = $app === '' ? \app_path() . '/view/' : \app_path() . "/$app/view/";
+        $request = \request();
+        $plugin = $request->plugin ?? '';
+        $app = $app === null ? $request->app : $app;
+        $config_prefix = $plugin ? "plugin.$plugin." : '';
+        $view_suffix = \config("{$config_prefix}view.options.view_suffix", 'html');
+        $base_view_path = $plugin ? \base_path() . "/plugin/$plugin/app" : \app_path();
+        $view_path = $app === '' ? "$base_view_path/view/" : "$base_view_path/$app/view/";
         $default_options = [
             'view_path' => $view_path,
             'cache_path' => \runtime_path() . '/views/',
-            'view_suffix' => config('view.view_suffix', 'html')
+            'view_suffix' => $view_suffix
         ];
-        $options = $default_options + \config('view.options', []);
+        $options = $default_options + \config("{$config_prefix}view.options", []);
         $views = new Template($options);
         \ob_start();
         $vars = \array_merge(static::$_vars, $vars);
