@@ -79,7 +79,7 @@ goto :end
 %PHP_BINARY% -v
 echo.
 echo "如果您需要停止程序，请按下组合键：CTRL + C"
-%PHP_BINARY% start.php task.php
+%PHP_BINARY% windows.php
 pause
 goto :end
 
