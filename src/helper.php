@@ -184,7 +184,7 @@ function convertToMB(string $from)
  * [percentage] => 100%
  * [owner] => 匿名
  * )
- * @return bool 或 string    false不过滤
+ * @return bool|string 不过滤false，返回string表示过滤的原因
  */
 function filter(array $filter = [], array $torrent = array())
 {

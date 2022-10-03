@@ -112,3 +112,51 @@ function booleanParse($value): bool
 
     return $rs;
 }
+
+/**
+ * 获取当前版本commit
+ * @param string $branch
+ * @param bool $short
+ * @return string
+ */
+function get_current_git_commit(string $branch = 'master', bool $short = true): string
+{
+    if ($hash = file_get_contents(sprintf(base_path() . '/.git/refs/heads/%s', $branch))) {
+        $hash = trim($hash);
+
+        return $short ? substr($hash, 0, 7) : $hash;
+    }
+    return '';
+}
+
+/**
+ * 获取当前版本时间
+ * @param string $branch
+ * @return string
+ */
+function get_current_git_filemtime(string $branch = 'master'): string
+{
+    if ($time = filemtime(sprintf(base_path() . '/.git/refs/heads/%s', $branch))) {
+        return date("Y-m-d H:i:s", $time);
+    }
+    return '';
+}
+
+/**
+ * 转换成易读的容量格式(包含小数)
+ * @param int|float $bytes 字节
+ * @param string $delimiter 分隔符 [&nbsp; | <br />]
+ * @param int $decimals 保留小数点
+ * @return string
+ */
+function dataSize($bytes, string $delimiter = '', int $decimals = 2): string
+{
+    $type = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+    $i = 0;
+    while ($bytes >= 1024) {
+        $bytes /= 1024;
+        $i++;
+    }
+
+    return number_format($bytes, $decimals) . $delimiter . $type[$i];
+}

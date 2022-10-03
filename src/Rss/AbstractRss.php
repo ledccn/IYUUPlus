@@ -8,6 +8,7 @@ use DOMNode;
 use app\common\Constant;
 use IYUU\Library\Rpc;
 use app\domain\ConfigParser\Rss as domainRss;
+use function explode;
 
 abstract class AbstractRss
 {
@@ -66,7 +67,7 @@ abstract class AbstractRss
      * 构造方法，配置应用信息
      * @param bool $init 是否初始化（domainRss获取全部站点名时候，需要到）
      */
-    final public function __construct($init = true)
+    final public function __construct(bool $init = true)
     {
         if ($init) {
             echo $this->site . " 正在初始化RSS配置..." . PHP_EOL;
@@ -138,7 +139,7 @@ abstract class AbstractRss
      * @param string $uuid 任务标识
      * @return mixed 返回站点的rss解码实例
      */
-    public static function getInstance($uuid)
+    public static function getInstance(string $uuid)
     {
         $filename = self::getCliInput($uuid);
         // 转小写
@@ -161,7 +162,7 @@ abstract class AbstractRss
      * @param string $uuid 任务标识
      * @return string 类文件名
      */
-    private static function getCliInput($uuid)
+    private static function getCliInput(string $uuid): string
     {
         self::$conf = domainRss::parser($uuid);
         if (empty(self::$conf)) {
@@ -189,7 +190,7 @@ abstract class AbstractRss
      */
     public static function getFileName(string $site_name): string
     {
-        return isset(self::SITENAME_TO_FILENAME_MAP[$site_name]) ? self::SITENAME_TO_FILENAME_MAP[$site_name] : $site_name;
+        return self::SITENAME_TO_FILENAME_MAP[$site_name] ?? $site_name;
     }
 
     /**
@@ -219,7 +220,7 @@ abstract class AbstractRss
         if ($key === null) {
             return self::$conf;
         }
-        $key_array = \explode('.', $key);
+        $key_array = explode('.', $key);
         $value = self::$conf;
         foreach ($key_array as $index) {
             if (!isset($value[$index])) {

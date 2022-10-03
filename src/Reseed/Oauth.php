@@ -9,15 +9,17 @@ use Curl\Curl;
  */
 class Oauth
 {
-    const SiteLoginCache = RUNTIME_PATH . DS . 'db' . DS . 'siteLoginCache_{}.json';
     // 登录缓存路径
+    const SiteLoginCache = RUNTIME_PATH . DS . 'db' . DS . 'siteLoginCache_{}.json';
+
+    //配置
     private static $conf = [];
 
     /**
      * 初始化
      * @param array $config
      */
-    public static function init($config = [])
+    public static function init(array $config = [])
     {
         $dir = dirname(self::SiteLoginCache);
         is_dir($dir) or mkdir($dir, 0777, true);
@@ -32,7 +34,7 @@ class Oauth
      * @param array $sites
      * @return bool
      */
-    public static function login($apiUrl = '', $sites = array())
+    public static function login(string $apiUrl = '', array $sites = array()): bool
     {
         // 云端下发合作的站点标识
         if (empty($sites)) {
@@ -81,8 +83,9 @@ class Oauth
 
     /**
      * 从配置文件内读取爱语飞飞token作为鉴权参数
+     * @return string
      */
-    public static function getSign()
+    public static function getSign(): string
     {
         $token = empty(self::$conf['iyuu.cn']) ? '' : self::$conf['iyuu.cn'];
         if (empty($token) || strlen($token) < 46) {
@@ -98,15 +101,14 @@ class Oauth
      * @desc 作用：减少对服务器请求，跳过鉴权提示信息；
      * @param string $site
      * @param array $array
-     * @return bool|int
+     * @return void
      */
-    private static function setSiteLoginCache($site = '', $array = [])
+    private static function setSiteLoginCache(string $site, array $array): void
     {
         $json = json_encode($array, JSON_UNESCAPED_UNICODE);
         $file = str_replace('{}', $site, self::SiteLoginCache);
         $file_pointer = @fopen($file, "w");
         $worldsnum = @fwrite($file_pointer, $json);
         @fclose($file_pointer);
-        return $worldsnum;
     }
 }

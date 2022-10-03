@@ -12,12 +12,14 @@ use Throwable;
 class EventDispatcher
 {
     /**
+     * 所有事件监听器
      * @var EventListenerInterface
      */
     protected $eventListeners = [];
 
     /**
-     * EventDispatcher constructor.
+     * 构造函数
+     * @descr 初始化所有事件监听器
      * @param EventListenerInterface[] $listeners
      */
     public function __construct(array $listeners)
@@ -32,13 +34,11 @@ class EventDispatcher
     }
 
     /**
-     * 派发当前事件到所有监听器的process处理方法
-     *
+     * 派发当前事件到所有监听器的处理方法process
      * @param object $event 当前事件对象
-     * @return string
-     *   The Event that was passed, now modified by listeners.
+     * @return object
      */
-    public function dispatch(object $event)
+    public function dispatch(object $event): object
     {
         foreach ($this->getListenersForEvent($event) as $callback) {
             try {
@@ -55,12 +55,8 @@ class EventDispatcher
 
     /**
      * 检出当前事件的所有监听器
-     *
-     * @param object $event
-     *   An event for which to return the relevant listeners.
-     * @return iterable[callable]
-     *   An iterable (array, iterator, or generator) of callables.  Each
-     *   callable MUST be type-compatible with $event.
+     * @param object $event 当前事件类
+     * @return iterable 可迭代对象
      */
     public function getListenersForEvent(object $event): iterable
     {
