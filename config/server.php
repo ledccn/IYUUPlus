@@ -1,6 +1,6 @@
 <?php
 return [
-    'listen' => 'http://0.0.0.0:8787',
+    'listen' => defined('IYUU_LISTEN_IPV6') ? 'http://[::]:8787' : 'http://0.0.0.0:8787',
     'transport' => 'tcp',
     'context' => [],
     'name' => 'IYUUPlus',

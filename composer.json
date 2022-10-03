@@ -51,9 +51,9 @@
       "IYUU\\": "src/"
     },
     "files": [
-      "./init.php",
+      "./app/helpers.php",
       "./support/helpers.php",
-      "./app/helpers.php"
+      "./init.php"
     ]
   },
   "scripts": {
