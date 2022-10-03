@@ -2,6 +2,7 @@
 
 namespace IYUU\Reseed;
 
+use app\common\event\EventDispatcher;
 use Curl\Curl;
 use Exception;
 use IYUU\Client\AbstractClient;
@@ -14,12 +15,20 @@ use app\common\components\Curl as ICurl;
 use app\common\Constant;
 use app\domain\ConfigParser\Reseed as domainReseed;
 use app\domain\Crontab as domainCrontab;
+use IYUU\Reseed\Events\ClientLinkSuccessEvent;
+use IYUU\Reseed\Listener\ClientLinkSuccessListener;
 
 /**
  * IYUUAutoReseed辅种类
  */
 class AutoReseed
 {
+    /**
+     * 事件调度器
+     * @var EventDispatcher
+     */
+    protected static $EventDispatcher;
+
     /**
      * 运行缓存目录
      * @var string
@@ -126,6 +135,12 @@ class AutoReseed
      */
     public static function init()
     {
+        //初始化事件调度器
+        $listener = [
+            new ClientLinkSuccessListener::class,
+        ];
+        static::$EventDispatcher = new EventDispatcher($listener);
+
         // 1. 初始化curl
         self::$curl = new Curl();
         self::$curl->setOpt(CURLOPT_SSL_VERIFYPEER, false);
@@ -154,8 +169,8 @@ class AutoReseed
     protected static function getCliInput()
     {
         global $argv;
-        $cron_name = isset($argv[1]) ? $argv[1] : null;
-        is_null($cron_name) and die('缺少命令行参数。');
+        $cron_name = $argv[1] ?? null;
+        empty($cron_name) and die('缺少命令行参数。');
         self::$conf = domainReseed::parser($cron_name);
         if (empty(self::$conf['sites']) || empty(self::$conf['clients'])) {
             die('解析计划任务失败：站点或客户端为空！可能当前任务已被停止或删除！' . PHP_EOL);
@@ -187,7 +202,7 @@ class AutoReseed
      * 保存进程pid文件
      * @param string $cron_name
      */
-    protected static function savePid(string $cron_name = '')
+    protected static function savePid(string $cron_name)
     {
         self::$conf['cron_name'] = $cron_name;  // 保存计划任务名字
         //pid文件
@@ -224,7 +239,7 @@ class AutoReseed
      * 检查pid文件
      * @return bool
      */
-    protected static function checkPid()
+    protected static function checkPid(): bool
     {
         clearstatcache();
         return is_file(self::$pid_file);
@@ -311,7 +326,7 @@ class AutoReseed
             $j++;
             $data[$k][] = $j . ". " . $v['site'];
         }
-        echo "IYUUAutoReseed自动辅种脚本，目前支持以下站点：" . PHP_EOL;
+        echo "IYUUPlus自动辅种，目前支持以下站点：" . PHP_EOL;
         // 输出支持站点表格
         $table = new Table();
         $table->setRows($data);
@@ -336,7 +351,7 @@ class AutoReseed
                 static::$links[$k]['_config'] = $v;     // 完整配置
                 static::$links[$k]['type'] = $v['type'];// 类型
                 static::$links[$k]['BT_backup'] = !empty($v['BT_backup']) ? $v['BT_backup'] : '';
-                static::$links[$k]['root_folder'] = isset($v['root_folder']) && booleanParse($v['root_folder']) ? true : false;
+                static::$links[$k]['root_folder'] = isset($v['root_folder']) && booleanParse($v['root_folder']);
                 $result = $client->status();
                 static::$links[$k]['version'] = $result;    // QB：v4.3.8, TR：success
                 static::$links[$k]['reseed_infohash'] = []; // 初始化本次运行时辅种infohash变量
@@ -345,6 +360,9 @@ class AutoReseed
                 die('[连接错误] ' . $v['host'] . ' ' . $e->getMessage() . PHP_EOL);
             }
         }
+        //触发事件
+        $event = new ClientLinkSuccessEvent(static::$clients, static::$links);
+        static::$EventDispatcher->dispatch($event);
     }
 
     /**
@@ -369,7 +387,7 @@ class AutoReseed
         // 按客户端循环辅种 开始
         foreach (self::$links as $clientKey => $clientValue) {
             if (empty($clientValue)) {
-                echo "【" . $clientValue['_config']['name'] . "】 用户名或密码未配置，已跳过" . PHP_EOL . PHP_EOL;
+                echo "【当前下载器】 用户名或密码未配置，已跳过" . PHP_EOL . PHP_EOL;
                 continue;
             }
             echo "正在从下载器 【" . $clientValue['_config']['name'] . "】 获取种子哈希……" . PHP_EOL;
@@ -459,7 +477,7 @@ class AutoReseed
      * @param int $clientKey 当前客户端key
      * @param array $clientValue 当前客户端配置
      */
-    private static function requestApi($hashString, $hashArray, $clientKey, $clientValue)
+    private static function requestApi(array $hashString, array $hashArray, int $clientKey, array $clientValue)
     {
         echo "正在向服务器提交 【" . $clientValue['_config']['name'] . "】 种子哈希……" . PHP_EOL;
         $res = self::$curl->post(Constant::API_BASE . Constant::API['infohash'], $hashArray);
@@ -493,7 +511,7 @@ class AutoReseed
      * @param array $hashString 当前客户端infohash与目录对应的字典
      * @param int $clientKey 当前客户端key
      */
-    private static function selfClientReseed($data = [], $hashString = [], $clientKey = 0)
+    private static function selfClientReseed(array $data = [], array $hashString = [], int $clientKey = 0)
     {
         foreach ($data as $info_hash => $reseed) {
             $downloadDir = $hashString[$info_hash];   // 辅种目录
@@ -727,7 +745,7 @@ class AutoReseed
      * @param int $sid
      * @param int $torrent_id
      */
-    private static function setNotify($siteName = '', $sid = 0, $torrent_id = 0)
+    private static function setNotify(string $siteName = '', int $sid = 0, int $torrent_id = 0)
     {
         self::$errNotify = array(
             'sign' => Oauth::getSign(),
@@ -739,14 +757,14 @@ class AutoReseed
 
     /**
      * 辅种前置检查
-     * @param $k                int         客户端key
-     * @param $torrent          array       可辅的种子
-     * @param $infohash_Dir     array       当前客户端hash目录对应字典
-     * @param $downloadDir      string      辅种目录
-     * @param $_url             string      种子临时连接
+     * @param int $k                         客户端key
+     * @param array $torrent                 可辅的种子
+     * @param array $infohash_Dir            当前客户端hash目录对应字典
+     * @param string $downloadDir            辅种目录
+     * @param string $_url                   种子临时连接
      * @return bool     true 可辅种 | false 不可辅种
      */
-    private static function reseedCheck($k, $torrent, $infohash_Dir, $downloadDir, $_url)
+    private static function reseedCheck(int $k, array $torrent, array $infohash_Dir, string $downloadDir, string $_url): bool
     {
         self::checkPid() or die('检测到当前任务被外部主动停止，进程退出！' . PHP_EOL);
         $sid = $torrent['sid'];
@@ -809,7 +827,7 @@ class AutoReseed
                     return false;
                 } else {
                     // 异步间隔流控算法：各站独立、执行时间最优
-                    $lastTime = isset($limitRule['time']) ? $limitRule['time'] : 0; // 最近一次辅种成功的时间
+                    $lastTime = $limitRule['time'] ?? 0; // 最近一次辅种成功的时间
                     if ($lastTime) {
                         $interval = time() - $lastTime;   // 间隔时间
                         if ($interval < $limitRule['sleep']) {
@@ -850,7 +868,7 @@ class AutoReseed
         print "种子详情页：" . $details_url . PHP_EOL;
         $details_html = download($details_url, $cookie, $userAgent);
         // 删种检查
-        if (strpos($details_html, '没有该ID的种子') != false) {
+        if (strpos($details_html, '没有该ID的种子')) {
             echo '种子已被删除！' . PHP_EOL;
             self::sendNotify('404');
             return null;
@@ -881,7 +899,7 @@ class AutoReseed
      * @param string $desp
      * @return false|string
      */
-    protected static function ff($text = '', $desp = '')
+    protected static function ff(string $text = '', string $desp = '')
     {
         $token = static::$conf['iyuu.cn'];
         $desp = empty($desp) ? date("Y-m-d H:i:s") : $desp;
@@ -899,7 +917,7 @@ class AutoReseed
      * @param string $url 未替换前的url
      * @return string           带host的完整种子下载连接
      */
-    private static function getTorrentUrl($site = '', $sid = 0, $url = '')
+    private static function getTorrentUrl(string $site = '', int $sid = 0, string $url = ''): string
     {
         // 注入替换规则
         if (in_array($site, self::$recommend)) {
@@ -935,7 +953,7 @@ class AutoReseed
      * @param string $url
      * @return string
      */
-    private static function getRecommendTorrentUrl($site = '', $url = '')
+    private static function getRecommendTorrentUrl(string $site = '', string $url = ''): string
     {
         if (in_array($site, self::$recommend)) {
             $now = time();
@@ -995,7 +1013,7 @@ class AutoReseed
      * @param string $site
      * @return string
      */
-    private static function getDownloadTorrentSign($site = '')
+    private static function getDownloadTorrentSign(string $site = ''): string
     {
         $signKEY = 'signString';
         $expireKEY = 'signExpire';
@@ -1008,7 +1026,7 @@ class AutoReseed
             'sign' => self::$conf['iyuu.cn'],
             'version' => IYUU_VERSION(),
             'site' => $site,
-            'uid' => isset(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0,
+            'uid' => self::$_sites[$site]['id'] ?? 0,
         ];
         $res = self::$curl->get(Constant::API_BASE . Constant::API['getSign'], $data);
         $ret = json_decode($res->response, true);
@@ -1029,13 +1047,13 @@ class AutoReseed
 
     /**
      * @brief 添加下载任务
-     * @param $clientKey
+     * @param int $clientKey
      * @param string $torrent 种子元数据
      * @param string $save_path 保存路径
      * @param array $extra_options
      * @return bool
      */
-    protected static function add($clientKey, $torrent, $save_path = '', $extra_options = array())
+    protected static function add(int $clientKey, string $torrent, string $save_path = '', array $extra_options = array()): bool
     {
         try {
             $is_url = static::isTorrentUrl($torrent);
@@ -1044,7 +1062,7 @@ class AutoReseed
             // 判断
             switch ($type) {
                 case 'transmission':
-                    $extra_options['paused'] = isset($extra_options['paused']) ? $extra_options['paused'] : true;
+                    $extra_options['paused'] = $extra_options['paused'] ?? true;
                     if ($is_url) {
                         $result = static::getRpc($clientKey)->add($torrent, $save_path, $extra_options);            // URL添加
                     } else {
@@ -1058,7 +1076,7 @@ class AutoReseed
                         print "********RPC添加下载任务成功 [" . $result['result'] . "] (id=" . $id . ")" . PHP_EOL . PHP_EOL;
                         return true;
                     } else {
-                        $err = isset($result['result']) ? $result['result'] : '未知错误，请稍后重试！';
+                        $err = $result['result'] ?? '未知错误，请稍后重试！';
                         if (strpos($err, 'http error 404: Not Found') !== false) {
                             static::sendNotify('404');
                         }
@@ -1107,7 +1125,7 @@ class AutoReseed
      * @param string $torrent
      * @return bool
      */
-    protected static function isTorrentUrl(string $torrent)
+    protected static function isTorrentUrl(string $torrent): bool
     {
         return (stripos($torrent, 'http://') === 0) || (stripos($torrent, 'https://') === 0) || (strpos($torrent, 'magnet:?xt=urn:btih:') === 0);
     }
@@ -1125,9 +1143,9 @@ class AutoReseed
     /**
      * 错误的种子通知服务器
      * @param string $error
-     * @return bool
+     * @return void
      */
-    private static function sendNotify($error = '')
+    private static function sendNotify(string $error = ''): void
     {
         self::$errNotify['error'] = $error;
 
@@ -1135,7 +1153,7 @@ class AutoReseed
         $errNotifyCacheFile = self::errNotifyCacheFile(self::$errNotify['sid'], self::$errNotify['torrent_id']);
         if (is_file($errNotifyCacheFile)) {
             echo '感谢您的参与，失效种子已经成功汇报过！！' . PHP_EOL;
-            return true;
+            return;
         }
 
         // 创建错误通知缓存
@@ -1154,7 +1172,6 @@ class AutoReseed
         if (isset($res['data']['success']) && $res['data']['success']) {
             echo '感谢您的参与，失效种子上报成功！！' . PHP_EOL;
         }
-        return true;
     }
 
     /**
@@ -1163,7 +1180,7 @@ class AutoReseed
      * @param int $torrent_id
      * @return string
      */
-    private static function errNotifyCacheFile($site_id = 0, $torrent_id = 0)
+    private static function errNotifyCacheFile(int $site_id = 0, int $torrent_id = 0): string
     {
         $filename = $site_id . '_' . $torrent_id . '.txt';
         return self::$cacheNotify . $filename;

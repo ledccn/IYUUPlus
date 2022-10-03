@@ -12,6 +12,11 @@ use Throwable;
 class EventDispatcher
 {
     /**
+     * @var EventDispatcher
+     */
+    private static $instance = null;
+
+    /**
      * 所有事件监听器
      * @var EventListenerInterface
      */
@@ -31,6 +36,20 @@ class EventDispatcher
             }
         }
         $this->eventListeners = $eventListeners;
+    }
+
+    /**
+     * 单例调用
+     * @param EventListenerInterface[] $listeners
+     * @return EventDispatcher
+     */
+    final public static function getInstance(array $listeners = []): EventDispatcher
+    {
+        if (null === static::$instance) {
+            static::$instance = new static($listeners);
+        }
+
+        return static::$instance;
     }
 
     /**
