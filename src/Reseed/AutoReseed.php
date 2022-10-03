@@ -137,7 +137,7 @@ class AutoReseed
     {
         //初始化事件调度器
         $listener = [
-            new ClientLinkSuccessListener::class,
+            new ClientLinkSuccessListener,
         ];
         static::$EventDispatcher = new EventDispatcher($listener);
 
