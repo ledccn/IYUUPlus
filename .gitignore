@@ -4,7 +4,6 @@
 /composer
 /db
 /php
-/composer.lock
 *.log
 .env
 /._.DS_Store
