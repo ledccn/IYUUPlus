@@ -22,6 +22,9 @@ I::::::::I    Y:::::::::::Y        UU:::::::::UU        UU:::::::::UU
 IIIIIIIIII    YYYYYYYYYYYYY          UUUUUUUUU            UUUUUUUUU
 
 EOF;
+
+// 设置时区
+date_default_timezone_set('Asia/Shanghai');
 echo microtime(true) . ' 当前时间：' . date('Y-m-d H:i:s') . PHP_EOL;
 echo microtime(true) . ' 当前操作系统：' . PHP_OS . PHP_EOL;
 echo microtime(true) . ' 当前运行环境：' . PHP_OS_FAMILY . PHP_EOL;
@@ -53,8 +56,6 @@ if (PHP_SAPI != 'cli') {
     exit("You must run the CLI environment\n");
 }
 
-// 设置时区
-date_default_timezone_set('Asia/Shanghai');
 echo microtime(true) . ' 环境变量初始化完成！' . PHP_EOL;
 
 //检查扩展与函数
