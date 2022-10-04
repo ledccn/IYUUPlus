@@ -164,7 +164,8 @@ class MoveTorrent extends AutoReseed
                             //先检查是否为空
                             $infohash_v1 = $move[$info_hash]['infohash_v1'] ?? '';
                             if (empty($infohash_v1)) {
-                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件{$infohash_v1}为空，无法完成转移！");
+                                echo $help_msg;
+                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件{$torrentPath}不存在，infohash_v1为空，无法完成转移！");
                             }
 
                             //高版本qb下载器，infohash_v1
