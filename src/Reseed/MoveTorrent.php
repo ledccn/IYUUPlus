@@ -105,6 +105,7 @@ class MoveTorrent extends AutoReseed
             }
             $qBittorrent_version_lg_4_4 = false;
             if ($v['type'] == 'qBittorrent') {
+                $version = $v['version'];
                 $arr = explode('.', ltrim($version, "v"), 3);
                 if (count($arr) > 2 && ($arr[0] == '4' && $arr[1] >= '4' || $arr[0] > '4')) {
                     global $qBittorrent_version_lg_4_4;
