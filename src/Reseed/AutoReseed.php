@@ -2,7 +2,11 @@
 
 namespace IYUU\Reseed;
 
+use app\common\components\Curl as ICurl;
+use app\common\Constant;
 use app\common\event\EventDispatcher;
+use app\domain\ConfigParser\Reseed as domainReseed;
+use app\domain\Crontab as domainCrontab;
 use Curl\Curl;
 use Exception;
 use IYUU\Client\AbstractClient;
@@ -11,10 +15,6 @@ use IYUU\Client\qBittorrent\qBittorrent;
 use IYUU\Client\transmission\transmission;
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
-use app\common\components\Curl as ICurl;
-use app\common\Constant;
-use app\domain\ConfigParser\Reseed as domainReseed;
-use app\domain\Crontab as domainCrontab;
 use IYUU\Reseed\Events\ClientLinkSuccessEvent;
 use IYUU\Reseed\Listener\ClientLinkSuccessListener;
 
@@ -23,12 +23,6 @@ use IYUU\Reseed\Listener\ClientLinkSuccessListener;
  */
 class AutoReseed
 {
-    /**
-     * 事件调度器
-     * @var EventDispatcher
-     */
-    protected static $EventDispatcher;
-
     /**
      * 运行缓存目录
      * @var string
@@ -54,6 +48,11 @@ class AutoReseed
      * @var int
      */
     public static $ExitCode = 0;
+    /**
+     * 事件调度器
+     * @var EventDispatcher
+     */
+    protected static $EventDispatcher;
     /**
      * 解析的运行时配置
      * @var array
@@ -445,6 +444,16 @@ class AutoReseed
     }
 
     /**
+     * 优化IDE跟踪
+     * @param string $clientKey
+     * @return qBittorrent|transmission
+     */
+    public static function getRpc(string $clientKey)
+    {
+        return static::$links[$clientKey]['rpc'];
+    }
+
+    /**
      * 追加式写入日志
      * @param string|int|array|object $data
      * @param string $name
@@ -757,11 +766,11 @@ class AutoReseed
 
     /**
      * 辅种前置检查
-     * @param string $k                         客户端key
-     * @param array $torrent                 可辅的种子
-     * @param array $infohash_Dir            当前客户端hash目录对应字典
-     * @param string $downloadDir            辅种目录
-     * @param string $_url                   种子临时连接
+     * @param string $k 客户端key
+     * @param array $torrent 可辅的种子
+     * @param array $infohash_Dir 当前客户端hash目录对应字典
+     * @param string $downloadDir 辅种目录
+     * @param string $_url 种子临时连接
      * @return bool     true 可辅种 | false 不可辅种
      */
     private static function reseedCheck(string $k, array $torrent, array $infohash_Dir, string $downloadDir, string $_url): bool
@@ -851,10 +860,10 @@ class AutoReseed
     /**
      * 请求NexusPHP详情页
      * @descr 天空、瓷器、城市 个别站用到
-     * @param string $protocol          协议
-     * @param array $torrent            种子
-     * @param string $cookie            Cookie
-     * @param string $userAgent         UA
+     * @param string $protocol 协议
+     * @param array $torrent 种子
+     * @param string $cookie Cookie
+     * @param string $userAgent UA
      * @return mixed|null
      */
     private static function getNexusPHPdetailsPage(string $protocol, array $torrent, string $cookie, string $userAgent)
@@ -874,6 +883,52 @@ class AutoReseed
             return null;
         }
         return $details_html;
+    }
+
+    /**
+     * 错误的种子通知服务器
+     * @param string $error
+     * @return void
+     */
+    private static function sendNotify(string $error = ''): void
+    {
+        self::$errNotify['error'] = $error;
+
+        // 存在错误通知缓存，直接返回（减少请求次数）
+        $errNotifyCacheFile = self::errNotifyCacheFile(self::$errNotify['sid'], self::$errNotify['torrent_id']);
+        if (is_file($errNotifyCacheFile)) {
+            echo '感谢您的参与，失效种子已经成功汇报过！！' . PHP_EOL;
+            return;
+        }
+
+        // 创建错误通知缓存
+        file_put_contents($errNotifyCacheFile, json_encode(self::$errNotify, JSON_UNESCAPED_UNICODE));
+
+        $notify = http_build_query(self::$errNotify);
+        self::$errNotify = array(
+            'sign' => '',
+            'site' => '',
+            'sid' => 0,
+            'torrent_id' => 0,
+            'error' => '',
+        );
+        $res = self::$curl->get(Constant::API_BASE . Constant::API['notify'] . '?' . $notify);
+        $res = json_decode($res->response, true);
+        if (isset($res['data']['success']) && $res['data']['success']) {
+            echo '感谢您的参与，失效种子上报成功！！' . PHP_EOL;
+        }
+    }
+
+    /**
+     * 拼接错误通知缓存的文件路径
+     * @param int $site_id
+     * @param int $torrent_id
+     * @return string
+     */
+    private static function errNotifyCacheFile(int $site_id = 0, int $torrent_id = 0): string
+    {
+        $filename = $site_id . '_' . $torrent_id . '.txt';
+        return self::$cacheNotify . $filename;
     }
 
     /**
@@ -1128,62 +1183,6 @@ class AutoReseed
     protected static function isTorrentUrl(string $torrent): bool
     {
         return (stripos($torrent, 'http://') === 0) || (stripos($torrent, 'https://') === 0) || (strpos($torrent, 'magnet:?xt=urn:btih:') === 0);
-    }
-
-    /**
-     * 优化IDE跟踪
-     * @param string $clientKey
-     * @return qBittorrent|transmission
-     */
-    public static function getRpc(string $clientKey)
-    {
-        return static::$links[$clientKey]['rpc'];
-    }
-
-    /**
-     * 错误的种子通知服务器
-     * @param string $error
-     * @return void
-     */
-    private static function sendNotify(string $error = ''): void
-    {
-        self::$errNotify['error'] = $error;
-
-        // 存在错误通知缓存，直接返回（减少请求次数）
-        $errNotifyCacheFile = self::errNotifyCacheFile(self::$errNotify['sid'], self::$errNotify['torrent_id']);
-        if (is_file($errNotifyCacheFile)) {
-            echo '感谢您的参与，失效种子已经成功汇报过！！' . PHP_EOL;
-            return;
-        }
-
-        // 创建错误通知缓存
-        file_put_contents($errNotifyCacheFile, json_encode(self::$errNotify, JSON_UNESCAPED_UNICODE));
-
-        $notify = http_build_query(self::$errNotify);
-        self::$errNotify = array(
-            'sign' => '',
-            'site' => '',
-            'sid' => 0,
-            'torrent_id' => 0,
-            'error' => '',
-        );
-        $res = self::$curl->get(Constant::API_BASE . Constant::API['notify'] . '?' . $notify);
-        $res = json_decode($res->response, true);
-        if (isset($res['data']['success']) && $res['data']['success']) {
-            echo '感谢您的参与，失效种子上报成功！！' . PHP_EOL;
-        }
-    }
-
-    /**
-     * 拼接错误通知缓存的文件路径
-     * @param int $site_id
-     * @param int $torrent_id
-     * @return string
-     */
-    private static function errNotifyCacheFile(int $site_id = 0, int $torrent_id = 0): string
-    {
-        $filename = $site_id . '_' . $torrent_id . '.txt';
-        return self::$cacheNotify . $filename;
     }
 
     /**

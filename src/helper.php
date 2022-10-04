@@ -1,6 +1,5 @@
 <?php
 
-use IYUU\Library\IFile;
 use IYUU\Library\Table;
 
 /**

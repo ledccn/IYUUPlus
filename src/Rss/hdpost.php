@@ -2,9 +2,6 @@
 
 namespace IYUU\Rss;
 
-use DOMDocument;
-use Exception;
-
 class hdpost extends AbstractRss
 {
     /**

@@ -5,11 +5,6 @@
 
 namespace IYUU\Rss;
 
-use Curl\Curl;
-use DOMDocument;
-use DOMXpath;
-use IYUU\Library\Rpc;
-
 class ttg extends AbstractRss
 {
     /**

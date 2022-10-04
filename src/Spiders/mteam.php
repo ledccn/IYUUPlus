@@ -2,8 +2,6 @@
 
 namespace IYUU\Spiders;
 
-use IYUU\Library\Selector;
-
 class mteam extends SitesBase
 {
     /**

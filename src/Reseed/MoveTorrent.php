@@ -3,7 +3,6 @@
 namespace IYUU\Reseed;
 
 use app\domain\ConfigParser\Move as domainMove;
-use app\domain\Crontab as domainCrontab;
 use IYUU\Client\ClientException;
 use Rhilip\Bencode\Bencode;
 use Rhilip\Bencode\ParseException;

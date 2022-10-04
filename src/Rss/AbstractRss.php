@@ -2,12 +2,12 @@
 
 namespace IYUU\Rss;
 
-use DOMDocument;
-use Curl\Curl;
-use DOMNode;
 use app\common\Constant;
-use IYUU\Library\Rpc;
 use app\domain\ConfigParser\Rss as domainRss;
+use Curl\Curl;
+use DOMDocument;
+use DOMNode;
+use IYUU\Library\Rpc;
 use function explode;
 
 abstract class AbstractRss
