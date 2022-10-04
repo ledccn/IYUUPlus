@@ -1047,13 +1047,13 @@ class AutoReseed
 
     /**
      * @brief 添加下载任务
-     * @param int $clientKey
+     * @param string $clientKey
      * @param string $torrent 种子元数据
      * @param string $save_path 保存路径
      * @param array $extra_options
      * @return bool
      */
-    protected static function add(int $clientKey, string $torrent, string $save_path = '', array $extra_options = array()): bool
+    protected static function add(string $clientKey, string $torrent, string $save_path = '', array $extra_options = array()): bool
     {
         try {
             $is_url = static::isTorrentUrl($torrent);
