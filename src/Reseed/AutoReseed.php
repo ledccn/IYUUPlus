@@ -216,16 +216,9 @@ class AutoReseed
         $data = time() . ',' . $pid;
         file_put_contents(self::$pid_file, $data);
 
-        //lock文件
-        $lockFile = domainCrontab::getLockFile($cron_name);
-        //TODO.. 本次执行检查锁，避免系统资源耗尽
-        file_put_contents($lockFile, $data);
-
-        //注册一个会在php中止时执行的函数，删除pid、删除锁文件
-        register_shutdown_function(function () use (&$cron_name) {
+        //注册一个会在php中止时执行的函数，删除pid
+        register_shutdown_function(function () {
             self::deletePid();
-            $lockFile = domainCrontab::getLockFile($cron_name);
-            is_file($lockFile) and unlink($lockFile);
         });
     }
 

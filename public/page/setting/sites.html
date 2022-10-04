@@ -120,19 +120,19 @@
   {{# } }}
   {{# if (d.limitRule === true) { }}
   <div class="layui-form-item">
-    <div class="layui-inline">
-      <label class="layui-form-label required">流控规则</label>
-      <div class="layui-input-inline">
-        <input type="number" name="limitRule[count]" lay-verify="required" placeholder="单次辅种数" autocomplete="off" class="layui-input" value="10">
+    <label class="layui-form-label required">流控规则</label>
+    <div class="layui-input-block">
+      <div class="layui-inline">
+        <div class="layui-input-inline" style="width: 100px;">
+          <input type="number" name="limitRule[count]" lay-verify="required" placeholder="单次辅种数" autocomplete="off" class="layui-input" value="10">
+        </div>
+        <div class="layui-input-inline" style="width: 100px;">
+          <input type="number" name="limitRule[sleep]" lay-verify="required" placeholder="间隔时间" autocomplete="off" class="layui-input" value="20">
+        </div>
       </div>
+      <tip>每运行一次最多添加{单次辅种数}个种子，每添加一个种子需等待{间隔时间}秒。为账号安全，每次运行辅种的时候，超过流控限制，会在下次运行辅种的时候，继续添加辅种。</tip>
     </div>
-    <div class="layui-inline">
-      <div class="layui-input-inline">
-        <input type="number" name="limitRule[sleep]" lay-verify="required" placeholder="间隔时间" autocomplete="off" class="layui-input" value="20">
-      </div>
-      <div class="layui-form-mid layui-word-aux">每运行一次最多添加{单次辅种数}个种子，每添加一个种子需等待{间隔时间}秒。为账号安全，每次运行辅种的时候，超过流控限制，会在下次运行辅种的时候，继续添加辅种。</div>
-    </div>
-    
+
   </div>
   {{# } }}
   {{# if (d.urlJoin.visible === true) { }}
@@ -222,8 +222,13 @@
         case 'm-team':
           rule.urlJoin.visible = true;
           break;
-        //Cookie必须
+        case 'gainbound':
+          //Cookie必须
+          rule.cookie.required = true;
+          rule.cookie.verify = 'required';
+          break;
         case 'hdcity':
+          //Cookie必须
           rule.cookie.required = true;
           rule.cookie.verify = 'required';
           rule.passkey.required = false;
