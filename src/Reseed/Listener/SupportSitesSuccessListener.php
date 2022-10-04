@@ -3,17 +3,17 @@
 namespace IYUU\Reseed\Listener;
 
 use app\common\event\EventListenerInterface;
-use IYUU\Reseed\Events\ClientLinkSuccessEvent;
+use IYUU\Reseed\Events\SupportSitesSuccessEvent;
 
 /**
- * 事件监听器：监听客户端连接成功
+ * 事件监听器：监听支持站点列表获取成功之后
  */
-class ClientLinkSuccessListener implements EventListenerInterface
+class SupportSitesSuccessListener implements EventListenerInterface
 {
     public function events(): array
     {
         return [
-            ClientLinkSuccessEvent::class
+            SupportSitesSuccessEvent::class,
         ];
     }
 

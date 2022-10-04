@@ -16,7 +16,9 @@ use IYUU\Client\transmission\transmission;
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
 use IYUU\Reseed\Events\ClientLinkSuccessEvent;
+use IYUU\Reseed\Events\SupportSitesSuccessEvent;
 use IYUU\Reseed\Listener\ClientLinkSuccessListener;
+use IYUU\Reseed\Listener\SupportSitesSuccessListener;
 
 /**
  * IYUUAutoReseed辅种类
@@ -109,7 +111,7 @@ class AutoReseed
      */
     protected static $temp = [];
     /**
-     * 站点
+     * 站点（云端下发的站点列表）
      * @var array
      */
     private static $sites = [];
@@ -137,6 +139,7 @@ class AutoReseed
         //初始化事件调度器
         $listener = [
             new ClientLinkSuccessListener,
+            new SupportSitesSuccessListener,
         ];
         static::$EventDispatcher = new EventDispatcher($listener);
 
@@ -272,6 +275,11 @@ class AutoReseed
             die('网络故障或远端服务器无响应，请稍后再试！！！' . PHP_EOL . '如果多次出现此提示，请修改您设置的执行周期（请勿整点、半点执行），错峰辅种。');
         }
         self::$sites = array_column($sites, null, 'id');
+
+        //触发事件
+        $event = new SupportSitesSuccessEvent(self::$sites);
+        self::$EventDispatcher->dispatch($event);
+
         // 初始化辅种检查规则    2020年12月12日新增
         array_walk(self::$sites, function (&$v, $k) {
             if (empty($v['reseed_check'])) {
@@ -580,7 +588,7 @@ class AutoReseed
                                 break;
                             }
                             // 提取种子地址
-                            $regex = "/download.php\?hash\=(.*?)[\"|\']/i";   // 提取种子hash的正则表达式
+                            $regex = "/download.php\?hash=(.*?)[\"|']/i";   // 提取种子hash的正则表达式
                             if (preg_match($regex, $details_html, $matchs)) {
                                 // 拼接种子地址
                                 $_url = str_replace($remove, $matchs[1], $_url);
@@ -622,7 +630,7 @@ class AutoReseed
                                     break;
                                 }
                                 // 提取cuhash
-                                $regex = "/cuhash\=(.*?)[\"|\']/i";   // 提取种子cuhash的正则表达式
+                                $regex = "/cuhash=(.*?)[\"|']/i";   // 提取种子cuhash的正则表达式
                                 if (preg_match($regex, $html, $matchs)) {
                                     self::$_sites[$siteName]['cuhash'] = $matchs[1];
                                 } else {
