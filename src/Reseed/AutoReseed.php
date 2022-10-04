@@ -757,14 +757,14 @@ class AutoReseed
 
     /**
      * 辅种前置检查
-     * @param int $k                         客户端key
+     * @param int|string $k                         客户端key
      * @param array $torrent                 可辅的种子
      * @param array $infohash_Dir            当前客户端hash目录对应字典
      * @param string $downloadDir            辅种目录
      * @param string $_url                   种子临时连接
      * @return bool     true 可辅种 | false 不可辅种
      */
-    private static function reseedCheck(int $k, array $torrent, array $infohash_Dir, string $downloadDir, string $_url): bool
+    private static function reseedCheck(string $k, array $torrent, array $infohash_Dir, string $downloadDir, string $_url): bool
     {
         self::checkPid() or die('检测到当前任务被外部主动停止，进程退出！' . PHP_EOL);
         $sid = $torrent['sid'];

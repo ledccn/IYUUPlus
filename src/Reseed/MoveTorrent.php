@@ -50,7 +50,7 @@ class MoveTorrent extends AutoReseed
     protected static function getCliInput()
     {
         global $argv;
-        $cron_name = isset($argv[1]) ? $argv[1] : null;
+        $cron_name = $argv[1] ?? null;
         is_null($cron_name) and die('缺少命令行参数。');
         self::$conf = domainMove::parser($cron_name);
         // 用户选择的下载器
@@ -60,6 +60,8 @@ class MoveTorrent extends AutoReseed
 
     /**
      * 转移，总入口
+     * @return void
+     * @throws ClientException
      */
     public static function call()
     {
