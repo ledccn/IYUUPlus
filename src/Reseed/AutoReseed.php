@@ -474,10 +474,10 @@ class AutoReseed
      * 请求API接口获取当前客户端辅种数据
      * @param array $hashString 当前客户端infohash与目录对应的字典
      * @param array $hashArray 当前客户端infohash
-     * @param int|string $clientKey 当前客户端key
+     * @param string $clientKey 当前客户端key
      * @param array $clientValue 当前客户端配置
      */
-    private static function requestApi(array $hashString, array $hashArray, $clientKey, array $clientValue)
+    private static function requestApi(array $hashString, array $hashArray, string $clientKey, array $clientValue)
     {
         echo "正在向服务器提交 【" . $clientValue['_config']['name'] . "】 种子哈希……" . PHP_EOL;
         $res = self::$curl->post(Constant::API_BASE . Constant::API['infohash'], $hashArray);
@@ -509,9 +509,9 @@ class AutoReseed
      * 遍历当前客户端可辅种数据
      * @param array $data 接口返回的可辅种数据
      * @param array $hashString 当前客户端infohash与目录对应的字典
-     * @param int|string $clientKey 当前客户端key
+     * @param string $clientKey 当前客户端key
      */
-    private static function selfClientReseed(array $data = [], array $hashString = [], $clientKey = 0)
+    private static function selfClientReseed(array $data = [], array $hashString = [], string $clientKey = '')
     {
         foreach ($data as $info_hash => $reseed) {
             $downloadDir = $hashString[$info_hash];   // 辅种目录
@@ -757,7 +757,7 @@ class AutoReseed
 
     /**
      * 辅种前置检查
-     * @param int|string $k                         客户端key
+     * @param string $k                         客户端key
      * @param array $torrent                 可辅的种子
      * @param array $infohash_Dir            当前客户端hash目录对应字典
      * @param string $downloadDir            辅种目录
