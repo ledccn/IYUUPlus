@@ -18,6 +18,7 @@ use IYUU\Library\Table;
 use IYUU\Reseed\Events\ClientHashSuccessEvent;
 use IYUU\Reseed\Events\ClientLinkSuccessEvent;
 use IYUU\Reseed\Events\SupportSitesSuccessEvent;
+use IYUU\Reseed\Listener\ClientHashSuccessListener;
 use IYUU\Reseed\Listener\ClientLinkSuccessListener;
 use IYUU\Reseed\Listener\SupportSitesSuccessListener;
 
@@ -52,7 +53,19 @@ class AutoReseed
      */
     public static $ExitCode = 0;
     /**
-     * 事件调度器
+     * 事件系统：事件监听器
+     * @var array
+     */
+    protected static $EventListener = [
+        //监听客户端连接成功
+        ClientLinkSuccessListener::class,
+        //监听支持站点列表获取成功之后
+        SupportSitesSuccessListener::class,
+        //监听获取到下载器做种哈希
+        ClientHashSuccessListener::class,
+    ];
+    /**
+     * 事件系统：事件调度器
      * @var EventDispatcher
      */
     protected static $EventDispatcher;
@@ -137,12 +150,8 @@ class AutoReseed
      */
     public static function init()
     {
-        //初始化事件调度器
-        $listener = [
-            new ClientLinkSuccessListener,
-            new SupportSitesSuccessListener,
-        ];
-        static::$EventDispatcher = new EventDispatcher($listener);
+        // 0. 初始化事件调度器
+        static::$EventDispatcher = new EventDispatcher(self::$EventListener);
 
         // 1. 初始化curl
         self::$curl = new Curl();

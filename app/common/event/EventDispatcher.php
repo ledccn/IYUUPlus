@@ -25,14 +25,20 @@ class EventDispatcher
     /**
      * 构造函数
      * @descr 初始化所有事件监听器
-     * @param EventListenerInterface[] $listeners
+     * @param EventListenerInterface[]|string[] $listeners
      */
     public function __construct(array $listeners)
     {
         $eventListeners = [];
         foreach ($listeners as $listener) {
-            foreach ($listener->events() as $event) {
-                $eventListeners[$event][] = $listener;
+            //传入类名，实例化
+            if (is_string($listener)) {
+                $listener = new $listener;
+            }
+            if ($listener instanceof EventListenerInterface) {
+                foreach ($listener->events() as $event) {
+                    $eventListeners[$event][] = $listener;
+                }
             }
         }
         $this->eventListeners = $eventListeners;
