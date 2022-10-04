@@ -15,6 +15,7 @@ use IYUU\Client\qBittorrent\qBittorrent;
 use IYUU\Client\transmission\transmission;
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
+use IYUU\Reseed\Events\ClientHashSuccessEvent;
 use IYUU\Reseed\Events\ClientLinkSuccessEvent;
 use IYUU\Reseed\Events\SupportSitesSuccessEvent;
 use IYUU\Reseed\Listener\ClientLinkSuccessListener;
@@ -395,6 +396,12 @@ class AutoReseed
             if (empty($hashArray)) {
                 continue;
             }
+            //触发事件
+            $event = new ClientHashSuccessEvent($hashArray, $clientValue);
+            self::$EventDispatcher->dispatch($event);
+            //事件内允许处理做种哈希
+            $hashArray = $event->getHashArray();
+
             if (isset($clientValue['_config']['debug'])) {
                 cli($hashArray);
             }
@@ -406,7 +413,8 @@ class AutoReseed
             $sign['timestamp'] = time();
             $sign['version'] = IYUU_VERSION();
             // 写请求日志
-            static::wLog($hashArray, 'Request_' . $clientKey);
+            //static::wLog($hashArray, 'Request_' . $clientKey);
+
             self::$wechatMsg['hashCount'] += count($hashString);
             // 分组200个hash，分批辅种
             $group_num = 200;
@@ -496,7 +504,8 @@ class AutoReseed
         }
         $res = json_decode($res->response, true);
         // 写响应日志
-        static::wLog($res, 'Response_' . $clientKey);
+        //static::wLog($res, 'Response_' . $clientKey);
+
         $data = $res['data'] ?? array();
         if (empty($data)) {
             echo "clients_" . $clientKey . "【" . $clientValue['_config']['name'] . "】 没有查询到可辅种数据" . PHP_EOL . PHP_EOL;
@@ -511,6 +520,9 @@ class AutoReseed
             echo '-----辅种失败，原因：' . $msg . PHP_EOL . PHP_EOL;
             return;
         }
+
+        //触发事件
+
         // 遍历当前客户端可辅种数据
         self::selfClientReseed($data, $hashString, $clientKey);
     }
