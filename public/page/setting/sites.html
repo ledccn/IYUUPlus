@@ -184,7 +184,7 @@
           ,torrent_pass: {name: 'torrent_pass', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,authkey: {name: 'authkey', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,id: false
-          ,limitRule: false
+          ,limitRule: true
           ,urlJoin: {visible: false, required: false, id: 'url_join', field: {https: true, ipv4: true, ipv6: true}}
           ,urlReplace: {visible: false, required: false, id: 'url_replace', field: {}}
           ,downHash: {name: 'downHash', visible: false, required: true, desc: '', verify: '', reqtext: ''}
@@ -200,7 +200,6 @@
         //合作站点
         case 'ourbits':
           rule.id = true;
-          rule.limitRule = true;
           rule.urlJoin.visible = true;
           break;
         case 'hdhome':
@@ -208,7 +207,6 @@
         case 'hddolby':
         case 'audiences':
           rule.id = true;
-          rule.limitRule = true;
           rule.downHash.visible = true;
           rule.downHash.desc = 'RSS订阅页面 passkey= 后面的字符串。';
           break;
@@ -223,10 +221,6 @@
         case 'leaguehd':
         case 'm-team':
           rule.urlJoin.visible = true;
-          break;
-        case 'ssd':
-        case 'pt':
-          rule.limitRule = true;
           break;
         //Cookie必须
         case 'hdcity':
@@ -243,7 +237,6 @@
           rule.cookie.verify = 'required';
           rule.passkey.required = false;
           rule.passkey.verify = '';
-          rule.limitRule = true;
           break;
         case 'ttg':
           rule.downHash.visible = true;
@@ -263,7 +256,6 @@
           break;
         //默认规则
         default:
-          rule.limitRule = true;
           rule.urlJoin.visible = true;
           break;
       }
