@@ -161,6 +161,9 @@ class AutoReseed
         IFile::mkdir(self::$cacheNotify);
         // 8. 连接下载服务器
         self::links();
+        //触发事件
+        $event = new ClientLinkSuccessEvent(static::$clients, static::$links);
+        static::$EventDispatcher->dispatch($event);
     }
 
     /**
@@ -360,9 +363,6 @@ class AutoReseed
                 die('[连接错误] ' . $v['host'] . ' ' . $e->getMessage() . PHP_EOL);
             }
         }
-        //触发事件
-        $event = new ClientLinkSuccessEvent(static::$clients, static::$links);
-        static::$EventDispatcher->dispatch($event);
     }
 
     /**
@@ -474,10 +474,10 @@ class AutoReseed
      * 请求API接口获取当前客户端辅种数据
      * @param array $hashString 当前客户端infohash与目录对应的字典
      * @param array $hashArray 当前客户端infohash
-     * @param int $clientKey 当前客户端key
+     * @param int|string $clientKey 当前客户端key
      * @param array $clientValue 当前客户端配置
      */
-    private static function requestApi(array $hashString, array $hashArray, int $clientKey, array $clientValue)
+    private static function requestApi(array $hashString, array $hashArray, $clientKey, array $clientValue)
     {
         echo "正在向服务器提交 【" . $clientValue['_config']['name'] . "】 种子哈希……" . PHP_EOL;
         $res = self::$curl->post(Constant::API_BASE . Constant::API['infohash'], $hashArray);
@@ -509,9 +509,9 @@ class AutoReseed
      * 遍历当前客户端可辅种数据
      * @param array $data 接口返回的可辅种数据
      * @param array $hashString 当前客户端infohash与目录对应的字典
-     * @param int $clientKey 当前客户端key
+     * @param int|string $clientKey 当前客户端key
      */
-    private static function selfClientReseed(array $data = [], array $hashString = [], int $clientKey = 0)
+    private static function selfClientReseed(array $data = [], array $hashString = [], $clientKey = 0)
     {
         foreach ($data as $info_hash => $reseed) {
             $downloadDir = $hashString[$info_hash];   // 辅种目录
@@ -851,13 +851,13 @@ class AutoReseed
     /**
      * 请求NexusPHP详情页
      * @descr 天空、瓷器、城市 个别站用到
-     * @param $protocol     string      协议
-     * @param $torrent      array       种子
-     * @param $cookie       string      Cookie
-     * @param $userAgent    string      UA
+     * @param string $protocol          协议
+     * @param array $torrent            种子
+     * @param string $cookie            Cookie
+     * @param string $userAgent         UA
      * @return mixed|null
      */
-    private static function getNexusPHPdetailsPage($protocol, $torrent, $cookie, $userAgent)
+    private static function getNexusPHPdetailsPage(string $protocol, array $torrent, string $cookie, string $userAgent)
     {
         $sid = $torrent['sid'];
         $torrent_id = $torrent['torrent_id'];
@@ -879,9 +879,9 @@ class AutoReseed
     /**
      * 微信通知cookie失效，延时15秒提示
      * @descr 天空、瓷器、城市 个别站用到
-     * @param $siteName
+     * @param string $siteName
      */
-    private static function cookieExpired($siteName)
+    private static function cookieExpired(string $siteName)
     {
         $msg = $siteName . '站点，cookie已过期，请更新后重新辅种！';
         $msg_md5 = md5($msg);

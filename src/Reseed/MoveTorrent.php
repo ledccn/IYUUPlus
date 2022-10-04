@@ -400,13 +400,12 @@ class MoveTorrent extends AutoReseed
         $text = 'IYUU转移任务-统计报表';
         $desp = '### 版本号：' . IYUU_VERSION() . $br;
         // 移动做种
+        $desp .= $br . '----------' . $br;
         if (static::$wechatMsg['MoveSuccess'] || static::$wechatMsg['MoveError']) {
-            $desp .= $br . '----------' . $br;
             $desp .= '**移动成功：' . static::$wechatMsg['MoveSuccess'] . '**  [会把hash加入移动缓存]' . $br;
             $desp .= '**移动失败：' . static::$wechatMsg['MoveError'] . '**  [解决错误提示，可以重试]' . $br;
             $desp .= '**如需重新移动，请删除 ./torrent/cachemove 移动缓存。**' . $br;
         } else {
-            $desp .= $br . '----------' . $br;
             $desp .= $br . '转移任务完成，未发现种子需要转移' . $br;
             $desp .= $br . '----------' . $br;
         }
