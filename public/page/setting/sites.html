@@ -263,6 +263,8 @@
           break;
         //默认规则
         default:
+          rule.limitRule = true;
+          rule.urlJoin.visible = true;
           break;
       }
       laytpl(getTpl).render(rule, function(html) {
