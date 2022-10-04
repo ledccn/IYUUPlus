@@ -234,7 +234,7 @@ class MoveTorrent extends AutoReseed
                 $type = self::$links[$clientKey]['type'];
                 $extra_options = array();
                 // 转移后，是否开始？
-                $extra_options['paused'] = isset(self::$conf['paused']) && self::$conf['paused'] ? true : false;
+                $extra_options['paused'] = isset(self::$conf['paused']) && self::$conf['paused'];
                 if ($type == 'qBittorrent') {
                     if (isset(self::$conf['skip_check']) && self::$conf['skip_check']) {
                         $extra_options['skip_checking'] = "true";    //转移成功，跳校验
@@ -270,7 +270,7 @@ class MoveTorrent extends AutoReseed
      * @param array $infohash_Dir infohash与路径对应的字典
      * @return bool     true 过滤 | false 不过滤
      */
-    private static function hashFilter(&$infohash_Dir = array())
+    private static function hashFilter(array &$infohash_Dir = array()): bool
     {
         foreach ($infohash_Dir as $info_hash => $dir) {
             if (is_file(self::$cacheMove . $info_hash . '.txt')) {
@@ -278,7 +278,7 @@ class MoveTorrent extends AutoReseed
                 echo '-------当前种子上次已成功转移，前置过滤已跳过！ 如需再次转移，可以清理转移缓存。' . PHP_EOL . PHP_EOL;
             }
         }
-        return empty($infohash_Dir) ? true : false;
+        return empty($infohash_Dir);
     }
 
     /**
@@ -286,7 +286,7 @@ class MoveTorrent extends AutoReseed
      * @param string $path
      * @return bool   true 过滤 | false 不过滤
      */
-    private static function pathFilter(&$path = '')
+    private static function pathFilter(string &$path = ''): bool
     {
         $path = rtrim($path, DIRECTORY_SEPARATOR);      // 提高Windows转移兼容性
         // 转移过滤器、选择器 David/2020年7月11日
@@ -346,7 +346,7 @@ class MoveTorrent extends AutoReseed
      * @param string $path
      * @return string | null        string转换成功
      */
-    private static function pathReplace($path = '')
+    private static function pathReplace(string $path = ''): ?string
     {
         $type = intval(self::$conf['path_type']);
         $pathArray = self::$conf['path_rule'];
@@ -382,7 +382,7 @@ class MoveTorrent extends AutoReseed
 
     /**
      * 微信模板消息拼接方法
-     * @return string           发送情况，json
+     * @return string|false          发送情况，json
      */
     protected static function wechatMessage()
     {
