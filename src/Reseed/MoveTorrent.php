@@ -103,7 +103,7 @@ class MoveTorrent extends AutoReseed
                 continue;
             }
             $qBittorrent_version_lg_4_4 = false;
-            if ($v['type'] == 'qBittorrent') {
+            if ($v['type'] === 'qBittorrent') {
                 $version = $v['version'];
                 $arr = explode('.', ltrim($version, "v"), 3);
                 if (count($arr) > 2 && ($arr[0] == '4' && $arr[1] >= '4' || $arr[0] > '4')) {
@@ -201,7 +201,7 @@ class MoveTorrent extends AutoReseed
                         die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`解析失败，无法完成转移！");
                     }
                     if (empty($parsed_torrent['announce'])) {
-                        if (isset($move[$info_hash]['tracker'])) {
+                        if (!empty($move[$info_hash]['tracker'])) {
                             $parsed_torrent['announce'] = $move[$info_hash]['tracker'];
                         } else {
                             if (!is_file($fast_resumePath)) {
