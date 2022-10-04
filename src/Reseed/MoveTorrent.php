@@ -144,6 +144,11 @@ class MoveTorrent extends AutoReseed
                             $torrentPath = str_replace("\\", "/", $torrentPath);
                             $torrentPath = $path . strrchr($torrentPath, '/');
                         }
+                        // 再次检查
+                        if (!is_file($torrentPath)) {
+                            echo $help_msg;
+                            die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`不存在，无法完成转移！");
+                        }
                         break;
                     case 'qBittorrent':
                         if (empty($path)) {
@@ -153,20 +158,31 @@ class MoveTorrent extends AutoReseed
                         $torrentPath = $path . DS . $info_hash . '.torrent';
                         $fast_resumePath = $path . DS . $info_hash . '.fastresume';
                         $torrentDelete = $info_hash;
+
+                        // 再次检查
+                        if (!is_file($torrentPath)) {
+                            //先检查是否为空
+                            $infohash_v1 = $move[$info_hash]['infohash_v1'] ?? '';
+                            if (empty($infohash_v1)) {
+                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件{$infohash_v1}为空，无法完成转移！");
+                            }
+
+                            //高版本qb下载器，infohash_v1
+                            $v1_path = $path . DS . $infohash_v1 . '.torrent';
+                            if (is_file($v1_path)) {
+                                $torrentPath = $v1_path;
+                                $fast_resumePath = $path . DS . $infohash_v1 . '.torrent';
+                            } else {
+                                echo $help_msg;
+                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`不存在，无法完成转移！");
+                            }
+                        }
                         break;
                     default:
                         break;
                 }
-                if (!is_file($torrentPath)) {
-                    $v1_path = $path . DS . $move[$info_hash]['infohash_v1'] . '.torrent';
-                    if (is_file($v1_path)) {
-                        $torrentPath = $v1_path;
-                        $fast_resumePath = $path . DS . $move[$info_hash]['infohash_v1'] . '.torrent';
-                    } else {
-                        echo $help_msg;
-                        die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`不存在，无法完成转移！");
-                    }
-                }
+
+                //读取种子源文件
                 echo '存在种子：' . $torrentPath . PHP_EOL;
                 $torrent = file_get_contents($torrentPath);
                 $parsed_torrent = [];
