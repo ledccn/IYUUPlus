@@ -303,12 +303,18 @@ class Crontab
     /**
      * 读取计划任务的日志
      * @param string $uuid
+     * @param int $last_line_number
      * @return string
      */
-    public static function readLogs(string $uuid = ''): string
+    public static function readLogs(string $uuid = '', int $last_line_number = 0): string
     {
         $logFile = self::getLogFile($uuid);
-        return Conf::get($logFile, 'raw', '', true);
+        if ($last_line_number) {
+            $log = fileLastLines($logFile, $last_line_number);
+        } else {
+            $log = Conf::get($logFile, 'raw', '', true);
+        }
+        return $log;
     }
 
     /**

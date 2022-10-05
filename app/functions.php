@@ -101,20 +101,18 @@ function fileLastLines(string $filename, int $n = 1): ?string
     $eof = '';
     $lines = array();
     while ($n > 0) {
-        $str = '';
         while ($eof != "\n") {
             //在打开的文件中定位
             if (!fseek($fp, $pos, SEEK_END)) {
                 //从文件指针中读取一个字符
                 $eof = fgetc($fp);
                 $pos--;
-                $str = $eof . $str;
             } else {
                 break;
             }
         }
         // 插入到数组的开头
-        array_unshift($lines, $str);
+        array_unshift($lines, fgets($fp));
         $eof = '';
         $n--;
     }

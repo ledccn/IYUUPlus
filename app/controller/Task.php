@@ -8,6 +8,7 @@ use app\domain\Crontab;
 use app\domain\ConfigParser\Move as domainMove;
 use app\domain\ConfigParser\Reseed as domainReseed;
 use app\domain\ConfigParser\Rss as domainRss;
+use Throwable;
 
 /**
  * Class Task
@@ -106,9 +107,16 @@ class Task extends BaseController
     {
         $rs = self::RS;
         $uuid = $request->get('uuid');
+        $last_line_number = $request->get('last_line_number', 100);
+        try {
+            $logs = Crontab::readLogs($uuid, $last_line_number);
+        } catch (Throwable $throwable) {
+            $logs = $throwable->getMessage();
+        }
+
         $rs['data'] = [
             'uuid' => $uuid,
-            'logs' => Crontab::readLogs($uuid)
+            'logs' => $logs,
         ];
         return json($rs);
     }

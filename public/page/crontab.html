@@ -1038,6 +1038,7 @@
                 layer.msg(data.msg);
                 return;
               }
+              let cronTimer;
               layer.open({
                 type: 1
                 ,title: false
@@ -1047,9 +1048,27 @@
                 ,shade: 0.8
                 ,id: obj.data.uuid
                 ,moveType: 1 //拖拽模式，0或者1
-                ,content: '<pre class="layui-code">'+ data.data.logs +'</pre>'
+                ,content: '<pre class="layui-code" id="crontab_log">'+ data.data.logs +'</pre>'
                 ,success: function(layero){
                   layui.code();
+                  cronTimer = setInterval(function () {
+                    $.ajax({
+                      url: API.taskLogs,
+                      type:'get',
+                      data: {uuid: obj.data.uuid, last_line_number: 50},
+                      success:function(data){
+                        if (200 === data.ret) {
+                          document.getElementById('crontab_log').innerHTML = data.data.logs;
+                          layui.code();
+                        } else {
+                          layer.msg(data.msg);
+                        }
+                      }
+                    });
+                  }, 2000);
+                }
+                ,end: function () {
+                  clearInterval(cronTimer);
                 }
               });
             },

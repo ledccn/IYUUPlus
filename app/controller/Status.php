@@ -26,7 +26,7 @@ class Status extends BaseController
         $log_file = Conf::get($config['log_file'], 'raw', '', true);
         $stdout_file = Conf::get($config['stdout_file'], 'raw', '', true);
         $rs['data'] = [
-            'log_file' => $log_file,
+            'log_file' => fileLastLines($config['log_file'], 100),   //$log_file,
             'stdout_file' => $stdout_file,
         ];
         return json($rs);
