@@ -608,7 +608,7 @@ class AutoReseed
                     switch ($siteName) {
                         case 'hdchina':
                             // 请求详情页
-                            $details_html = self::getNexusPHPdetailsPage($protocol, $value, $cookie, $userAgent);
+                            $details_html = self::getNexusPHPDetailsPage($protocol, $value, $cookie, $userAgent);
                             if (is_null($details_html)) {
                                 $reseedPass = true;
                                 break;
@@ -688,7 +688,7 @@ class AutoReseed
                             break;
                         case 'hdsky':
                             // 请求详情页
-                            $details_html = self::getNexusPHPdetailsPage($protocol, $value, $cookie, $userAgent);
+                            $details_html = self::getNexusPHPDetailsPage($protocol, $value, $cookie, $userAgent);
                             if (is_null($details_html)) {
                                 $reseedPass = true;
                                 break;
@@ -758,7 +758,7 @@ class AutoReseed
                 if ($ret) {
                     // 成功
                     // 操作流控参数
-                    if (isset(self::$_sites[$siteName]['limitRule']) && self::$_sites[$siteName]['limitRule']) {
+                    if (!empty(self::$_sites[$siteName]['limitRule'])) {
                         $limitRule = self::$_sites[$siteName]['limitRule'];
                         if ($limitRule['count']) {
                             self::$_sites[$siteName]['limitRule']['count']--;
@@ -899,9 +899,9 @@ class AutoReseed
      * @param array $torrent 种子
      * @param string $cookie Cookie
      * @param string $userAgent UA
-     * @return mixed|null
+     * @return bool|string|null
      */
-    private static function getNexusPHPdetailsPage(string $protocol, array $torrent, string $cookie, string $userAgent)
+    private static function getNexusPHPDetailsPage(string $protocol, array $torrent, string $cookie, string $userAgent)
     {
         $sid = $torrent['sid'];
         $torrent_id = $torrent['torrent_id'];
