@@ -21,6 +21,7 @@ use IYUU\Reseed\Events\InfoHashResponseEvent;
 use IYUU\Reseed\Events\SupportSitesSuccessEvent;
 use IYUU\Reseed\Listener\ClientHashSuccessListener;
 use IYUU\Reseed\Listener\ClientLinkSuccessListener;
+use IYUU\Reseed\Listener\InfoHashResponseListener;
 use IYUU\Reseed\Listener\SupportSitesSuccessListener;
 
 /**
@@ -64,6 +65,8 @@ class AutoReseed
         SupportSitesSuccessListener::class,
         //监听获取到下载器做种哈希
         ClientHashSuccessListener::class,
+        //监听请求服务器辅种接口，返回可辅种的infoHash
+        InfoHashResponseListener::class,
     ];
     /**
      * 事件系统：事件调度器
