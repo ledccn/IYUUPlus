@@ -107,7 +107,7 @@ class Task extends BaseController
     {
         $rs = self::RS;
         $uuid = $request->get('uuid');
-        $last_line_number = $request->get('last_line_number', 100);
+        $last_line_number = $request->get('last_line_number', 50);
         try {
             $logs = Crontab::readLogs($uuid, $last_line_number);
         } catch (Throwable $throwable) {
