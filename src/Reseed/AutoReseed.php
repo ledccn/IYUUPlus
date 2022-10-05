@@ -537,6 +537,10 @@ class AutoReseed
         self::$EventDispatcher->dispatch($event);
         //事件内允许处理可辅种哈希
         $data = $event->getInfoHashResponse();
+        if (empty($data)) {
+            echo "【" . $clientValue['_config']['name'] . "】 本次分组未查询到可辅种数据" . PHP_EOL . PHP_EOL;
+            return;
+        }
 
         // 遍历当前客户端可辅种数据
         self::selfClientReseed($data, $hashString, $clientKey);
