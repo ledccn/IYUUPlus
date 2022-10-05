@@ -130,18 +130,28 @@
         miniAdmin = layui.miniAdmin,
         miniTongji = layui.miniTongji;
 
+  /**
+   * 登录检测
+   */
+    function check_login() {
+        $.ajax({
+            url: '/Api/checkLogin',
+            type:'get',
+            success:function(data){
+                if (data.ret !== 200 || data.data.is_login !== true) {
+                    layer.msg('您暂未登录，正在前往登录入口……', function () {
+                        window.location = '/page/login.html';
+                    });
+                }
+            }
+        });
+    }
+
     //登录检测
-    $.ajax({
-      url: '/Api/checkLogin',
-      type:'get',
-      success:function(data){
-        if (data.ret !== 200 || data.data.is_login !== true) {
-          layer.msg('您暂未登录，正在前往登录入口……', function () {
-            window.location = '/page/login.html';
-          });
-        }
-      }
-    });
+    check_login();
+    setInterval(function () {
+        check_login();
+    }, 30000);
 
     let options = {
         iniUrl: "/Api/Menu",    // 初始化接口
