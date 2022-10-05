@@ -24,51 +24,46 @@ class Rss implements ConfigParserInterface
             return $rs;
         }
         $cron = Config::getCronByUUID($uuid);
-        //检查使能
-        if (isset($cron['switch']) && $cron['switch'] === 'on') {
-            //IYUU密钥
-            $iyuu = Config::getIyuu();
-            $rs['iyuu.cn'] = $iyuu['iyuu.cn'];
 
-            //默认
-            $default = Config::getDefault();
-            $rs['default'] = $default;
+        //IYUU密钥
+        $iyuu = Config::getIyuu();
+        $rs['iyuu.cn'] = $iyuu['iyuu.cn'];
 
-            //解析用户的站点配置
-            $site = 'site';
-            $userSites = Config::getUserSites();
-            if (!empty($cron[$site]) && !empty($userSites)) {
-                $key = $cron[$site];
-                $rs['site'] = array_key_exists($key, $userSites) ? $userSites[$key] : [];
-            }
+        //默认
+        $default = Config::getDefault();
+        $rs['default'] = $default;
 
-            //解析站点域名
-            $sites = Config::getSites();
-            if (!empty($cron[$site]) && !empty($sites)) {
-                $key = $cron[$site];
-                $rs['sites'] = array_key_exists($key, $sites) ? $sites[$key] : [];
-            }
-
-            //解析下载器
-            $clients = Config::getClients();
-            if (!empty($cron['clients']) && !empty($clients)) {
-                $key = $cron['clients'];
-                $rs['clients'] = array_key_exists($key, $clients) ? $clients[$key] : [];
-            }
-
-            //解析筛选规则的过滤器
-            $filter = Config::getFilter();
-            if (!empty($cron['filter']) && !empty($filter)) {
-                $key = $cron['filter'];
-                $rs['filter'] = array_key_exists($key, $filter) ? $filter[$key] : [];
-            }
-
-            //其他参数
-            $rs = array_merge($cron, $rs);
-        } else {
-            $rs = [];
+        //解析用户的站点配置
+        $site = 'site';
+        $userSites = Config::getUserSites();
+        if (!empty($cron[$site]) && !empty($userSites)) {
+            $key = $cron[$site];
+            $rs['site'] = array_key_exists($key, $userSites) ? $userSites[$key] : [];
         }
-        return $rs;
+
+        //解析站点域名
+        $sites = Config::getSites();
+        if (!empty($cron[$site]) && !empty($sites)) {
+            $key = $cron[$site];
+            $rs['sites'] = array_key_exists($key, $sites) ? $sites[$key] : [];
+        }
+
+        //解析下载器
+        $clients = Config::getClients();
+        if (!empty($cron['clients']) && !empty($clients)) {
+            $key = $cron['clients'];
+            $rs['clients'] = array_key_exists($key, $clients) ? $clients[$key] : [];
+        }
+
+        //解析筛选规则的过滤器
+        $filter = Config::getFilter();
+        if (!empty($cron['filter']) && !empty($filter)) {
+            $key = $cron['filter'];
+            $rs['filter'] = array_key_exists($key, $filter) ? $filter[$key] : [];
+        }
+
+        //其他参数
+        return array_merge($cron, $rs);
     }
 
     /**

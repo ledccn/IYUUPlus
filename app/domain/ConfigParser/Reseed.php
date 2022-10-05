@@ -29,41 +29,37 @@ class Reseed implements ConfigParserInterface
             return $rs;
         }
         $cron = Config::getCronByUUID($uuid);
-        //检查使能
-        if (isset($cron['switch']) && $cron['switch'] === 'on') {
-            //IYUU密钥
-            $iyuu = Config::getIyuu();
-            $rs['iyuu.cn'] = $iyuu['iyuu.cn'];
 
-            //默认
-            $rs['default'] = Config::getDefault();
+        //IYUU密钥
+        $iyuu = Config::getIyuu();
+        $rs['iyuu.cn'] = $iyuu['iyuu.cn'];
 
-            //微信通知
-            $rs['weixin'] = Config::getWeixin();
+        //默认
+        $rs['default'] = Config::getDefault();
 
-            //解析站点
-            $sites = Config::getUserSites();
-            if (!empty($cron['sites']) && !empty($sites)) {
-                $key = $cron['sites'];
-                $rs['sites'] = array_filter($sites, function ($v, $k) use ($key) {
-                    return array_key_exists($k, $key);
-                }, ARRAY_FILTER_USE_BOTH);
-            }
+        //微信通知
+        $rs['weixin'] = Config::getWeixin();
 
-            //解析下载器
-            $clients = Config::getClients();
-            if (!empty($cron['clients']) && !empty($clients)) {
-                $key = $cron['clients'];
-                $rs['clients'] = array_filter($clients, function ($k) use ($key) {
-                    return array_key_exists($k, $key);
-                }, ARRAY_FILTER_USE_KEY);
-            }
-
-            //其他参数
-            $rs = array_merge($cron, $rs);
+        //解析站点
+        $sites = Config::getUserSites();
+        if (!empty($cron['sites']) && !empty($sites)) {
+            $key = $cron['sites'];
+            $rs['sites'] = array_filter($sites, function ($v, $k) use ($key) {
+                return array_key_exists($k, $key);
+            }, ARRAY_FILTER_USE_BOTH);
         }
 
-        return $rs;
+        //解析下载器
+        $clients = Config::getClients();
+        if (!empty($cron['clients']) && !empty($clients)) {
+            $key = $cron['clients'];
+            $rs['clients'] = array_filter($clients, function ($k) use ($key) {
+                return array_key_exists($k, $key);
+            }, ARRAY_FILTER_USE_KEY);
+        }
+
+        //其他参数
+        return array_merge($cron, $rs);
     }
 
     /**

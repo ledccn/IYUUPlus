@@ -254,11 +254,8 @@ class Crontab
         $cronFilename = Config::filename['crontab'];
         $cronAll = Conf::get($cronFilename, Constant::config_format, []);
         $cron = array_key_exists($uuid, $cronAll) ? $cronAll[$uuid] : [];
-        if (isset($cron['switch']) && booleanParse($cron['switch'])) {
-            self::execute($cron['command'], $cron['uuid']);
-            return true;
-        }
-        return false;
+        self::execute($cron['command'], $cron['uuid']);
+        return true;
     }
 
     /**
