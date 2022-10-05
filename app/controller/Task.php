@@ -94,8 +94,13 @@ class Task extends BaseController
     {
         $rs = self::RS;
         $uuid = $request->get('uuid');
-        //TODO...
-        return json(domainReseed::parser($uuid));
+        $pid_file = Crontab::getPidFile($uuid);
+        clearstatcache();
+        $rs['data'] = [
+            'success' => (is_file($pid_file) and unlink($pid_file)) or !is_file($pid_file),
+        ];
+
+        return json($rs);
     }
 
     /**

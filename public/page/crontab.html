@@ -388,6 +388,7 @@
 <!-- 模板：表格行工具条 -->
 <script type="text/html" id="tableToolbar">
   <span class="layui-badge layui-bg-cyan" lay-event="run">运行</span>
+  <span class="layui-badge layui-bg-cyan" lay-event="stop">停止</span>
   <span class="layui-badge layui-bg-orange" lay-event="log">日志</span>
   <span class="layui-badge layui-bg-gray" lay-event="clearLog">清理</span>
   <span class="layui-badge layui-bg-green" lay-event="edit">编辑</span>
@@ -409,6 +410,7 @@
       ,create: '/Api/Config'
       ,delete: '/Api/Config?config_filename=crontab&action=del'
       ,taskRun: '/Task/start'
+      ,taskStop: '/Task/stop'
       ,taskLogs: '/Task/logs'
       ,taskClearLogs: '/Task/clearLogs'
     };
@@ -929,7 +931,7 @@
             return d.body || d.command || '';
           }
         }
-        ,{title: '操作', width: 230, templet: '#tableToolbar', fixed: "right", align: "center"}
+        ,{title: '操作', width: 270, templet: '#tableToolbar', fixed: "right", align: "center"}
       ]]
       ,done: function(res, curr, count){
         //如果是异步请求数据方式，res即为你接口返回的信息。
@@ -1003,6 +1005,24 @@
                 return;
               }
               let msg = data.data.success ? '运行成功' : '运行失败';
+              layer.msg(msg, function () {
+              });
+            },
+            complete: function () {
+            }
+          });
+          break;
+        case 'stop':
+          $.ajax({
+            url: API.taskStop,
+            type:'get',
+            data: {uuid: obj.data.uuid},
+            success:function(data){
+              if (data.ret !== 200) {
+                layer.msg(data.msg);
+                return;
+              }
+              let msg = data.data.success ? '已停止' : '操作失败';
               layer.msg(msg, function () {
               });
             },
