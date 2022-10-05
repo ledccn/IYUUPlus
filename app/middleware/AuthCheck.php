@@ -19,6 +19,7 @@ class AuthCheck implements MiddlewareInterface
         $action = $request->action;
         $skip = in_array($action, Constant::Skip_AuthCheck);    // 严格区分大小写
         if ($skip || $session->get(Constant::Session_Token_Key)) {
+            //刷新SESSION修改时间，避免被GC清除
             $session->set('last_time', time());
             // 不拦截：账号登录、检查登录、绑定token、存在Session等
             return $next($request);
