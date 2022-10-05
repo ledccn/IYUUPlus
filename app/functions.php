@@ -94,7 +94,7 @@ function fileLastLines(string $filename, int $n = 1): ?string
 {
     // 文件存在并打开文件
     if (!is_file($filename) || !$fp = fopen($filename, 'r')) {
-        return null;
+        return '';
     }
 
     $pos = -2;

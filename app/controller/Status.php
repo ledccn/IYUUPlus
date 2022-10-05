@@ -77,7 +77,7 @@ class Status extends BaseController
         $rs['data'] = [
             'cron_total' => count($cron),
             'sites_total' => count($user_sites),
-            'sites_conut' => count($sites),
+            'sites_count' => count($sites),
             'clients_total' => count($clients),
             'project' => IYUU_PROJECT_NAME(),
             'version' => $version,
