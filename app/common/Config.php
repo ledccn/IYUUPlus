@@ -33,15 +33,17 @@ class Config
         clearstatcache();
         $file_name = $absolutePath ? $filename : static::createFilePath($filename, $type);
 
-        if (!is_writable(dirname($file_name))) {
+        $dir = dirname($file_name);
+        is_dir($dir) or mkdir($dir, 0777, true);
+        if (!is_writable($dir)) {
             return false;
         }
-        if (file_exists($file_name)) {
+
+        if (!file_exists($file_name)) {
+            touch($file_name);
             chmod($file_name, 0777);
-        } else {
-            $dir = dirname($file_name);
-            is_dir($dir) or mkdir($dir, 0777, true);
         }
+
         switch (strtolower($type)) {
             case 'object':
                 $str = serialize($data);
