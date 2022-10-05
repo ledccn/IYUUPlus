@@ -17,6 +17,7 @@ use IYUU\Library\IFile;
 use IYUU\Library\Table;
 use IYUU\Reseed\Events\ClientHashSuccessEvent;
 use IYUU\Reseed\Events\ClientLinkSuccessEvent;
+use IYUU\Reseed\Events\InfoHashResponseEvent;
 use IYUU\Reseed\Events\SupportSitesSuccessEvent;
 use IYUU\Reseed\Listener\ClientHashSuccessListener;
 use IYUU\Reseed\Listener\ClientLinkSuccessListener;
@@ -405,6 +406,7 @@ class AutoReseed
             if (empty($hashArray)) {
                 continue;
             }
+
             //触发事件
             $event = new ClientHashSuccessEvent($hashArray, $clientValue);
             self::$EventDispatcher->dispatch($event);
@@ -531,6 +533,10 @@ class AutoReseed
         }
 
         //触发事件
+        $event = new InfoHashResponseEvent($data, self::$_sites, self::$sites);
+        self::$EventDispatcher->dispatch($event);
+        //事件内允许处理可辅种哈希
+        $data = $event->getInfoHashResponse();
 
         // 遍历当前客户端可辅种数据
         self::selfClientReseed($data, $hashString, $clientKey);
