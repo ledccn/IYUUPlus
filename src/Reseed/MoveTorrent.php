@@ -4,6 +4,7 @@ namespace IYUU\Reseed;
 
 use app\domain\ConfigParser\Move as domainMove;
 use IYUU\Client\ClientException;
+use IYUU\Notify\NotifyFactory;
 use Rhilip\Bencode\Bencode;
 use Rhilip\Bencode\ParseException;
 
@@ -28,7 +29,7 @@ class MoveTorrent extends AutoReseed
      * 微信通知消息体
      * @var array
      */
-    protected static $wechatMsg = array(
+    protected static $notifyMsg = array(
         'MoveSuccess' => 0,      // 移动成功
         'MoveError' => 0,      // 移动失败
     );
@@ -54,6 +55,8 @@ class MoveTorrent extends AutoReseed
         self::$conf = domainMove::parser($cron_name);
         // 用户选择的下载器
         self::$clients = self::$conf['clients'];
+        // 获取通知渠道
+        self::$notify = NotifyFactory::get(self::$conf['notify']['channel'] ?? '');
         echo microtime(true) . ' 命令行参数解析完成！' . PHP_EOL;
     }
 
@@ -65,7 +68,7 @@ class MoveTorrent extends AutoReseed
     public static function call()
     {
         self::move();
-        self::wechatMessage();
+        self::job_done_notify();
         exit(self::$ExitCode);
     }
 
@@ -256,11 +259,11 @@ class MoveTorrent extends AutoReseed
                     // 转移成功的种子，以infohash为文件名，写入缓存
                     static::wLog($log, $info_hash, self::$cacheMove);
                     static::wLog($log, 'MoveSuccess' . $k);
-                    static::$wechatMsg['MoveSuccess']++;
+                    static::$notifyMsg['MoveSuccess']++;
                 } else {
                     // 失败的种子
                     static::wLog($log, 'MoveError' . $k);
-                    static::$wechatMsg['MoveError']++;
+                    static::$notifyMsg['MoveError']++;
                 }
             }
         }
@@ -385,28 +388,28 @@ class MoveTorrent extends AutoReseed
      * 微信模板消息拼接方法
      * @return string|false          发送情况，json
      */
-    protected static function wechatMessage()
+    protected static function job_done_notify()
     {
-        $weixin = self::$conf['weixin'];
-        // 1. 检查微信通知开关
-        if (empty($weixin['switch'])) {
+        $notify = self::$conf['notify'];
+        // 1. 检查通知开关
+        if (!$notify['enable']) {
             return '';
         }
         // 2. 检查变化通知开关
-        if (!empty($weixin['notify_on_change'])) {
-            switch ($weixin['notify_on_change']) {
+        if (!empty($notify['notify_on_change'])) {
+            switch ($notify['notify_on_change']) {
                 case 'on':
-                    if (self::$wechatMsg['MoveSuccess'] === 0 && self::$wechatMsg['MoveError'] === 0) {
+                    if (self::$notifyMsg['reseedSuccess'] === 0 && self::$notifyMsg['reseedError'] === 0) {
                         return '';
                     }
                     break;
                 case 'only_success':
-                    if (self::$wechatMsg['MoveSuccess'] === 0) {
+                    if (self::$notifyMsg['reseedSuccess'] === 0) {
                         return '';
                     }
                     break;
                 case 'only_fails':
-                    if (self::$wechatMsg['MoveError'] === 0) {
+                    if (self::$notifyMsg['reseedError'] === 0) {
                         return '';
                     }
                     break;
@@ -420,15 +423,15 @@ class MoveTorrent extends AutoReseed
         $desp = '### 版本号：' . IYUU_VERSION() . $br;
         // 移动做种
         $desp .= $br . '----------' . $br;
-        if (static::$wechatMsg['MoveSuccess'] || static::$wechatMsg['MoveError']) {
-            $desp .= '**移动成功：' . static::$wechatMsg['MoveSuccess'] . '**  [会把hash加入移动缓存]' . $br;
-            $desp .= '**移动失败：' . static::$wechatMsg['MoveError'] . '**  [解决错误提示，可以重试]' . $br;
+        if (static::$notifyMsg['MoveSuccess'] || static::$notifyMsg['MoveError']) {
+            $desp .= '**移动成功：' . static::$notifyMsg['MoveSuccess'] . '**  [会把hash加入移动缓存]' . $br;
+            $desp .= '**移动失败：' . static::$notifyMsg['MoveError'] . '**  [解决错误提示，可以重试]' . $br;
             $desp .= '**如需重新移动，请删除 ./torrent/cachemove 移动缓存。**' . $br;
         } else {
             $desp .= $br . '转移任务完成，未发现种子需要转移' . $br;
             $desp .= $br . '----------' . $br;
         }
         $desp .= $br . '*此消息将在3天后过期*。';
-        return static::ff($text, $desp);
+        return static::send_notify($text, $desp);
     }
 }

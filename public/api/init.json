@@ -221,46 +221,12 @@
 							"id": 26278,
 							"title": "通知设置",
 							"icon": "fa fa-bell-o fa-fw",
-							"href": "",
+							"href": "page/setting/notify.html",
 							"target": "_self",
 							"sort_num": 9,
 							"parent_id": 80638,
 							"assign_admin_roles": "super",
-							"assgin_admin_usernames": "",
-							"child": [{
-									"id": 89240,
-									"title": "微信配置",
-									"icon": "fa fa-weixin fa-fw",
-									"href": "page/setting/weixin.html",
-									"target": "_self",
-									"sort_num": 0,
-									"parent_id": 26278,
-									"assign_admin_roles": "",
-									"assgin_admin_usernames": null
-								},
-								{
-									"id": 17982,
-									"title": "邮箱配置",
-									"icon": "fa fa-envelope fa-fw",
-									"href": "page/setting/mail.html",
-									"target": "_self",
-									"sort_num": 2,
-									"parent_id": 26278,
-									"assign_admin_roles": "super",
-									"assgin_admin_usernames": ""
-								},
-								{
-									"id": 98077,
-									"title": "短信配置",
-									"icon": "fa fa-comment-o fa-fw",
-									"href": "page/setting/sms.html",
-									"target": "_self",
-									"sort_num": 3,
-									"parent_id": 26278,
-									"assign_admin_roles": "super",
-									"assgin_admin_usernames": ""
-								}
-							]
+							"assgin_admin_usernames": ""
 						}
 					]
 				},

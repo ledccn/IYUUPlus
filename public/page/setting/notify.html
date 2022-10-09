@@ -1,0 +1,264 @@
+<style>
+  .layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+</style>
+<div class="layuimini-container layuimini-page-anim">
+  <div class="layuimini-main">
+    <table id="tableId" lay-filter="tableFilter"></table>
+    <fieldset class="layui-elem-field">
+      <legend>新增/编辑通知渠道</legend>
+      <div class="layui-field-box">
+        <form class="layui-form layuimini-form" lay-filter="form" id="form">
+          <input type="hidden" name="config_filename" value="notify">
+          <div class="layui-form-item">
+            <label class="layui-form-label">通知渠道类型</label>
+            <div class="layui-input-inline">
+            <select name="type" lay-filter="type" lay-verify="required" lay-reqtext="通知渠道类型不能为空">
+              <option value="">请选择通知渠道类型</option>
+              <option value="iyuu">iyuu</option>
+              <option value="serverchan">server酱</option>
+              <option value="bark">Bark</option>
+              <option value="sms">短信(未实现)</option>
+              <option value="email">E-mail(未实现)</option>
+            </select>
+            </div>
+          </div>
+          <div class="layuimini-form" id="notify_type_view"></div>
+          <div class="layui-form-item">
+            <div class="layui-input-block">
+              <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确认保存</button>
+              <button class="layui-btn layui-btn-primary" data-refresh="刷新">重置</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </fieldset>
+  </div>
+</div>
+<!-- 模板：通知渠道配置字段 -->
+<script type="text/html" id="notify_type_tpl">
+  <input type="hidden" name="action" value="{{ d.action || 'add'}}">
+  {{# if (d.action === 'edit') { }}
+  <input type="hidden" name="uuid" value="">
+  {{# } }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">通知渠道名字</label>
+    <div class="layui-input-block">
+      <input type="text" name="name" lay-verify="required" lay-reqtext="通知渠道名字不能为空" placeholder="请输入通知渠道名字" class="layui-input">
+      <tip>给通知渠道起个名字，方便你找到它。</tip>
+    </div>
+  </div>
+  {{# switch (d.type) {
+        case 'iyuu': }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">token</label>
+    <div class="layui-input-block">
+      <input type="text" name="options[token]" lay-verify="required" lay-reqtext="token 不能为空" placeholder="请输入 token" class="layui-input">
+    </div>
+  </div>
+  {{# break; case 'serverchan': }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">key</label>
+    <div class="layui-input-block">
+      <input type="text" name="options[key]" lay-verify="required" lay-reqtext="key 不能为空" placeholder="请输入 key" class="layui-input">
+    </div>
+  </div>
+  {{# break; case 'bark': }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">服务器</label>
+    <div class="layui-input-block">
+      <input type="text" name="options[server]" lay-verify="required" lay-reqtext="服务器 不能为空" placeholder="请输入 服务器" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">device_key</label>
+    <div class="layui-input-block">
+      <input type="text" name="options[device_key]" lay-verify="required" lay-reqtext="device_key 不能为空" placeholder="请输入 device_key" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label required">通知分组(可选)</label>
+    <div class="layui-input-block">
+      <input type="text" name="options[group]" placeholder="通知分组" class="layui-input">
+    </div>
+  </div>
+  {{# break; case 'email': }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">邮箱地址</label>
+    <div class="layui-input-block">
+      <input type="text" name="options[email]" lay-verify="required" lay-reqtext="邮箱地址不能为空" placeholder="请输入邮箱地址" class="layui-input">
+    </div>
+  </div>
+  {{# break; case 'sms': }}
+  <div class="layui-form-item">
+    <label class="layui-form-label required">手机号</label>
+    <div class="layui-input-block">
+      <input type="text" name="options[phone]" lay-verify="required" lay-reqtext="手机号不能为空" placeholder="请输入手机号" class="layui-input">
+    </div>
+  </div>
+  {{# break; default: }}
+  {{# } }}
+</script>
+<script>
+  layui.use(['table','form','miniPage','laytpl'], function () {
+    let $ = layui.$,
+      layer = layui.layer,
+      table = layui.table,
+      form = layui.form,
+      miniPage = layui.miniPage,
+      laytpl = layui.laytpl;
+
+    const API = {
+      tableList: '/Api/Config?config_filename=notify&action=list'
+      ,create: '/Api/Config'
+      ,delete: '/Api/Config?config_filename=notify&action=del'
+      ,notify_field_rule:{
+        type: ''
+      }
+    };
+    sessionStorage.setItem('notify_field_rule',JSON.stringify(API.notify_field_rule));
+
+    /**
+     * 通知渠道选择框
+     */
+    notify_sel_action = function(type = '', action = '') {
+      let rule = JSON.parse(sessionStorage.getItem('notify_field_rule'))
+        ,getTpl = notify_type_tpl.innerHTML
+        ,view = document.getElementById('notify_type_view');
+
+      view.innerHTML = '';
+      if (type === '') {
+        return ;
+      }
+      rule.action = action;
+      rule.type = type;
+      laytpl(getTpl).render(rule, function(html) {
+        view.innerHTML = html;
+      });
+      form.render();
+    };
+
+    /**
+     * 初始化表格
+     */
+    table.render({
+      elem: '#tableId'
+      ,url: API.tableList
+      ,parseData: function(res){
+        (res.ret === 200) && localStorage.setItem('notify',JSON.stringify(res));
+        return {
+          "code": res.ret === 200 ? 0 : res.ret,
+          "msg": res.msg,
+          "count": res.data.total,
+          "data": res.data.items
+        };
+      }
+      ,cols: [[
+        {field: 'name', title: '名称', width:180, align: "center", sort: true, fixed: 'left'}
+        ,{field: 'uuid', title: 'UUID', width:80, align: "center", hide: true}
+        ,{field: 'type', title: '类型', width:180, align: "center", sort: true}
+        ,{field: 'options', title: '配置', minWidth:300, sort: false
+          ,templet: function(d){
+            return JSON.stringify(d.options);
+          }
+        }
+        ,{title: '操作', width: 120, templet: '#tableRowToolbar', fixed: "right", align: "center"}
+      ]]
+      ,done: function(res, curr, count){
+        //如果是异步请求数据方式，res即为你接口返回的信息。
+        //如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
+        //console.log(res);
+        //console.log(curr);  //得到当前页码
+        //console.log(count); //得到数据总量
+      }
+      ,page: false
+      ,limit:500
+    });
+
+    /**
+     * 监听：行工具条
+     */
+     table.on('tool(tableFilter)', function(obj){
+      let layEvent = obj.event;
+      let tr = obj.tr;
+      console.log(obj.data);
+      switch (layEvent) {
+        case 'edit':
+          notify_sel_action(obj.data.type, 'edit');
+          $('#notify_type_view :input').removeAttr("checked");
+          format_input('options', obj.data);
+          form.val("form", obj.data);
+          break;
+        case 'delete':
+          layer.confirm('真的删除 '+obj.data.name +'吗？', function(index){
+            $.ajax({
+              url: API.delete,
+              type:'get',
+              data: {uuid: obj.data.uuid},
+              success:function(data){
+                if (data.ret !== 200) {
+                  layer.msg(data.msg);
+                  return;
+                }
+                layer.msg('删除成功', function () {
+                });
+                obj.del();
+                layer.close(index);
+              },
+              complete: function () {
+              }
+            });
+          });
+          break;
+        default:
+          break;
+      }
+    });
+
+    //监听行单击事件
+    table.on('row(tableFilter)', function(obj){
+      //同下
+    });
+    //监听行双击事件
+    table.on('rowDouble(tableFilter)', function(obj){
+      //console.log(obj.tr) //得到当前行元素对象
+      console.log(obj.data) //得到当前行数据
+      //obj.del(); //删除当前行
+      //obj.update(fields) //修改当前行数据
+    });
+
+    /**
+      * 初始化表单，要加上，不然刷新部分组件可能会不加载
+      */
+    form.render();
+
+    //监听选择：类型
+    form.on('select(type)', function(data){
+      notify_sel_action(data.value, 'add');
+    });
+    //监听提交
+    form.on('submit(saveBtn)', function (data) {
+      $.ajax({
+        url: API.create,
+        type: 'post',
+        data: data.field,
+        success:function(d){
+          console.log(d);
+          if (d.ret !== 200) {
+            layer.msg(d.msg);
+            return;
+          }
+          layer.msg('保存成功', function(){
+            //miniPage.hashHome();
+            window.location.reload();
+          });
+        },
+        complete: function () {
+        },
+        error : function(request) {
+          layer.alert('未知错误，请截图当前界面，然后求助于QQ群：859882209、931954050、924099912！', {icon: 2, title: '出错提示'});
+        }
+      });
+      return false;
+    });
+  });
+</script>
