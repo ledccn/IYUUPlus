@@ -35,14 +35,15 @@ class Crontab
     // 任务进程后缀
     const pid_suffix = '.pid';
 
-    // 管理员用户名,用户名密码都为空字符串时说明不用验证
     /**
      * linux系统的crontab任务永远在第1秒执行,且添加定时任务后的1分钟之内是不会执行该任务(即使语法上完全满足)
-     * @var mixed
+     * @var string
      */
     const cron_minute = '%s %s %s %s %s';
 
-    // 管理员密码,用户名密码都为空字符串时说明不用验证
+    /**
+     * @var string
+     */
     const cron_second = '%s %s %s %s %s %s';
     /**
      * where可能的值
@@ -50,7 +51,10 @@ class Crontab
     const WHERE = [
         'day', 'day_n', 'hour', 'hour_n', 'minute', 'minute_n', 'second', 'second_n', 'week', 'month'
     ];
+    // 管理员用户名,用户名密码都为空字符串时说明不用验证
     public static $adminName = '';
+
+    // 管理员密码,用户名密码都为空字符串时说明不用验证
     public static $adminPassword = '';
 
     /**

@@ -526,7 +526,12 @@
      * @param {object} formData   编辑时表单数据
      */
     function notify_sel_action(type = '', formData) {
-      format_input('notify', formData);
+      if ('notify' !== type) {
+        return;
+      }
+      if (null !== formData) {
+        format_input('notify', formData);
+      }
     }
 
     /**
