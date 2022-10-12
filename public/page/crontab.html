@@ -469,6 +469,7 @@
       view.innerHTML = '';
       if (type === '') {
         getById('switch').checked = false;
+        getById('notify-enable').checked = false;
         form.render();
         return ;
       }
@@ -476,6 +477,7 @@
       if (action === '' || action === 'add') {
         getById('name').value = '';
         getById('switch').checked = true;
+        getById('notify-enable').checked = true;
       }
       laytpl(getTpl).render(rule, function(html) {
         view.innerHTML = html;
@@ -489,7 +491,7 @@
       reseed_sel_action(type, formData);
       //联动：转移任务
       move_sel_action(type, formData);
-      //联动：RSSS下载任务
+      //联动：RSS下载任务
       rss_sel_action(type, formData);
       //联动：免费种爬虫下载任务
       spiders_sel_action(type, formData);
@@ -526,9 +528,6 @@
      * @param {object} formData   编辑时表单数据
      */
     function notify_sel_action(type = '', formData) {
-      if ('notify' !== type) {
-        return;
-      }
       if (null !== formData) {
         format_input('notify', formData);
       }
@@ -1174,9 +1173,11 @@
           break;
         case 'edit':
           getById('switch').checked = false;  //取消使能
+          getById('notify-enable').checked = false;
           let formData = JSON.parse(JSON.stringify(obj.data));
           load_notify_channels(function () {
               crontab_sel_action(obj.data.type, 'edit', obj.data.where, formData);
+              sessionStorage.setItem('edit', JSON.stringify(formData));
               form.val("form", formData);
               form.render();
           });
