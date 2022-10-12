@@ -386,37 +386,13 @@ class MoveTorrent extends AutoReseed
 
     /**
      * 微信模板消息拼接方法
-     * @return string|false          发送情况，json
+     * @return string|bool          发送情况，json
      */
     protected static function job_done_notify()
     {
         $notify = self::$conf['notify'];
-        // 1. 检查通知开关
-        if (!$notify['enable']) {
+        if (false === static::isNotifyEnable($notify)) {
             return '';
-        }
-        // 2. 检查变化通知开关
-        if (!empty($notify['notify_on_change'])) {
-            switch ($notify['notify_on_change']) {
-                case 'on':
-                    if (self::$notifyMsg['reseedSuccess'] === 0 && self::$notifyMsg['reseedError'] === 0) {
-                        return '';
-                    }
-                    break;
-                case 'only_success':
-                    if (self::$notifyMsg['reseedSuccess'] === 0) {
-                        return '';
-                    }
-                    break;
-                case 'only_fails':
-                    if (self::$notifyMsg['reseedError'] === 0) {
-                        return '';
-                    }
-                    break;
-                case 'off':
-                default:
-                    break;
-            }
         }
         $br = PHP_EOL;
         $text = 'IYUU转移任务-统计报表';

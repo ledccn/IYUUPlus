@@ -994,9 +994,9 @@ class AutoReseed
 
     /**
      * 微信推送 爱语飞飞
-     * @param string $text
-     * @param string $desp
-     * @return false|string
+     * @param string $title
+     * @param string $content
+     * @return bool|string
      */
     protected static function send_notify(string $title = '', string $content = '')
     {
@@ -1224,38 +1224,55 @@ class AutoReseed
     }
 
     /**
-     * 微信模板消息拼接方法
-     * @return string           发送情况，json
+     * 判断是否启用通知
+     * @param array $notify
+     * @return bool
      */
-    protected static function job_done_notify()
+    protected static function isNotifyEnable(array $notify): bool
     {
-        $notify = self::$conf['notify'];
+        if (empty($notify)) {
+            return false;
+        }
         // 1. 检查通知开关
-        if (!$notify['enable']) {
-            return '';
+        if (empty($notify['enable'])) {
+            return false;
         }
         // 2. 检查变化通知开关
         if (!empty($notify['notify_on_change'])) {
             switch ($notify['notify_on_change']) {
                 case 'on':
                     if (self::$notifyMsg['reseedSuccess'] === 0 && self::$notifyMsg['reseedError'] === 0) {
-                        return '';
+                        return false;
                     }
                     break;
                 case 'only_success':
                     if (self::$notifyMsg['reseedSuccess'] === 0) {
-                        return '';
+                        return false;
                     }
                     break;
                 case 'only_fails':
                     if (self::$notifyMsg['reseedError'] === 0) {
-                        return '';
+                        return false;
                     }
                     break;
                 case 'off':
+                    return false;
                 default:
                     break;
             }
+        }
+        return true;
+    }
+
+    /**
+     * 微信模板消息拼接方法
+     * @return string|bool           发送情况，json
+     */
+    protected static function job_done_notify()
+    {
+        $notify = self::$conf['notify'];
+        if (false === static::isNotifyEnable($notify)) {
+            return '';
         }
         $br = PHP_EOL;
         $text = 'IYUU自动辅种-统计报表';

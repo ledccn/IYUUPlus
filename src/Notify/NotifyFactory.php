@@ -3,6 +3,7 @@
 namespace IYUU\Notify;
 
 use app\domain\Config;
+use Error;
 
 class NotifyFactory
 {
