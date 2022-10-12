@@ -4,7 +4,7 @@
 <div class="layuimini-container layuimini-page-anim">
   <div class="layuimini-main">
     <table id="tableId" lay-filter="tableFilter"></table>
-    
+
     <fieldset class="layui-elem-field">
       <legend>新增/编辑计划任务</legend>
       <div class="layui-field-box">
@@ -40,6 +40,29 @@
               <input type="checkbox" name="switch" lay-skin="switch" lay-text="YES|NO" lay-filter="switch" id="switch">
             </div>
           </div>
+          <div class="layui-form-item">
+            <label class="layui-form-label">通知启动</label>
+            <div class="layui-input-block">
+              <input type="checkbox" name="notify[enable]" lay-skin="switch" lay-text="YES|NO" lay-filter="switch" id="notify-enable">
+            </div>
+          </div>
+          <div class="layui-form-item">
+            <label class="layui-form-label">变化通知</label>
+            <div class="layui-input-block">
+              <select name="notify[notify_on_change]">
+                <option value="off">每次运行都通知</option>
+                <option value="on">成功数+失败数大于0时通知</option>
+                <option value="only_success">成功数大于0</option>
+                <option value="only_fails">失败数大于0</option>
+              </select>
+            </div>
+          </div>
+          <div class="layui-form-item">
+            <label class="layui-form-label">通知渠道</label>
+            <div class="layui-input-block">
+              <select name="notify[channel]" id="notify_channels"></select>
+            </div>
+          </div>
           <div class="layuimini-form" id="crontab_type_view"></div>
 
           <div class="layui-form-item">
@@ -53,6 +76,14 @@
     </fieldset>
   </div>
 </div>
+
+
+<!-- 模板：通知渠道 单选框 -->
+<script id="notify_option_tpl" type="text/html">
+  {{#  layui.each(d, function(index, item){ }}
+  <option value="{{ item.name }}">{{ item.name }}</option>
+  {{#  }); }}
+</script>
 
 <!-- 模板：计划任务配置字段 -->
 <script type="text/html" id="crontab_type_tpl">
@@ -86,7 +117,7 @@
       <tip>Crontab表达式优先级高于执行周期。如果不懂请留空。</tip>
     </div>
   </div>
-  
+
   {{# if (d.type === 'reseed') { }}
   <div class="layui-form-item">
     <label class="layui-form-label required">辅种的站点</label>
@@ -210,7 +241,7 @@
       <tip><span class="layui-badge">优先级：中</span>下载器的数据目录。如果此处留空，将会使用过滤器设置的数据目录或者下载器设置的数据目录；如果都未设置，将会采用下载器默认值。</tip>
     </div>
   </div>
-  
+
   <div class="layui-form-item">
     <label class="layui-form-label required">筛选规则</label>
     <div class="layui-input-block">
@@ -418,7 +449,7 @@
     const path_filter = 'path_filter'
       ,path_selector = 'path_selector'
       ,_height = 250;
-
+    load_notify_channels();
     /**
      * 任务类型 选择框
      * @param {string} type       任务类型
@@ -450,6 +481,8 @@
         view.innerHTML = html;
       });
       form.render();
+      //联动：更新通知渠道
+      notify_sel_action(type, formData);
       //联动：任务周期
       crontab_where_sel_action(rule.where);
       //联动：辅种任务
@@ -461,6 +494,40 @@
       //联动：免费种爬虫下载任务
       spiders_sel_action(type, formData);
     };
+
+    /**
+     * load notify channels
+     */
+    function load_notify_channels(callback) {
+      $.getJSON('/Api/Config?config_filename=notify&action=list', function (d) {
+        if (d.ret !== 200) {
+          return;
+        }
+        let notify_tpl = notify_option_tpl.innerHTML
+                ,notify_view = getById('notify_channels');
+        if (d.data.total <= 0) {
+          layer.alert('您还没有配置通知渠道，将会为您跳转到通知渠道设置！', function(index){
+            layer.close(index);
+            window.location = '/index.html#/page/setting/notify.html';
+          });
+          return;
+        }
+        laytpl(notify_tpl).render(d.data.items, function(html) {
+          notify_view.innerHTML = html;
+        });
+        //回调
+        form.render('select');
+        callback && callback()
+      });
+    }
+    /**
+     * notify
+     * @param {string} type       任务类型
+     * @param {object} formData   编辑时表单数据
+     */
+    function notify_sel_action(type = '', formData) {
+      format_input('notify', formData);
+    }
 
     /**
      * 任务周期选择框
@@ -486,7 +553,7 @@
       });
       form.render();
     };
-    
+
     /**
      * 清空crontab文本框
      */
@@ -685,7 +752,7 @@
         });
       });
     };
-    
+
     /**
      * 任务选择框联动，RSS下载任务
      * @param {string} type       任务类型
@@ -849,10 +916,9 @@
         form.render('radio');
       });
     };
-      
     /**
      * 初始化表格
-     */ 
+     */
     table.render({
       elem: '#tableId'
       ,url: API.tableList
@@ -931,6 +997,11 @@
             return d.body || d.command || '';
           }
         }
+        ,{field: 'notify', title: '通知', minWidth: 73, sort: true
+          ,templet: function(d){
+            return (d.notify.enable ? '<span class="layui-badge layui-bg-green">' : '<span class="layui-badge">') + d.notify.channel + '</span>';
+          }
+        }
         ,{title: '操作', width: 270, templet: '#tableToolbar', fixed: "right", align: "center"}
       ]]
       ,done: function(res, curr, count){
@@ -988,7 +1059,7 @@
 
     /**
      * 监听：行工具条
-     */ 
+     */
     table.on('tool(tableFilter)', function(obj){
       let layEvent = obj.event;
       let tr = obj.tr;
@@ -1099,9 +1170,11 @@
         case 'edit':
           getById('switch').checked = false;  //取消使能
           let formData = JSON.parse(JSON.stringify(obj.data));
-          crontab_sel_action(obj.data.type, 'edit', obj.data.where, formData);
-          form.val("form", formData);
-          form.render();
+          load_notify_channels(function () {
+              crontab_sel_action(obj.data.type, 'edit', obj.data.where, formData);
+              form.val("form", formData);
+              form.render();
+          });
           break;
         case 'delete':
           layer.confirm('真的删除 '+obj.data.name +'吗？', function(index){
@@ -1161,7 +1234,9 @@
     });
     //监听选择：类型
     form.on('select(type)', function(data){
-      crontab_sel_action(data.value, 'add');
+      load_notify_channels(function () {
+        crontab_sel_action(data.value, 'add');
+      });
     });
     //监听选择：执行周期where
     form.on('select(where)', function(data){
@@ -1184,7 +1259,7 @@
         clear_crontab_input();
       }
     },'change');
-    
+
     //监听提交
     form.on('submit(saveBtn)', function (data) {
       $.ajax({
@@ -1200,7 +1275,7 @@
           layer.msg('保存成功', function(){
             //miniPage.hashHome();
             window.location.reload();
-          });          
+          });
         },
         complete: function () {
         },

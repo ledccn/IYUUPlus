@@ -30,6 +30,7 @@ class Move implements ConfigParserInterface
             'skip_check' => 0,
             'paused' => 1,
             'delete_torrent' => 0,
+            'notify' => [],
         ];
         if (empty($uuid)) {
             return $rs;
@@ -42,6 +43,7 @@ class Move implements ConfigParserInterface
 
         //微信通知
         $rs['weixin'] = Config::getWeixin();
+        $rs['notify'] = $cron['notify'];
 
         //解析下载器
         $clients = Config::getClients();

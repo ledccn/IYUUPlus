@@ -23,6 +23,7 @@ class Config
         'folder' => 'folder',
         'init' => 'init',
         'iyuu' => 'iyuu',
+        'notify' => 'notify',
         'mail' => 'mail',
         'sites' => 'sites',
         'sms' => 'sms',
@@ -55,11 +56,33 @@ class Config
                 case 'crontab':
                     return self::uuid($config_filename, $request);
                 case 'user_sites':
+                case 'notify':
                     return self::uuid($config_filename, $request, 'name');
                 default:
                     return self::default($config_filename, $request);
             }
         }
+    }
+
+    /**
+     * 把老的通知数据格式改成新的
+     * 删除 weixin.json 把发送条件合并到定时任务里
+     * 初始化 notify.json，添加默认的 iyuu 通道
+     */
+    private static function migration_notify(array $crontab_configs): array
+    {
+        self::patchNotify();
+        if (empty($crontab_configs)) return $crontab_configs;
+        if (isset(current($crontab_configs)['notify'])) return $crontab_configs;
+        $wx = self::getWeixin();
+        foreach ($crontab_configs as $uuid => $item) {
+            $crontab_configs[$uuid]['notify'] = [
+                'enable' => $wx['switch'],
+                'channel' => 'iyuu',
+                'notify_on_change' => $wx['notify_on_change'] ?? 'off',
+            ];
+        }
+        return $crontab_configs;
     }
 
     /**
@@ -73,6 +96,14 @@ class Config
     {
         $rs = Constant::RS;
         $old_config = Conf::get($config_filename, Constant::config_format, []);
+        if ($config_filename === 'crontab' && !empty($old_config)) {
+            $old_config = self::migration_notify($old_config);
+            Conf::set('crontab', $old_config, Constant::config_format);
+            env('APP_DEBUG', false) and Conf::set('crontab', $old_config, 'array');
+        }
+        if ($config_filename === 'notify' && empty($old_config)) {
+            $old_config = self::patchNotify();;
+        }
         // 取值优先级：get > post
         $action = $request->get(Constant::action) ? $request->get(Constant::action) : $request->post(Constant::action);
         switch ($action) {
@@ -216,6 +247,44 @@ class Config
     public static function getWeixin(): array
     {
         return Conf::get(self::filename['weixin'], Constant::config_format, []);
+    }
+
+    /**
+     * 通知配置
+     * @return object[]
+     */
+    public static function getNotify(): array
+    {
+        $config = Conf::get(self::filename['notify'], Constant::config_format, []);
+        if (empty($config)) {
+            $iyuu_config = self::getIyuu();
+            if (!empty($iyuu_config)) {
+                return self::patchNotify();
+            }
+        }
+        return $config;
+    }
+
+    /**
+     * patch 通知配置
+     * @return array
+     */
+    private static function patchNotify(): array
+    {
+        $old = Conf::get(self::filename['notify'], Constant::config_format, []);
+        if (!empty($old)) return $old;
+        $iyuu_config = self::getIyuu();
+        $config = [
+            'iyuu' => [
+                'uuid' => 'iyuu',
+                'name' => 'iyuu',
+                'type' => 'iyuu',
+                'options' => ['token' => $iyuu_config['iyuu.cn']],
+            ],
+        ];
+        Conf::set(self::filename['notify'], $config, Constant::config_format);
+        env('APP_DEBUG', false) and Conf::set(self::filename['notify'], $config, 'array');
+        return $config;
     }
 
     /**

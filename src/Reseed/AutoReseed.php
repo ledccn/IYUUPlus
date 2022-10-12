@@ -15,6 +15,8 @@ use IYUU\Client\qBittorrent\qBittorrent;
 use IYUU\Client\transmission\transmission;
 use IYUU\Library\IFile;
 use IYUU\Library\Table;
+use IYUU\Notify\INotify;
+use IYUU\Notify\NotifyFactory;
 use IYUU\Reseed\Events\ClientHashSuccessEvent;
 use IYUU\Reseed\Events\ClientLinkSuccessEvent;
 use IYUU\Reseed\Events\InfoHashResponseEvent;
@@ -79,6 +81,11 @@ class AutoReseed
      */
     protected static $conf = [];
     /**
+     * 通知渠道方法
+     * @var INotify
+     */
+    protected static $notify;
+    /**
      * RPC连接
      * @var array
      */
@@ -98,10 +105,10 @@ class AutoReseed
      */
     protected static $pid_file = '';
     /**
-     * 微信通知消息体
+     * 通知消息体
      * @var array
      */
-    protected static $wechatMsg = array(
+    protected static $notifyMsg = array(
         'hashCount' => 0,  // 提交给服务器的hash总数
         'sitesCount' => 0,  // 可辅种站点总数
         'reseedCount' => 0,  // 返回的总数据
@@ -206,6 +213,8 @@ class AutoReseed
                 $v['url_join'] = [$url_join];
             }
         });
+        // 获取通知渠道
+        self::$notify = NotifyFactory::get(self::$conf['notify']['channel'] ?? '');
         // 用户辅种的下载器
         self::$clients = self::$conf['clients'];
         // curl超时
@@ -386,7 +395,7 @@ class AutoReseed
     public static function call()
     {
         self::reseed();
-        self::wechatMessage();
+        self::job_done_notify();
         exit(self::$ExitCode);
     }
 
@@ -397,7 +406,7 @@ class AutoReseed
     private static function reseed()
     {
         // 支持站点数量
-        self::$wechatMsg['sitesCount'] = count(self::$sites);
+        self::$notifyMsg['sitesCount'] = count(self::$sites);
         // 按客户端循环辅种 开始
         foreach (self::$links as $clientKey => $clientValue) {
             if (empty($clientValue)) {
@@ -429,7 +438,7 @@ class AutoReseed
             // 写请求日志
             //static::wLog($hashArray, 'Request_' . $clientKey);
 
-            self::$wechatMsg['hashCount'] += count($hashString);
+            self::$notifyMsg['hashCount'] += count($hashString);
             // 分组200个hash，分批辅种
             $group_num = 200;
             if (count($hashString) > $group_num) {
@@ -561,14 +570,14 @@ class AutoReseed
             $downloadDir = $hashString[$info_hash];   // 辅种目录
             foreach ($reseed['torrent'] as $id => $value) {
                 // 匹配的辅种数据累加
-                self::$wechatMsg['reseedCount']++;
+                self::$notifyMsg['reseedCount']++;
                 $sid = $value['sid'];                // 站点id
                 $torrent_id = $value['torrent_id'];  // 种子id
                 $reseed_infohash = $value['info_hash'];  // 种子infohash
                 // 检查禁用站点
                 if (empty(self::$sites[$sid])) {
                     echo '-----当前站点不受支持，已跳过。sid:' . $sid . PHP_EOL . PHP_EOL;
-                    self::$wechatMsg['reseedSkip']++;
+                    self::$notifyMsg['reseedSkip']++;
                     continue;
                 }
                 // 站名
@@ -634,7 +643,7 @@ class AutoReseed
 
                                     echo "当前站点触发第一次下载提示，已加入排除列表" . PHP_EOL;
                                     sleepIYUU(30, '请进入种子详情页，点右上角蓝色框：下载种子，成功后更新cookie！');
-                                    self::ff($siteName . '站点，辅种时触发第一次下载提示！');
+                                    self::send_notify($siteName . '站点，辅种时触发第一次下载提示！');
                                     break;
                                 }
                                 if (strpos($url, '系统检测到过多的种子下载请求') !== false) {
@@ -642,7 +651,7 @@ class AutoReseed
                                     $reseedPass = true;
 
                                     echo "当前站点触发人机验证，已加入流控列表" . PHP_EOL;
-                                    self::ff($siteName . '站点，辅种时触发流量控制！');
+                                    self::send_notify($siteName . '站点，辅种时触发流量控制！');
                                     break;
                                 }
                             } else {
@@ -716,7 +725,7 @@ class AutoReseed
                                     echo "当前站点触发第一次下载提示，已加入排除列表" . PHP_EOL;
                                     echo "请进入种子详情页，下载种子，成功后更新cookie！" . PHP_EOL;
                                     sleepIYUU(30, '请进入种子详情页，下载种子，成功后更新cookie！');
-                                    self::ff($siteName . '站点，辅种时触发第一次下载提示！');
+                                    self::send_notify($siteName . '站点，辅种时触发第一次下载提示！');
                                 }
                             } else {
                                 $reseedPass = true;
@@ -734,7 +743,7 @@ class AutoReseed
                                 echo "当前站点触发第一次下载提示，已加入排除列表" . PHP_EOL;
                                 echo "请进入种子详情页，下载种子，成功后更新cookie！" . PHP_EOL;
                                 sleepIYUU(30, '请进入种子详情页，下载种子，成功后更新cookie！');
-                                self::ff($siteName . '站点，辅种时触发第一次下载提示！');
+                                self::send_notify($siteName . '站点，辅种时触发第一次下载提示！');
                             }
                             break;
                     }
@@ -769,14 +778,14 @@ class AutoReseed
                     static::wLog($log, $value['info_hash'], self::$cacheHash);
                     static::wLog($log, 'reseedSuccess');
                     // 成功累加
-                    self::$wechatMsg['reseedSuccess']++;
+                    self::$notifyMsg['reseedSuccess']++;
                     // 保存当前客户端辅种的INFOHASH
                     self::$links[$clientKey]['reseed_infohash'][] = $reseed_infohash;
                 } else {
                     // 失败
                     static::wLog($log, 'reseedError');
                     // 失败累加
-                    self::$wechatMsg['reseedError']++;
+                    self::$notifyMsg['reseedError']++;
                 }
             }
             // 当前种子辅种 结束
@@ -824,7 +833,7 @@ class AutoReseed
                 if (empty(self::$_sites[$siteName]) || empty(self::$_sites[$siteName][$item])) {
                     $msg = '-------因当前' . $siteName . "站点未设置" . $item . "，已跳过！！【如果确实已设置，请检查辅种任务，是否勾选{$siteName}站点】" . PHP_EOL . PHP_EOL;
                     echo $msg;
-                    self::$wechatMsg['reseedSkip']++;
+                    self::$notifyMsg['reseedSkip']++;
                     return false;
                 }
             }
@@ -832,19 +841,19 @@ class AutoReseed
         // 重复做种检测
         if (isset($infohash_Dir[$info_hash])) {
             echo '-------与客户端现有种子重复：' . $_url . PHP_EOL . PHP_EOL;
-            self::$wechatMsg['reseedRepeat']++;
+            self::$notifyMsg['reseedRepeat']++;
             return false;
         }
         // 历史添加检测
         if (is_file(self::$cacheHash . $info_hash . '.txt')) {
             echo '-------当前种子上次辅种已成功添加【' . self::$cacheHash . $info_hash . '】，已跳过！ ' . $_url . PHP_EOL . PHP_EOL;
-            self::$wechatMsg['reseedPass']++;
+            self::$notifyMsg['reseedPass']++;
             return false;
         }
         // 检查站点是否可以辅种
         if (in_array($siteName, self::$noReseed)) {
             echo '-------已跳过不辅种的站点：' . $_url . PHP_EOL . PHP_EOL;
-            self::$wechatMsg['reseedPass']++;
+            self::$notifyMsg['reseedPass']++;
             // 写入日志文件，供用户手动辅种
             static::wLog('clients_' . $k . "【" . self::$links[$k]['_config']['name'] . "】" . PHP_EOL . $downloadDir . PHP_EOL . $_url . PHP_EOL . PHP_EOL, $siteName);
             return false;
@@ -858,7 +867,7 @@ class AutoReseed
                 $_url = 'https://' . self::$sites[$sid]['base_url'] . '/' . $details_page;
             }
             static::wLog('clients_' . $k . "【" . self::$links[$k]['_config']['name'] . "】" . PHP_EOL . $downloadDir . PHP_EOL . "-------因当前" . $siteName . "站点触发流控，已跳过！！ {$_url}" . PHP_EOL . PHP_EOL, 'reseedLimit');
-            self::$wechatMsg['reseedSkip']++;
+            self::$notifyMsg['reseedSkip']++;
             return false;
         }
         // 操作站点流控的配置
@@ -867,7 +876,7 @@ class AutoReseed
             if (isset($limitRule['count']) && isset($limitRule['sleep'])) {
                 if ($limitRule['count'] <= 0) {
                     echo '-------每次运行辅种，下载种子超过流控限制，会在下次运行辅种的时候，继续添加辅种。当前站点辅种数量已满足规则，保障账号安全已跳过：' . $_url . PHP_EOL . PHP_EOL;
-                    self::$wechatMsg['reseedPass']++;
+                    self::$notifyMsg['reseedPass']++;
                     return false;
                 } else {
                     // 异步间隔流控算法：各站独立、执行时间最优
@@ -885,7 +894,7 @@ class AutoReseed
                 }
             } else {
                 echo '-------当前站点流控规则错误，缺少count或sleep参数！请重新配置！' . $_url . PHP_EOL . PHP_EOL;
-                self::$wechatMsg['reseedPass']++;
+                self::$notifyMsg['reseedPass']++;
                 return false;
             }
         }
@@ -976,7 +985,7 @@ class AutoReseed
         $msg = $siteName . '站点，cookie已过期，请更新后重新辅种！';
         $msg_md5 = md5($msg);
         if (empty(static::$temp[$msg_md5])) {
-            self::ff($msg);
+            self::send_notify($msg);
             static::$temp[$msg_md5] = $msg;
         }
 
@@ -989,15 +998,9 @@ class AutoReseed
      * @param string $desp
      * @return false|string
      */
-    protected static function ff(string $text = '', string $desp = '')
+    protected static function send_notify(string $title = '', string $content = '')
     {
-        $token = static::$conf['iyuu.cn'];
-        $desp = empty($desp) ? date("Y-m-d H:i:s") : $desp;
-        $data = array(
-            'text' => $text,
-            'desp' => $desp
-        );
-        return ICurl::http_post('https://iyuu.cn/' . $token . '.send', $data);
+        return self::$notify->send($title, $content);
     }
 
     /**
@@ -1224,28 +1227,28 @@ class AutoReseed
      * 微信模板消息拼接方法
      * @return string           发送情况，json
      */
-    protected static function wechatMessage()
+    protected static function job_done_notify()
     {
-        $weixin = self::$conf['weixin'];
-        // 1. 检查微信通知开关
-        if (empty($weixin['switch'])) {
+        $notify = self::$conf['notify'];
+        // 1. 检查通知开关
+        if (!$notify['enable']) {
             return '';
         }
         // 2. 检查变化通知开关
-        if (!empty($weixin['notify_on_change'])) {
-            switch ($weixin['notify_on_change']) {
+        if (!empty($notify['notify_on_change'])) {
+            switch ($notify['notify_on_change']) {
                 case 'on':
-                    if (self::$wechatMsg['reseedSuccess'] === 0 && self::$wechatMsg['reseedError'] === 0) {
+                    if (self::$notifyMsg['reseedSuccess'] === 0 && self::$notifyMsg['reseedError'] === 0) {
                         return '';
                     }
                     break;
                 case 'only_success':
-                    if (self::$wechatMsg['reseedSuccess'] === 0) {
+                    if (self::$notifyMsg['reseedSuccess'] === 0) {
                         return '';
                     }
                     break;
                 case 'only_fails':
-                    if (self::$wechatMsg['reseedError'] === 0) {
+                    if (self::$notifyMsg['reseedError'] === 0) {
                         return '';
                     }
                     break;
@@ -1257,21 +1260,21 @@ class AutoReseed
         $br = PHP_EOL;
         $text = 'IYUU自动辅种-统计报表';
         $desp = '### 版本号：' . IYUU_VERSION() . $br;
-        $desp .= '**支持站点：' . self::$wechatMsg['sitesCount'] . '**  [当前支持自动辅种的站点数量]' . $br;
-        $desp .= '**总做种：' . self::$wechatMsg['hashCount'] . '**  [客户端做种的hash总数]' . $br;
-        $desp .= '**返回数据：' . self::$wechatMsg['reseedCount'] . '**  [服务器返回的可辅种数据]' . $br;
-        $desp .= '**成功：' . self::$wechatMsg['reseedSuccess'] . '**  [会把hash加入辅种缓存]' . $br;
-        $desp .= '**失败：' . self::$wechatMsg['reseedError'] . '**  [种子下载失败或网络超时引起]' . $br;
-        $desp .= '**重复：' . self::$wechatMsg['reseedRepeat'] . '**  [客户端已做种]' . $br;
-        $desp .= '**跳过：' . self::$wechatMsg['reseedSkip'] . '**  [未设置passkey]' . $br;
-        $desp .= '**忽略：' . self::$wechatMsg['reseedPass'] . '**  [成功添加存在缓存]' . $br;
+        $desp .= '**支持站点：' . self::$notifyMsg['sitesCount'] . '**  [当前支持自动辅种的站点数量]' . $br;
+        $desp .= '**总做种：' . self::$notifyMsg['hashCount'] . '**  [客户端做种的hash总数]' . $br;
+        $desp .= '**返回数据：' . self::$notifyMsg['reseedCount'] . '**  [服务器返回的可辅种数据]' . $br;
+        $desp .= '**成功：' . self::$notifyMsg['reseedSuccess'] . '**  [会把hash加入辅种缓存]' . $br;
+        $desp .= '**失败：' . self::$notifyMsg['reseedError'] . '**  [种子下载失败或网络超时引起]' . $br;
+        $desp .= '**重复：' . self::$notifyMsg['reseedRepeat'] . '**  [客户端已做种]' . $br;
+        $desp .= '**跳过：' . self::$notifyMsg['reseedSkip'] . '**  [未设置passkey]' . $br;
+        $desp .= '**忽略：' . self::$notifyMsg['reseedPass'] . '**  [成功添加存在缓存]' . $br;
         // 失败详情
-        if (self::$wechatMsg['reseedError']) {
+        if (self::$notifyMsg['reseedError']) {
             $desp .= '**失败详情，见 ./torrent/cache/reseedError.txt**' . $br;
         }
         // 重新辅种
         $desp .= '**如需重新辅种，请删除 ./torrent/cachehash 辅种缓存。**' . $br;
         $desp .= $br . '*此消息将在3天后过期*。';
-        return self::ff($text, $desp);
+        return self::send_notify($text, $desp);
     }
 }
