@@ -1256,7 +1256,6 @@ class AutoReseed
                     }
                     break;
                 case 'off':
-                    return false;
                 default:
                     break;
             }

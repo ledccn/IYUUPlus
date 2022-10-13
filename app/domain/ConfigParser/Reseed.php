@@ -24,7 +24,6 @@ class Reseed implements ConfigParserInterface
         $rs = [
             'sites' => [],
             'clients' => [],
-            'notify' => [],
         ];
         if (empty($uuid)) {
             return $rs;
@@ -40,7 +39,6 @@ class Reseed implements ConfigParserInterface
 
         //微信通知
         $rs['weixin'] = Config::getWeixin();
-        $rs['notify'] = Config::getNotify();
 
         //解析站点
         $sites = Config::getUserSites();

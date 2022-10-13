@@ -4,33 +4,28 @@ namespace IYUU\Notify;
 
 use app\domain\Config;
 use Error;
+use Exception;
 
 class NotifyFactory
 {
     /**
      * 缓存的通知渠道
-     * @var array<string, INotify> | null
+     * @var array<string, INotify>
      */
-    private static $notify_channels = null;
-
-    private static function init()
-    {
-        $result = [];
-        $notifyConfigs = Config::getNotify();
-        foreach ($notifyConfigs as $key => $option) {
-            $result[$key] = self::create($option['type'], $option['options']);
-        }
-        self::$notify_channels = $result;
-    }
+    private static $notify_channels;
 
     /**
      * @param string $name
      * @return null | INotify
+     * @throws Exception
      */
-    public static function get(string $name)
+    public static function get(string $name): ?INotify
     {
-        if (self::$notify_channels == null) {
-            self::init();
+        if (null === self::$notify_channels) {
+            $notifyConfigs = Config::getNotify();
+            foreach ($notifyConfigs as $key => $option) {
+                self::$notify_channels[$key] = self::create($option['type'], $option['options']);
+            }
         }
         return self::$notify_channels[$name];
     }
@@ -39,9 +34,9 @@ class NotifyFactory
      * @param string $type
      * @param array $options
      * @return INotify
-     * @throws Error
+     * @throws Exception
      */
-    private static function create(string $type, array $options)
+    private static function create(string $type, array $options): INotify
     {
         switch ($type) {
             case 'iyuu':
@@ -52,9 +47,9 @@ class NotifyFactory
                 return new Bark($options);
             case 'sms':
             case 'email':
-                throw new Error("unimplemented type `$type`");
+                throw new Exception("unimplemented type {$type}");
             default:
-                throw new Error("unknown notify type `$type`");
+                throw new Exception("unknown notify type {$type}");
         }
     }
 }

@@ -4,6 +4,9 @@ namespace IYUU\Notify;
 
 use app\common\components\Curl as ICurl;
 
+/**
+ * Server酱
+ */
 class ServerChan implements INotify
 {
     /**
@@ -11,12 +14,20 @@ class ServerChan implements INotify
      */
     private $key;
 
+    /**
+     * @param array $config
+     */
     public function __construct(array $config)
     {
         $this->key = $config['key'];
     }
 
-    public function send(string $title, string $content): bool
+    /**
+     * @param string $title
+     * @param string $content
+     * @return false|string
+     */
+    public function send(string $title, string $content)
     {
         $desp = empty($content) ? date("Y-m-d H:i:s") : $content;
         $data = array(

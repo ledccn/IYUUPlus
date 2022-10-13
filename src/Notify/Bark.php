@@ -4,6 +4,9 @@ namespace IYUU\Notify;
 
 use app\common\components\Curl as ICurl;
 
+/**
+ * Bark通知
+ */
 class Bark implements INotify
 {
     /**
@@ -19,6 +22,9 @@ class Bark implements INotify
      */
     private $group = 'IYUU';
 
+    /**
+     * @param array $config
+     */
     public function __construct(array $config)
     {
         $this->bark_v2_server = $config['server'];
@@ -27,18 +33,23 @@ class Bark implements INotify
             $this->group = $config['group'];
     }
 
-    public function send(string $title, string $content): bool
+    /**
+     * @param string $title
+     * @param string $content
+     * @return false|string
+     */
+    public function send(string $title, string $content)
     {
         $desp = empty($content) ? date("Y-m-d H:i:s") : $content;
         $data = array(
             "group" => $this->group,
-            "title" =>  $title,
+            "title" => $title,
             "body" => $desp,
             "device_key" => $this->device_key,
-//            "sound" => "minuet.caf",
-//            "badge" => 1,
-//            "icon" => "https://xxxx.xx/avatar.jpg",
-//            "url" => "https://github.com/Finb"
+            /*"sound" => "minuet.caf",
+            "badge" => 1,
+            "icon" => "https://xxxx.xx/avatar.jpg",
+            "url" => "https://github.com/Finb"*/
         );
         return ICurl::http_post($this->bark_v2_server, $data, true);
     }
