@@ -77,7 +77,7 @@ class Config
         $wx = self::getWeixin();
         foreach ($crontab_configs as $uuid => $item) {
             $crontab_configs[$uuid]['notify'] = [
-                'enable' => $wx['switch'],
+                'enable' => $wx['switch'] ?? 'on',
                 'channel' => 'iyuu',
                 'notify_on_change' => $wx['notify_on_change'] ?? 'off',
             ];
