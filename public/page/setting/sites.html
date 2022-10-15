@@ -56,7 +56,7 @@
     <label class="layui-form-label {{ d.mirror.required ? 'required' : '' }}">镜像域名</label>
     <div class="layui-input-block">
       <input type="text" name="{{d.mirror.name}}" {{ d.mirror.verify ? 'lay-verify="'+d.mirror.verify+'"' : '' }} lay-reqtext="{{d.mirror.name}}不能为空" placeholder="请输入{{d.mirror.name}}" class="layui-input">
-      <tip>代理域名或者镜像域名(仅域名部分，例如：pt.baidu.com)。</tip>
+      <tip>代理域名或者镜像域名(仅域名部分，例如：pt.baidu.com)，如果不理解请勿设置。</tip>
     </div>
   </div>
   {{# if (d.cookie.visible === true) { }}
