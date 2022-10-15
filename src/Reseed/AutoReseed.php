@@ -327,7 +327,7 @@ class AutoReseed
             ' gitee源码仓库：https://gitee.com/ledc/iyuuplus',
             ' github源码仓库：https://github.com/ledccn/IYUUPlus',
             ' 教程：https://www.iyuu.cn',
-            ' 【IYUU自动辅种交流】QQ群：859882209, 931954050, 924099912, 586608623, 41477250' . PHP_EOL,
+            ' 【IYUU自动辅种交流】QQ群：859882209, 931954050, 924099912, 41477250' . PHP_EOL,
             ' 正在连接IYUUAutoReseed服务器，查询支持列表……' . PHP_EOL
         ];
         array_walk($list, function ($v, $k) {
