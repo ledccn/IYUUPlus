@@ -68,7 +68,7 @@ class transmission extends AbstractClient
 
     /**
      * Curl实例
-     * @var
+     * @var Curl
      */
     private $curl;
 
@@ -847,7 +847,7 @@ class transmission extends AbstractClient
 
         // Grab the X-Transmission-Session-Id if we don't have it already
         if (!$this->session_id) {
-            if (!$this->GetSessionID()) {
+            if (!$this->getSessionId()) {
                 throw new ClientException('Unable to acquire X-Transmission-Session-Id', self::E_SESSIONID);
             }
         }
@@ -858,7 +858,7 @@ class transmission extends AbstractClient
         );
         $header = array(
             'Content-Type'              =>  'application/json',
-            'Authorization'             =>  'Basic ' . base64_encode(sprintf("%s:%s", $this->username, $this->password)),
+            //'Authorization'             =>  'Basic ' . base64_encode(sprintf("%s:%s", $this->username, $this->password)),
             'X-Transmission-Session-Id' =>  $this->session_id
         );
         $curl = $this->curl;
@@ -870,14 +870,14 @@ class transmission extends AbstractClient
             $curl->setHeader($key, $value);
         }
         $curl->setUserAgent(self::UA);
-        $curl->setBasicAuthentication($this->username, $this->password);
+        //$curl->setBasicAuthentication($this->username, $this->password);
         $curl->post($this->url, $data, true);
         $content = $curl->response;
 
         if ($this->debug) {
-            var_dump($curl->request_headers);
-            var_dump($curl->response_headers);
-            var_dump($curl->response);
+            print_r($curl->request_headers);
+            print_r($curl->response_headers);
+            print_r($curl->response);
         }
 
         if (!$content) {
@@ -887,39 +887,18 @@ class transmission extends AbstractClient
     }
 
     /**
-     * Performs an empty GET on the Transmission RPC to get the X-Transmission-Session-Id
-     * and store it in $this->session_id
+     * 登录下载器，获取session_id
      * @return string
      */
-    public function GetSessionID()
+    private function getSessionId(): string
     {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->url);
-        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_setopt($ch, CURLOPT_USERPWD, $this->username.':'.$this->password);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-        $content = curl_exec($ch);
-        $error_code     = curl_errno($ch);
-        $error_message  = curl_error($ch);
-        $http_status_code = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
-
+        $this->curl->setBasicAuthentication($this->username, $this->password);
+        $this->curl->get($this->url);
+        $response = $this->curl->response;
         if ($this->debug) {
-            var_dump($http_status_code);
-            var_dump($error_message);
-            var_dump($error_code);
-            var_dump($content);
+            print_r($this->curl->getResponseHeaders());
         }
-
-        // 401 Invalid username/password
-        // 409 成功
-        // 其他 Unexpected response from Transmission RPC
-        curl_close($ch);
-        if($content && preg_match("/<code>X-Transmission-Session-Id: (.*?)<\/code>/", $content, $match)) {
-            $this->session_id = isset($match[1]) ? $match[1] : null;
-        }
+        $this->session_id = $this->curl->getResponseHeaders(strtolower('X-Transmission-Session-Id'));
 
         return $this->session_id;
     }
