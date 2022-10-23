@@ -899,8 +899,8 @@ class transmission extends AbstractClient
         curl_setopt($ch, CURLOPT_USERPWD, $this->username.':'.$this->password);
         curl_setopt($ch, CURLOPT_HEADER, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 300);
         $content = curl_exec($ch);
         $error_code     = curl_errno($ch);
         $error_message  = curl_error($ch);
