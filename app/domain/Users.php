@@ -2,6 +2,7 @@
 
 namespace app\domain;
 
+use IYUU\Reseed\Oauth;
 use support\Request;
 use app\common\exception\BusinessException;
 use app\common\components\Curl;
@@ -37,11 +38,16 @@ class Users
     {
         $curl = Curl::one();
         $url = Constant::API_BASE . Constant::API['login'];
+
+        $site = $request->post('site');
+        $verityFiled = Oauth::VERITY_FIELD_MAP[$site] ?? Oauth::VERITY_FIELD_MAP[''];
+        $passkey = $request->post($verityFiled);
+
         $data = [
             'token' => $token,
             'id' => $request->post('id') + 0,
-            'passkey' => sha1($request->post('passkey')),     // 避免泄露用户密钥passkey
-            'site' => $request->post('site'),
+            'passkey' => sha1($passkey),     // 避免泄露用户密钥passkey
+            'site' => $site,
         ];
         $res = $curl->get($url, $data);
         $rs = json_decode($res->response, true);
