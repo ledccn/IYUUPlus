@@ -93,6 +93,24 @@
     </div>
   </div>
   {{# } }}
+  {{# if (d.rss_key.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.passkey.required ? 'required' : '' }}">{{d.rss_key.name}}</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.rss_key.name}}" {{ d.rss_key.verify ? 'lay-verify="'+d.rss_key.verify+'"' : '' }} lay-reqtext="{{d.rss_key.name}}不能为空" placeholder="请输入{{d.rss_key.name}}" class="layui-input">
+      <tip>{{d.rss_key.desc}}</tip>
+    </div>
+  </div>
+  {{# } }}
+  {{# if (d.torrent_key.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.torrent_key.required ? 'required' : '' }}">{{d.torrent_key.name}}</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.torrent_key.name}}" {{ d.torrent_key.verify ? 'lay-verify="'+d.torrent_key.verify+'"' : '' }} lay-reqtext="{{d.torrent_key.name}}不能为空" placeholder="请输入{{d.torrent_key.name}}" class="layui-input">
+      <tip>{{d.torrent_key.desc}}</tip>
+    </div>
+  </div>
+  {{# } }}
   {{# if (d.authkey.visible === true) { }}
   <div class="layui-form-item">
     <label class="layui-form-label {{ d.authkey.required ? 'required' : '' }}">{{d.authkey.name}}</label>
@@ -183,6 +201,8 @@
           ,rsskey: {name: 'rsskey', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,torrent_pass: {name: 'torrent_pass', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,authkey: {name: 'authkey', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
+          ,rss_key: {name: 'rss_key', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
+          ,torrent_key: {name: 'torrent_key', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
           ,id: false
           ,limitRule: true
           ,urlJoin: {visible: false, required: false, id: 'url_join', field: {https: true, ipv4: true, ipv6: true}}
@@ -253,6 +273,14 @@
           rule.passkey.visible = false;
           rule.torrent_pass.visible = true;
           rule.authkey.visible = true;
+          break;
+        case 'zhuque':
+          rule.cookie.visible = false;
+          rule.passkey.visible = false;
+          rule.torrent_key.visible = true;
+          rule.rss_key.visible = true;
+          rule.torrent_key.desc = 'Torrent Key：用户信息 -> 个人设置';
+          rule.rss_key.desc = 'RSS Key：用户信息 -> 个人设置';
           break;
         case 'hdpost':
           rule.passkey.visible = false;
