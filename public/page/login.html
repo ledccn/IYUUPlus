@@ -92,6 +92,14 @@
     </div>
   </div>
   {{# } }}
+  {{# if (d.torrent_key.visible === true) { }}
+  <div class="layui-form-item">
+    <label class="layui-form-label {{ d.torrent_key.required ? 'required' : '' }}">torrent_key</label>
+    <div class="layui-input-block">
+      <input type="text" name="{{d.torrent_key.name}}" {{ d.torrent_key.verify ? 'lay-verify="'+d.torrent_key.verify+'"' : '' }} lay-reqtext="{{d.torrent_key.name}}不能为空" placeholder="请输入{{d.torrent_key.name}}" class="layui-input">
+    </div>
+  </div>
+  {{# } }}
   {{# if (d.id === true) { }}
   <div class="layui-form-item">
     <label class="layui-form-label required">用户UID</label>
@@ -122,6 +130,7 @@
       ,site_field_view: 'site_field_view'
       ,site_field_rule: {
         passkey: {name: 'passkey', visible: true, required: true, desc: '', verify: 'required', reqtext: ''}
+        ,torrent_key: {name: 'torrent_key', visible: false, required: true, desc: '', verify: 'required', reqtext: ''}
         ,id: true
       }
     };
@@ -265,7 +274,16 @@
       if (site === '') {
         return ;
       }
-      //switch
+
+      switch (site) {
+        case 'zhuque':
+          rule.passkey.visible = false;
+          rule.torrent_key.visible = true;
+          break;
+        default:
+          break;
+      }
+
       laytpl(getTpl).render(rule, function(html) {
         view.innerHTML = html;
       });

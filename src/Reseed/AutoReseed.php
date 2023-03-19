@@ -1004,6 +1004,18 @@ class AutoReseed
     }
 
     /**
+     * 支持通过签名下载种子的站点
+     * @param string $site
+     * @return bool
+     */
+    private static function isSupportSignature(string $site): bool
+    {
+        //未适配辅种签名的站点，需要排除
+        $exclude = ['zhuque', 'audiences', 'hdvideo'];
+        return !in_array($site, $exclude);
+    }
+
+    /**
      * 获取站点种子的URL
      * @param string $site 站点名称
      * @param int $sid 站点ID
@@ -1013,7 +1025,7 @@ class AutoReseed
     private static function getTorrentUrl(string $site = '', int $sid = 0, string $url = ''): string
     {
         // 注入替换规则
-        if (in_array($site, self::$recommend)) {
+        if (static::isSupportSignature($site) && in_array($site, self::$recommend)) {
             $url = self::getRecommendTorrentUrl($site, $url);
         } else {
             $reseed_check = self::$sites[$sid]['reseed_check'];
@@ -1048,7 +1060,7 @@ class AutoReseed
      */
     private static function getRecommendTorrentUrl(string $site = '', string $url = ''): string
     {
-        if (in_array($site, self::$recommend)) {
+        if (static::isSupportSignature($site) && in_array($site, self::$recommend)) {
             $now = time();
             $uid = !empty(self::$_sites[$site]['id']) ? self::$_sites[$site]['id'] : 0;
             $passkey = !empty(self::$_sites[$site]['passkey']) ? trim(self::$_sites[$site]['passkey']) : $now;

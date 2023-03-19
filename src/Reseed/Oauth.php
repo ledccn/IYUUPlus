@@ -9,11 +9,26 @@ use Curl\Curl;
  */
 class Oauth
 {
-    // 登录缓存路径
+    /**
+     * 登录缓存路径
+     */
     const SiteLoginCache = RUNTIME_PATH . DS . 'db' . DS . 'siteLoginCache_{}.json';
 
-    //配置
+    /**
+     * 配置
+     * @var array
+     */
     private static $conf = [];
+
+    /**
+     * 用户验证字段映射表
+     */
+    const VERITY_FIELD_MAP = [
+        //默认字段名字
+        '' => 'passkey',
+        //朱雀
+        'zhuque' => 'torrent_key'
+    ];
 
     /**
      * 初始化
@@ -49,9 +64,11 @@ class Oauth
                 $ret = true;
                 continue;
             }
-            if (isset(self::$conf['sites'][$site]['passkey']) && self::$conf['sites'][$site]['passkey'] && isset(self::$conf['sites'][$site]['id']) && self::$conf['sites'][$site]['id']) {
+            //取推荐站点验证字段名字
+            $filed = static::VERITY_FIELD_MAP[$site] ?? static::VERITY_FIELD_MAP[''];
+            if (isset(self::$conf['sites'][$site][$filed]) && self::$conf['sites'][$site][$filed] && isset(self::$conf['sites'][$site]['id']) && self::$conf['sites'][$site]['id']) {
                 $user_id = self::$conf['sites'][$site]['id'];
-                $passkey = self::$conf['sites'][$site]['passkey'];
+                $passkey = self::$conf['sites'][$site][$filed];
 
                 $curl = new Curl();
                 $curl->setOpt(CURLOPT_SSL_VERIFYPEER, false);
