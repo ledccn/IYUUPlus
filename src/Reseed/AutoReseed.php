@@ -1012,7 +1012,7 @@ class AutoReseed
     {
         //未适配辅种签名的站点，需要排除
         $exclude = ['zhuque', 'audiences', 'hdvideo'];
-        return !in_array($site, $exclude);
+        return !($exclude && in_array($site, $exclude));
     }
 
     /**
