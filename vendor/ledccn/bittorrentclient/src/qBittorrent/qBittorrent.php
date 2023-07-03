@@ -526,11 +526,12 @@ class qBittorrent extends AbstractClient
     /**
      * 基本get方法
      * @param $endpoint
+     * @param array $data
      * @return mixed
      */
-    private function getData($endpoint)
+    private function getData($endpoint, $data = array())
     {
-        $this->curl->get($this->url . $this->endpoints[$endpoint][$this->api_version]);
+        $this->curl->get($this->url . $this->endpoints[$endpoint][$this->api_version], $data);
 
         if ($this->debug) {
             var_dump($this->curl->request_headers);
@@ -676,6 +677,35 @@ class qBittorrent extends AbstractClient
         $hashArray['hashString'] = array_column($res, "save_path", 'hash');
         $torrentList = array_column($res, null, 'hash');
         return $hashArray;
+    }
+
+    /**
+     * 抽象方法，子类实现
+     * @param string $hash
+     * @return array
+     */
+    public function getTorrentTrackers($hash)
+    {
+        $result = $this->getData('torrent_trackers', array("hash"=>$hash));
+        $res = json_decode($result, true);
+        if (empty($res)) {
+            echo "获取种子tracker失败，可能qBittorrent暂时无响应，请稍后重试！".PHP_EOL;
+            return array();
+        }
+
+        $trackers = $res;
+        $trackerArray = array();
+        foreach ($trackers as $tracker) {
+            if ($tracker['tier'] == -1) {
+                continue;
+            }
+            
+            if (!array_key_exists($tracker['tier'], $trackerArray)) {
+                $trackerArray[$tracker['tier']] = array();
+            }
+            array_push($trackerArray[$tracker['tier']], $tracker['url']);
+        }
+        return $trackerArray;
     }
 
     /**
