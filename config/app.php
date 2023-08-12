@@ -1,6 +1,6 @@
 <?php
 
-use app\Request;
+use support\Request;
 
 return [
     'debug' => env('APP_DEBUG', false),
