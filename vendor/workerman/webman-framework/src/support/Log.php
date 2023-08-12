@@ -18,6 +18,9 @@ use Monolog\Formatter\FormatterInterface;
 use Monolog\Handler\FormattableHandlerInterface;
 use Monolog\Handler\HandlerInterface;
 use Monolog\Logger;
+use function array_values;
+use function config;
+use function is_array;
 
 /**
  * Class Log
@@ -38,24 +41,26 @@ class Log
     /**
      * @var array
      */
-    protected static $_instance = [];
+    protected static $instance = [];
 
     /**
+     * Channel.
      * @param string $name
      * @return Logger
      */
-    public static function channel(string $name = 'default')
+    public static function channel(string $name = 'default'): Logger
     {
-        if (!isset(static::$_instance[$name])) {
-            $config = \config('log', [])[$name];
+        if (!isset(static::$instance[$name])) {
+            $config = config('log', [])[$name];
             $handlers = self::handlers($config);
             $processors = self::processors($config);
-            static::$_instance[$name] = new Logger($name, $handlers, $processors);
+            static::$instance[$name] = new Logger($name, $handlers, $processors);
         }
-        return static::$_instance[$name];
+        return static::$instance[$name];
     }
 
     /**
+     * Handlers.
      * @param array $config
      * @return array
      */
@@ -76,6 +81,7 @@ class Log
     }
 
     /**
+     * Handler.
      * @param string $class
      * @param array $constructor
      * @param array $formatterConfig
@@ -84,14 +90,14 @@ class Log
     protected static function handler(string $class, array $constructor, array $formatterConfig): HandlerInterface
     {
         /** @var HandlerInterface $handler */
-        $handler = new $class(... \array_values($constructor));
+        $handler = new $class(... array_values($constructor));
 
         if ($handler instanceof FormattableHandlerInterface && $formatterConfig) {
             $formatterClass = $formatterConfig['class'];
             $formatterConstructor = $formatterConfig['constructor'];
 
             /** @var FormatterInterface $formatter */
-            $formatter = new $formatterClass(... \array_values($formatterConstructor));
+            $formatter = new $formatterClass(... array_values($formatterConstructor));
 
             $handler->setFormatter($formatter);
         }
@@ -100,6 +106,7 @@ class Log
     }
 
     /**
+     * Processors.
      * @param array $config
      * @return array
      */
@@ -111,8 +118,8 @@ class Log
         }
 
         foreach ($config['processors'] ?? [] as $value) {
-            if (\is_array($value) && isset($value['class'])) {
-                $value = new $value['class'](... \array_values($value['constructor'] ?? []));;
+            if (is_array($value) && isset($value['class'])) {
+                $value = new $value['class'](... array_values($value['constructor'] ?? []));
             }
             $result[] = $value;
         }
@@ -127,6 +134,6 @@ class Log
      */
     public static function __callStatic(string $name, array $arguments)
     {
-        return static::channel('default')->{$name}(... $arguments);
+        return static::channel()->{$name}(... $arguments);
     }
 }

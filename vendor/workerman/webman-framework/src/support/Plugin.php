@@ -2,71 +2,107 @@
 
 namespace support;
 
+use function defined;
+use function is_callable;
+use function is_file;
+use function method_exists;
+
 class Plugin
 {
     /**
-     * @param $event
+     * Install.
+     * @param mixed $event
      * @return void
      */
     public static function install($event)
     {
-        static::findHepler();
-        $operation = $event->getOperation();
-        $autoload = \method_exists($operation, 'getPackage') ? $operation->getPackage()->getAutoload() : $operation->getTargetPackage()->getAutoload();
-        if (!isset($autoload['psr-4'])) {
-            return;
-        }
-        foreach ($autoload['psr-4'] as $namespace => $path) {
-            $install_function = "\\{$namespace}Install::install";
-            $plugin_const = "\\{$namespace}Install::WEBMAN_PLUGIN";
-            if (\defined($plugin_const) && \is_callable($install_function)) {
-                $install_function();
+        static::findHelper();
+        $psr4 = static::getPsr4($event);
+        foreach ($psr4 as $namespace => $path) {
+            $pluginConst = "\\{$namespace}Install::WEBMAN_PLUGIN";
+            if (!defined($pluginConst)) {
+                continue;
+            }
+            $installFunction = "\\{$namespace}Install::install";
+            if (is_callable($installFunction)) {
+                $installFunction(true);
             }
         }
     }
 
     /**
-     * @param $event
+     * Update.
+     * @param mixed $event
      * @return void
      */
     public static function update($event)
     {
-        static::install($event);
-    }
-
-    /**
-     * @param $event
-     * @return void
-     */
-    public static function uninstall($event)
-    {
-        static::findHepler();
-        $autoload = $event->getOperation()->getPackage()->getAutoload();
-        if (!isset($autoload['psr-4'])) {
-            return;
-        }
-        foreach ($autoload['psr-4'] as $namespace => $path) {
-            $uninstall_function = "\\{$namespace}Install::uninstall";
-            $plugin_const = "\\{$namespace}Install::WEBMAN_PLUGIN";
-            if (defined($plugin_const) && is_callable($uninstall_function)) {
-                $uninstall_function();
+        static::findHelper();
+        $psr4 = static::getPsr4($event);
+        foreach ($psr4 as $namespace => $path) {
+            $pluginConst = "\\{$namespace}Install::WEBMAN_PLUGIN";
+            if (!defined($pluginConst)) {
+                continue;
+            }
+            $updateFunction = "\\{$namespace}Install::update";
+            if (is_callable($updateFunction)) {
+                $updateFunction();
+                continue;
+            }
+            $installFunction = "\\{$namespace}Install::install";
+            if (is_callable($installFunction)) {
+                $installFunction(false);
             }
         }
     }
 
     /**
+     * Uninstall.
+     * @param mixed $event
      * @return void
      */
-    protected static function findHepler()
+    public static function uninstall($event)
+    {
+        static::findHelper();
+        $psr4 = static::getPsr4($event);
+        foreach ($psr4 as $namespace => $path) {
+            $pluginConst = "\\{$namespace}Install::WEBMAN_PLUGIN";
+            if (!defined($pluginConst)) {
+                continue;
+            }
+            $uninstallFunction = "\\{$namespace}Install::uninstall";
+            if (is_callable($uninstallFunction)) {
+                $uninstallFunction();
+            }
+        }
+    }
+
+    /**
+     * Get psr-4 info
+     *
+     * @param mixed $event
+     * @return array
+     */
+    protected static function getPsr4($event)
+    {
+        $operation = $event->getOperation();
+        $autoload = method_exists($operation, 'getPackage') ? $operation->getPackage()->getAutoload() : $operation->getTargetPackage()->getAutoload();
+        return $autoload['psr-4'] ?? [];
+    }
+
+    /**
+     * FindHelper.
+     * @return void
+     */
+    protected static function findHelper()
     {
         // Plugin.php in vendor
         $file = __DIR__ . '/../../../../../support/helpers.php';
-        if (\is_file($file)) {
+        if (is_file($file)) {
             require_once $file;
             return;
         }
         // Plugin.php in webman
         require_once __DIR__ . '/helpers.php';
     }
-
 }

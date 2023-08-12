@@ -7,6 +7,7 @@ use support\Log;
 
 class BootStrap implements \Webman\Bootstrap
 {
+
     /**
      * @var array
      */
@@ -19,17 +20,30 @@ class BootStrap implements \Webman\Bootstrap
     public static function start($worker)
     {
         static::getEvents([config()]);
-    }
-
-    protected static function convertCallable($callback)
-    {
-        if (\is_array($callback)) {
-            $callback = \array_values($callback);
-            if (isset($callback[1]) && \is_string($callback[0]) && \class_exists($callback[0])) {
-                $callback = [Container::get($callback[0]), $callback[1]];
+        foreach (static::$events as $name => $events) {
+            // 支持排序，1 2 3 ... 9 a b c...z
+            ksort($events, SORT_NATURAL);
+            foreach ($events as $callbacks) {
+                foreach ($callbacks as $callback) {
+                    Event::on($name, $callback);
+                }
             }
         }
-        return $callback;
+    }
+
+    /**
+     * @param $callbacks
+     * @return array|mixed
+     */
+    protected static function convertCallable($callbacks)
+    {
+        if (\is_array($callbacks)) {
+            $callback = \array_values($callbacks);
+            if (isset($callback[1]) && \is_string($callback[0]) && \class_exists($callback[0])) {
+                return [Container::get($callback[0]), $callback[1]];
+            }
+        }
+        return $callbacks;
     }
 
     /**
@@ -43,12 +57,10 @@ class BootStrap implements \Webman\Bootstrap
                 continue;
             }
             if (isset($config['event']) && is_array($config['event']) && !isset($config['event']['app']['enable'])) {
-                $events = [];
                 foreach ($config['event'] as $event_name => $callbacks) {
                     $callbacks = static::convertCallable($callbacks);
                     if (is_callable($callbacks)) {
-                        $events[$event_name] = [$callbacks];
-                        Event::on($event_name, $callbacks);
+                        static::$events[$event_name][] = [$callbacks];
                         continue;
                     }
                     if (!is_array($callbacks)) {
@@ -57,11 +69,11 @@ class BootStrap implements \Webman\Bootstrap
                         Log::error($msg);
                         continue;
                     }
-                    foreach ($callbacks as $callback) {
+                    ksort($callbacks, SORT_NATURAL);
+                    foreach ($callbacks as $id => $callback) {
                         $callback = static::convertCallable($callback);
                         if (is_callable($callback)) {
-                            $events[$event_name][] = $callback;
-                            Event::on($event_name, $callback);
+                            static::$events[$event_name][$id][] = $callback;
                             continue;
                         }
                         $msg = "Events: $event_name => " . var_export($callback, true) . " is not callable\n";
@@ -69,7 +81,6 @@ class BootStrap implements \Webman\Bootstrap
                         Log::error($msg);
                     }
                 }
-                static::$events = array_merge_recursive(static::$events, $events);
                 unset($config['event']);
             }
             static::getEvents($config);

@@ -14,6 +14,7 @@
 
 namespace support;
 
+use Closure;
 use Illuminate\Database\Capsule\Manager;
 
 /**
@@ -24,7 +25,7 @@ use Illuminate\Database\Capsule\Manager;
  * @method static int update(string $query, $bindings = [])
  * @method static int delete(string $query, $bindings = [])
  * @method static bool statement(string $query, $bindings = [])
- * @method static mixed transaction(\Closure $callback, $attempts = 1)
+ * @method static mixed transaction(Closure $callback, $attempts = 1)
  * @method static void beginTransaction()
  * @method static void rollBack($toLevel = null)
  * @method static void commit()

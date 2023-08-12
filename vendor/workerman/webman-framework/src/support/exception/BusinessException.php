@@ -15,8 +15,9 @@
 namespace support\exception;
 
 use Exception;
-use Webman\Http\Response;
 use Webman\Http\Request;
+use Webman\Http\Response;
+use function json_encode;
 
 /**
  * Class BusinessException
@@ -28,9 +29,9 @@ class BusinessException extends Exception
     {
         if ($request->expectsJson()) {
             $code = $this->getCode();
-            $json = ['code' => $code ? $code : 500, 'msg' => $this->getMessage()];
+            $json = ['code' => $code ?: 500, 'msg' => $this->getMessage()];
             return new Response(200, ['Content-Type' => 'application/json'],
-                \json_encode($json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                json_encode($json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
         return new Response(200, [], $this->getMessage());
     }

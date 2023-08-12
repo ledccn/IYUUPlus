@@ -10,7 +10,7 @@ trait TorrentFileV1Trait
 
     public function testV1WithWrongPieces() {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Invalid pieces length.');
+        $this->expectExceptionMessage('Invalid pieces length');
 
         $this->torrent->setInfoField('pieces', $this->torrent->getRootField('pieces') . 'somestring');
         $this->torrent->parse();

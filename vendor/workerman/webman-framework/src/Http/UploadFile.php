@@ -15,6 +15,7 @@
 namespace Webman\Http;
 
 use Webman\File;
+use function pathinfo;
 
 /**
  * Class UploadFile
@@ -25,80 +26,86 @@ class UploadFile extends File
     /**
      * @var string
      */
-    protected $_uploadName = null;
+    protected $uploadName = null;
 
     /**
      * @var string
      */
-    protected $_uploadMimeType = null;
+    protected $uploadMimeType = null;
 
     /**
      * @var int
      */
-    protected $_uploadErrorCode = null;
+    protected $uploadErrorCode = null;
 
     /**
      * UploadFile constructor.
      *
-     * @param string $file_name
-     * @param string $upload_name
-     * @param string $upload_mime_type
-     * @param int $upload_error_code
+     * @param string $fileName
+     * @param string $uploadName
+     * @param string $uploadMimeType
+     * @param int $uploadErrorCode
      */
-    public function __construct(string $file_name, string $upload_name, string $upload_mime_type, int $upload_error_code)
+    public function __construct(string $fileName, string $uploadName, string $uploadMimeType, int $uploadErrorCode)
     {
-        $this->_uploadName = $upload_name;
-        $this->_uploadMimeType = $upload_mime_type;
-        $this->_uploadErrorCode = $upload_error_code;
-        parent::__construct($file_name);
+        $this->uploadName = $uploadName;
+        $this->uploadMimeType = $uploadMimeType;
+        $this->uploadErrorCode = $uploadErrorCode;
+        parent::__construct($fileName);
     }
 
     /**
+     * GetUploadName
      * @return string
      */
-    public function getUploadName()
+    public function getUploadName(): ?string
     {
-        return $this->_uploadName;
+        return $this->uploadName;
     }
 
     /**
+     * GetUploadMimeType
      * @return string
      */
-    public function getUploadMimeType()
+    public function getUploadMimeType(): ?string
     {
-        return $this->_uploadMimeType;
+        return $this->uploadMimeType;
     }
 
     /**
-     * @return mixed
+     * GetUploadExtension
+     * @return string
      */
-    public function getUploadExtension()
+    public function getUploadExtension(): string
     {
-        return \pathinfo($this->_uploadName, PATHINFO_EXTENSION);
+        return pathinfo($this->uploadName, PATHINFO_EXTENSION);
     }
 
     /**
+     * GetUploadErrorCode
      * @return int
      */
-    public function getUploadErrorCode()
+    public function getUploadErrorCode(): ?int
     {
-        return $this->_uploadErrorCode;
+        return $this->uploadErrorCode;
     }
 
     /**
+     * IsValid
      * @return bool
      */
-    public function isValid()
+    public function isValid(): bool
     {
-        return $this->_uploadErrorCode === UPLOAD_ERR_OK;
+        return $this->uploadErrorCode === UPLOAD_ERR_OK;
     }
 
     /**
-     * @deprecated
+     * GetUploadMineType
      * @return string
+     * @deprecated
      */
-    public function getUploadMineType()
+    public function getUploadMineType(): ?string
     {
-        return $this->_uploadMimeType;
+        return $this->uploadMimeType;
     }
 }

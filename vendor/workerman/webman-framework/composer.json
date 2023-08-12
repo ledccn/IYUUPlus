@@ -25,7 +25,8 @@
   },
   "require": {
     "php": ">=7.2",
-    "workerman/workerman": "^4.0.4",
+    "ext-json": "*",
+    "workerman/workerman": "^4.0.4 || ^5.0.0",
     "nikic/fast-route": "^1.3",
     "psr/container": ">=1.0"
   },

@@ -56,7 +56,6 @@ class AppPluginCreateCommand extends Command
     {
         $base_path = base_path();
         $this->mkdir("$base_path/plugin/$name/app/controller", 0777, true);
-        $this->mkdir("$base_path/plugin/$name/app/exception", 0777, true);
         $this->mkdir("$base_path/plugin/$name/app/model", 0777, true);
         $this->mkdir("$base_path/plugin/$name/app/middleware", 0777, true);
         $this->mkdir("$base_path/plugin/$name/app/view/index", 0777, true);
@@ -66,7 +65,6 @@ class AppPluginCreateCommand extends Command
         $this->createFunctionsFile("$base_path/plugin/$name/app/functions.php");
         $this->createControllerFile("$base_path/plugin/$name/app/controller/IndexController.php", $name);
         $this->createViewFile("$base_path/plugin/$name/app/view/index/index.html");
-        $this->createExceptionFile("$base_path/plugin/$name/app/exception/Handler.php", $name);
         $this->createConfigFiles("$base_path/plugin/$name/config", $name);
         $this->createApiFiles("$base_path/plugin/$name/api", $name);
     }
@@ -141,44 +139,6 @@ EOF;
 
     }
 
-    /**
-     * @param $path
-     * @return void
-     */
-    protected function createExceptionFile($path, $name)
-    {
-        $content = <<<EOF
-<?php
-namespace plugin\\$name\\app\\exception;
-
-use Throwable;
-use Webman\\Http\\Request;
-use Webman\\Http\\Response;
-
-/**
- * Class Handler
- * @package Support\Exception
- */
-class Handler extends \\support\\exception\\Handler
-{
-    public function render(Request \$request, Throwable \$exception): Response
-    {
-        \$code = \$exception->getCode();
-        if (\$request->expectsJson()) {
-            \$json = ['code' => \$code ? \$code : 500, 'message' => \$this->_debug ? \$exception->getMessage() : 'Server internal error', 'type' => 'failed'];
-            \$this->_debug && \$json['traces'] = (string)\$exception;
-            return new Response(200, ['Content-Type' => 'application/json'],
-                \json_encode(\$json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        }
-        \$error = \$this->_debug ? \\nl2br((string)\$exception) : 'Server internal error';
-        return new Response(500, [], \$error);
-    }
-}
-
-EOF;
-        file_put_contents($path, $content);
-
-    }
 
     /**
      * @param $file
@@ -223,7 +183,9 @@ class Install
     public static function install(\$version)
     {
         // 导入菜单
-        Menu::import(static::getMenus());
+        if(\$menus = static::getMenus()) {
+            Menu::import(\$menus);
+        }
     }
 
     /**
@@ -236,7 +198,7 @@ class Install
     {
         // 删除菜单
         foreach (static::getMenus() as \$menu) {
-            Menu::delete(\$menu['name']);
+            Menu::delete(\$menu['key']);
         }
     }
 
@@ -255,7 +217,9 @@ class Install
             static::removeUnnecessaryMenus(\$context['previous_menus']);
         }
         // 导入新菜单
-        Menu::import(static::getMenus());
+        if (\$menus = static::getMenus()) {
+            Menu::import(\$menus);
+        }
     }
 
     /**
@@ -323,7 +287,8 @@ use support\\Request;
 return [
     'debug' => true,
     'controller_suffix' => 'Controller',
-    'controller_reuse' => true,
+    'controller_reuse' => false,
+    'version' => '1.0.0'
 ];
 
 EOF;
@@ -371,7 +336,7 @@ EOF;
 <?php
 
 return [
-    '' => \\plugin\\$name\\app\\exception\\Handler::class,
+    '' => support\\exception\\Handler::class,
 ];
 
 EOF;
@@ -471,7 +436,7 @@ return [
     // Fallback language
     'fallback_locale' => ['zh_CN', 'en'],
     // Folder where language files are stored
-    'path' => "$base/resource/translations",
+    'path' => base_path() . "/plugin/$name/resource/translations",
 ];
 
 EOF;

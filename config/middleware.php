@@ -5,6 +5,5 @@
 return [
     '' => [
         app\middleware\AuthCheck::class,
-        //support\middleware\AccessControlTest::class,
     ]
 ];

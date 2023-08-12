@@ -18,6 +18,9 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use Webman\Http\Request;
 use Webman\Http\Response;
+use function json_encode;
+use function nl2br;
+use function trim;
 
 /**
  * Class Handler
@@ -28,12 +31,12 @@ class ExceptionHandler implements ExceptionHandlerInterface
     /**
      * @var LoggerInterface
      */
-    protected $_logger = null;
+    protected $logger = null;
 
     /**
      * @var bool
      */
-    protected $_debug = false;
+    protected $debug = false;
 
     /**
      * @var array
@@ -47,8 +50,8 @@ class ExceptionHandler implements ExceptionHandlerInterface
      */
     public function __construct($logger, $debug)
     {
-        $this->_logger = $logger;
-        $this->_debug = $debug;
+        $this->logger = $logger;
+        $this->debug = $debug;
     }
 
     /**
@@ -62,9 +65,9 @@ class ExceptionHandler implements ExceptionHandlerInterface
         }
         $logs = '';
         if ($request = \request()) {
-            $logs = $request->getRealIp() . ' ' . $request->method() . ' ' . \trim($request->fullUrl(), '/');
+            $logs = $request->getRealIp() . ' ' . $request->method() . ' ' . trim($request->fullUrl(), '/');
         }
-        $this->_logger->error($logs . PHP_EOL . $exception);
+        $this->logger->error($logs . PHP_EOL . $exception);
     }
 
     /**
@@ -76,12 +79,12 @@ class ExceptionHandler implements ExceptionHandlerInterface
     {
         $code = $exception->getCode();
         if ($request->expectsJson()) {
-            $json = ['code' => $code ? $code : 500, 'msg' => $this->_debug ? $exception->getMessage() : 'Server internal error'];
-            $this->_debug && $json['traces'] = (string)$exception;
+            $json = ['code' => $code ?: 500, 'msg' => $this->debug ? $exception->getMessage() : 'Server internal error'];
+            $this->debug && $json['traces'] = (string)$exception;
             return new Response(200, ['Content-Type' => 'application/json'],
-                \json_encode($json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                json_encode($json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
-        $error = $this->_debug ? \nl2br((string)$exception) : 'Server internal error';
+        $error = $this->debug ? nl2br((string)$exception) : 'Server internal error';
         return new Response(500, [], $error);
     }
 
@@ -89,7 +92,7 @@ class ExceptionHandler implements ExceptionHandlerInterface
      * @param Throwable $e
      * @return bool
      */
-    protected function shouldntReport(Throwable $e)
+    protected function shouldntReport(Throwable $e): bool
     {
         foreach ($this->dontReport as $type) {
             if ($e instanceof $type) {
@@ -97,5 +100,19 @@ class ExceptionHandler implements ExceptionHandlerInterface
             }
         }
         return false;
+    }
+
+    /**
+     * Compatible $this->_debug
+     *
+     * @param string $name
+     * @return bool|null
+     */
+    public function __get(string $name)
+    {
+        if ($name === '_debug') {
+            return $this->debug;
+        }
+        return null;
     }
 }

@@ -14,7 +14,6 @@
 
 namespace support;
 
-use Psr\Container\ContainerInterface;
 use Webman\Config;
 
 /**
@@ -27,7 +26,9 @@ use Webman\Config;
 class Container
 {
     /**
-     * @return ContainerInterface
+     * Instance
+     * @param string $plugin
+     * @return array|mixed|void|null
      */
     public static function instance(string $plugin = '')
     {

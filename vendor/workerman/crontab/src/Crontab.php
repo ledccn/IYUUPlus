@@ -47,11 +47,11 @@ class Crontab
 
     /**
      * Crontab constructor.
-     * @param $rule
-     * @param $callback
-     * @param null $name
+     * @param string $rule
+     * @param callable $callback
+     * @param string $name
      */
-    public function __construct($rule, $callback, $name = null)
+    public function __construct($rule, $callback, $name = '')
     {
         $this->_rule = $rule;
         $this->_callback = $callback;
@@ -165,9 +165,13 @@ class Crontab
             Timer::add(60 - time()%60, $callback, null, false);
         };
 
-        // The next second begins
-        $ms = floatval(substr(explode(' ', microtime())[0], 0, 8));
-        Timer::add(1 - $ms, $callback, null, false);
+        $next_time = time()%60;
+        if ($next_time == 0) {
+            $next_time = 0.00001;
+        } else {
+            $next_time = 60 - $next_time;
+        }
+        Timer::add($next_time, $callback, null, false);
     }
 
 }

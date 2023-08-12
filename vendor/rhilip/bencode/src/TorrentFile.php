@@ -53,7 +53,7 @@ class TorrentFile
     protected static function checkTorrentDict($dict, $key, $type = null)
     {
         if (!is_array($dict)) {
-            throw new ParseException('Checking non-dictionary value.');
+            throw new ParseException('Checking non-dictionary value');
         }
 
         if (!isset($dict[$key])) {
@@ -307,7 +307,7 @@ class TorrentFile
         $allowedKeys = array_merge([
             'name', 'private', 'piece length', // Common key
             'files', 'pieces', 'length',  // v1
-            'files tree', 'meta version', // v2
+            'file tree', 'meta version', // v2
         ], $allowedKeys);
         foreach ($this->data['info'] as $key => $value) {
             if (!in_array($key, $allowedKeys)) {
@@ -578,7 +578,7 @@ class TorrentFile
             if ($this->getProtocol() === self::PROTOCOL_V1) {  // Do what we do in protocol v1
                 $pieces = self::checkTorrentDict($info, 'pieces', 'string');
                 if (strlen($pieces) % 20 != 0) {
-                    throw new ParseException('Invalid pieces length.');
+                    throw new ParseException('Invalid pieces length');
                 }
 
                 if ($this->getFileMode() === self::FILEMODE_SINGLE) {
@@ -596,7 +596,7 @@ class TorrentFile
 
                         foreach ($paths as $path) {
                             if (!is_string($path)) {
-                                throw new ParseException('Invalid path with non-string value.');
+                                throw new ParseException('Invalid path with non-string value');
                             }
                         }
 
@@ -635,7 +635,7 @@ class TorrentFile
                         $length = self::checkTorrentDict($file, 'length', 'integer');
                         if ($length > $pieceLength) {  // check pieces root of large file is exist in $root['picec layers'] or not
                             if (!array_key_exists($piecesRoot, $pieceLayers)) {
-                                throw new ParseException('Pieces not exist in piece layers.');
+                                throw new ParseException('Pieces not exist in piece layers');
                             }
                         }
 
@@ -643,7 +643,6 @@ class TorrentFile
                         $merkleTree = $length;  // rewrite merkleTree to size, it's safe since it not affect $data['info']['file tree']
                     } else {
                         $parent_path = $paths;  // store parent paths
-                        /** @noinspection PhpParameterByRefIsNotUsedAsReferenceInspection */
                         foreach ($merkleTree as $k => &$v) {  // Loop tree
                             $paths[] = $k;   // push current path into paths
                             $loopMerkleTree($v, $paths);  // Loop check

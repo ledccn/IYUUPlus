@@ -56,7 +56,11 @@ class Bencode
     {
         $start_decode = ($pos === 0);   // If it is the root call ?
         if ($start_decode && (!is_string($data) || strlen($data) == 0)) {
-            throw new ParseException('Decode Input is not valid String.');
+            throw new ParseException('Decode Input is not valid String');
+        }
+
+        if ($pos >= strlen($data)) {
+            throw new ParseException('Unterminated bencode string literal');
         }
 
         if ($data[$pos] === 'd') {
@@ -69,7 +73,7 @@ class Bencode
                     break;
                 }
                 if (!is_string($key)) {
-                    throw new ParseException('Non string key found in the dictionary.');
+                    throw new ParseException('Non string key found in the dictionary');
                 } elseif (array_key_exists($key, $return)) {
                     throw new ParseException('Duplicate Dictionary key exist before: ' . $key);
                 }

@@ -4,6 +4,7 @@
 use Webman\Config;
 use Webman\Console\Command;
 use Webman\Console\Util;
+use support\Container;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -36,7 +37,7 @@ foreach (config('plugin', []) as $firm => $projects) {
             continue;
         }
         foreach ($project['command'] ?? [] as $command) {
-            $cli->add(new $command);
+            $cli->add(Container::get($command));
         }
     }
 }

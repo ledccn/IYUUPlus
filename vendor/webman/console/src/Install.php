@@ -8,9 +8,9 @@ class Install
     /**
      * @var array
      */
-    protected static $pathRelation = array (
-  'config/plugin/webman/console' => 'config/plugin/webman/console',
-);
+    protected static $pathRelation = [
+      'config/plugin/webman/console' => 'config/plugin/webman/console',
+    ];
 
     /**
      * Install
@@ -18,8 +18,13 @@ class Install
      */
     public static function install()
     {
-        copy(__DIR__ . "/webman", base_path()."/webman");
-        chmod(base_path()."/webman", 0755);
+        $dest = base_path() . "/webman";
+        if (is_dir($dest)) {
+            echo "Installation failed, please remove directory $dest\n";
+            return;
+        }
+        copy(__DIR__ . "/webman", $dest);
+        chmod(base_path() . "/webman", 0755);
 
         static::installByRelation();
     }
@@ -33,7 +38,6 @@ class Install
         if (is_file(base_path()."/webman")) {
             unlink(base_path() . "/webman");
         }
-
         self::uninstallByRelation();
     }
 
@@ -50,7 +54,6 @@ class Install
                     mkdir($parent_dir, 0777, true);
                 }
             }
-            //symlink(__DIR__ . "/$source", base_path()."/$dest");
             copy_dir(__DIR__ . "/$source", base_path()."/$dest");
         }
     }
@@ -66,9 +69,6 @@ class Install
             if (!is_dir($path) && !is_file($path)) {
                 continue;
             }
-            /*if (is_link($path) {
-                unlink($path);
-            }*/
             remove_dir($path);
         }
     }

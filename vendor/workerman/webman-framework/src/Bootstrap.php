@@ -21,8 +21,8 @@ interface Bootstrap
     /**
      * onWorkerStart
      *
-     * @param Worker $worker
+     * @param Worker|null $worker
      * @return mixed
      */
-    public static function start($worker);
+    public static function start(?Worker $worker);
 }

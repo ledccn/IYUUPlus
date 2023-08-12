@@ -1,7 +1,4 @@
 <?php
-
-namespace Webman;
-
 /**
  * This file is part of webman.
  *
@@ -14,34 +11,44 @@ namespace Webman;
  * @link      http://www.workerman.net/
  * @license   http://www.opensource.org/licenses/mit-license.php MIT License
  */
+
+namespace Webman;
+
+
+use RuntimeException;
+use function array_merge;
+use function array_reverse;
+use function is_array;
+use function method_exists;
+
 class Middleware
 {
 
     /**
      * @var array
      */
-    protected static $_instances = [];
+    protected static $instances = [];
 
     /**
-     * @param array $all_middlewares
+     * @param mixed $allMiddlewares
      * @param string $plugin
      * @return void
      */
-    public static function load($all_middlewares, string $plugin = '')
+    public static function load($allMiddlewares, string $plugin = '')
     {
-        if (!\is_array($all_middlewares)) {
+        if (!is_array($allMiddlewares)) {
             return;
         }
-        foreach ($all_middlewares as $app_name => $middlewares) {
-            if (!\is_array($middlewares)) {
-                throw new \RuntimeException('Bad middleware config');
+        foreach ($allMiddlewares as $appName => $middlewares) {
+            if (!is_array($middlewares)) {
+                throw new RuntimeException('Bad middleware config');
             }
-            foreach ($middlewares as $class_name) {
-                if (\method_exists($class_name, 'process')) {
-                    static::$_instances[$plugin][$app_name][] = [$class_name, 'process'];
+            foreach ($middlewares as $className) {
+                if (method_exists($className, 'process')) {
+                    static::$instances[$plugin][$appName][] = [$className, 'process'];
                 } else {
                     // @todo Log
-                    echo "middleware $class_name::process not exsits\n";
+                    echo "middleware $className::process not exsits\n";
                 }
             }
         }
@@ -49,23 +56,23 @@ class Middleware
 
     /**
      * @param string $plugin
-     * @param string $app_name
-     * @param bool $with_global_middleware
+     * @param string $appName
+     * @param bool $withGlobalMiddleware
      * @return array|mixed
      */
-    public static function getMiddleware(string $plugin, string $app_name, bool $with_global_middleware = true)
+    public static function getMiddleware(string $plugin, string $appName, bool $withGlobalMiddleware = true)
     {
-        $global_middleware = $with_global_middleware && isset(static::$_instances[$plugin]['']) ? static::$_instances[$plugin][''] : [];
-        if ($app_name === '') {
-            return \array_reverse($global_middleware);
+        $globalMiddleware = $withGlobalMiddleware && isset(static::$instances[$plugin]['']) ? static::$instances[$plugin][''] : [];
+        if ($appName === '') {
+            return array_reverse($globalMiddleware);
         }
-        $app_middleware = static::$_instances[$plugin][$app_name] ?? [];
-        return \array_reverse(\array_merge($global_middleware, $app_middleware));
+        $appMiddleware = static::$instances[$plugin][$appName] ?? [];
+        return array_reverse(array_merge($globalMiddleware, $appMiddleware));
     }
 
     /**
-     * @deprecated
      * @return void
+     * @deprecated
      */
     public static function container($_)
     {

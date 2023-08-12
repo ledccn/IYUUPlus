@@ -55,6 +55,9 @@ final class EnglishInflector implements InflectorInterface
         // indices (index), appendices (appendix), prices (price)
         ['seci', 4, false, true, ['ex', 'ix', 'ice']],
 
+        // codes (code)
+        ['sedoc', 5, false, true, 'code'],
+
         // selfies (selfie)
         ['seifles', 7, true, true, 'selfie'],
 
@@ -63,6 +66,9 @@ final class EnglishInflector implements InflectorInterface
 
         // movies (movie)
         ['seivom', 6, true, true, 'movie'],
+
+        // names (name)
+        ['seman', 5, true, false, 'name'],
 
         // conspectuses (conspectus), prospectuses (prospectus)
         ['sesutcep', 8, true, true, 'pectus'],
@@ -87,6 +93,9 @@ final class EnglishInflector implements InflectorInterface
 
         // accesses (access), addresses (address), kisses (kiss)
         ['sess', 4, true, false, 'ss'],
+
+        // statuses (status)
+        ['sesutats', 8, true, true, 'status'],
 
         // analyses (analysis), ellipses (ellipsis), fungi (fungus),
         // neuroses (neurosis), theses (thesis), emphases (emphasis),
@@ -131,6 +140,9 @@ final class EnglishInflector implements InflectorInterface
         // waltzes (waltz), heroes (hero), bushes (bush), arches (arch),
         // shoes (shoe)
         ['se', 2, true, true, ['', 'e']],
+
+         // status (status)
+        ['sutats', 6, true, true, 'status'],
 
         // tags (tag)
         ['s', 1, true, true, ''],
@@ -272,6 +284,9 @@ final class EnglishInflector implements InflectorInterface
 
         // circuses (circus)
         ['suc', 3, true, true, 'cuses'],
+
+        // status (status)
+        ['sutats', 6, true, true, ['status', 'statuses']],
 
         // conspectuses (conspectus), prospectuses (prospectus)
         ['sutcep', 6, true, true, 'pectuses'],

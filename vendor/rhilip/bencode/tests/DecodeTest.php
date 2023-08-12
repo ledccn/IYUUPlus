@@ -218,7 +218,7 @@ class DecodeTest extends TestCase
     public function testDecodeDictionaryKeyNotString()
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Non string key found in the dictionary.');
+        $this->expectExceptionMessage('Non string key found in the dictionary');
 
         Bencode::decode('di123ei321ee');
     }
@@ -263,7 +263,7 @@ class DecodeTest extends TestCase
     public function testDecodeNothing()
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Decode Input is not valid String.');
+        $this->expectExceptionMessage('Decode Input is not valid String');
 
         Bencode::decode('');
     }
@@ -274,7 +274,7 @@ class DecodeTest extends TestCase
     public function testDecodeNull()
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Decode Input is not valid String.');
+        $this->expectExceptionMessage('Decode Input is not valid String');
 
         Bencode::decode(null);
     }

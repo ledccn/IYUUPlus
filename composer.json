@@ -32,8 +32,6 @@
     "rhilip/bencode": "^2.1",
     "workerman/crontab": "^1.0",
     "curl/curl": "^2.3",
-    "ext-posix": "*",
-    "ext-pcntl": "*",
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-curl": "*",

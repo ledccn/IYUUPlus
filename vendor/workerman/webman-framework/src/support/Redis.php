@@ -15,10 +15,13 @@
 namespace support;
 
 use Illuminate\Events\Dispatcher;
-use Illuminate\Redis\Events\CommandExecuted;
+use Illuminate\Redis\Connections\Connection;
 use Illuminate\Redis\RedisManager;
 use Workerman\Timer;
 use Workerman\Worker;
+use function class_exists;
+use function config;
+use function in_array;
 
 
 /**
@@ -184,7 +187,7 @@ use Workerman\Worker;
  * @method static mixed watch($keys)
  * @method static mixed unwatch($keys)
  * Scripting methods
- * @method mixed eval($script, $numkeys, $keyOrArg1 = null, $keyOrArgN = null)
+ * @method static mixed eval($script, $numkeys, $keyOrArg1 = null, $keyOrArgN = null)
  * @method static mixed evalSha($scriptSha, $numkeys, ...$arguments)
  * @method static mixed script($command, ...$scripts)
  * @method static mixed client(...$args)
@@ -209,7 +212,7 @@ class Redis
     /**
      * @var RedisManager
      */
-    protected static $_instance = null;
+    protected static $instance = null;
 
     /**
      * need to install phpredis extension
@@ -225,7 +228,7 @@ class Redis
     /**
      * Support client collection
      */
-    static $_allowClient = [
+    static $allowClient = [
         self::PHPREDIS_CLIENT,
         self::PREDIS_CLIENT
     ];
@@ -233,26 +236,27 @@ class Redis
     /**
      * @return RedisManager
      */
-    public static function instance()
+    public static function instance(): ?RedisManager
     {
-        if (!static::$_instance) {
-            $config = \config('redis');
+        if (!static::$instance) {
+            $config = config('redis');
             $client = $config['client'] ?? self::PHPREDIS_CLIENT;
 
-            if (!\in_array($client, static::$_allowClient)) {
+            if (!in_array($client, static::$allowClient)) {
                 $client = self::PHPREDIS_CLIENT;
             }
 
-            static::$_instance = new RedisManager('', $client, $config);
+            static::$instance = new RedisManager('', $client, $config);
         }
-        return static::$_instance;
+        return static::$instance;
     }
 
     /**
+     * Connection.
      * @param string $name
-     * @return \Illuminate\Redis\Connections\Connection
+     * @return Connection
      */
-    public static function connection(string $name = 'default')
+    public static function connection(string $name = 'default'): Connection
     {
         static $timers = [];
         $connection = static::instance()->connection($name);
@@ -260,7 +264,7 @@ class Redis
             $timers[$name] = Worker::getAllWorkers() ? Timer::add(55, function () use ($connection) {
                 $connection->get('ping');
             }) : 1;
-            if (\class_exists(Dispatcher::class)) {
+            if (class_exists(Dispatcher::class)) {
                 $connection->setEventDispatcher(new Dispatcher());
             }
         }
@@ -274,6 +278,6 @@ class Redis
      */
     public static function __callStatic(string $name, array $arguments)
     {
-        return static::connection('default')->{$name}(... $arguments);
+        return static::connection()->{$name}(... $arguments);
     }
 }

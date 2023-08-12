@@ -1,21 +1,18 @@
 <?php
 /**
- * This file is part of webman.
- *
- * Licensed under The MIT License
- * For full copyright and license information, please see the MIT-LICENSE.txt
- * Redistributions of files must retain the above copyright notice.
- *
- * @author    walkor<walkor@workerman.net>
- * @copyright walkor<walkor@workerman.net>
- * @link      http://www.workerman.net/
- * @license   http://www.opensource.org/licenses/mit-license.php MIT License
+ * 路由配置
  */
 
+use Webman\Http\Request;
 use Webman\Route;
 
-Route::any('/test', function ($request) {
-    return response('test');
+Route::fallback(function (Request $request) {
+    $response = strtoupper($request->method()) === 'OPTIONS' ? response('', 204) : json(['code' => 404, 'msg' => '404 not found']);
+    $response->withHeaders([
+        'Access-Control-Allow-Credentials' => 'true',
+        'Access-Control-Allow-Origin' => "*",
+        'Access-Control-Allow-Methods' => '*',
+        'Access-Control-Allow-Headers' => '*',
+    ]);
+    return $response;
 });
-
-Route::any('/route-test', 'app\controller\Index@index');

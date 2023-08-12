@@ -1,7 +1,10 @@
 {
   "name": "curl/curl",
   "description": "cURL class for PHP",
-  "keywords": ["dot", "curl"],
+  "keywords": [
+    "dot",
+    "curl"
+  ],
   "homepage": "https://github.com/php-mod/curl",
   "type": "library",
   "license": "MIT",
@@ -31,5 +34,8 @@
     "psr-0": {
       "Curl": "src/"
     }
+  },
+  "scripts": {
+    "phpstan": "./phpstan.phar -v"
   }
 }

@@ -60,7 +60,7 @@ class TorrentV1MultiTest extends TestCase
 
     public function testFilesPathEntityNotString() {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Invalid path with non-string value.');
+        $this->expectExceptionMessage('Invalid path with non-string value');
 
         $files = $this->torrent->getInfoField('files');
         $files[0]['path'][0] = 123;

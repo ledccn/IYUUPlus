@@ -14,9 +14,11 @@
 
 namespace Webman\Route;
 
-use FastRoute\Dispatcher\GroupCountBased;
-use FastRoute\RouteCollector;
 use Webman\Route as Router;
+use function array_merge;
+use function count;
+use function preg_replace_callback;
+use function str_replace;
 
 /**
  * Class Route
@@ -27,112 +29,119 @@ class Route
     /**
      * @var string|null
      */
-    protected $_name = null;
+    protected $name = null;
 
     /**
      * @var array
      */
-    protected $_methods = [];
+    protected $methods = [];
 
     /**
      * @var string
      */
-    protected $_path = '';
+    protected $path = '';
 
     /**
      * @var callable
      */
-    protected $_callback = null;
+    protected $callback = null;
 
     /**
      * @var array
      */
-    protected $_middlewares = [];
+    protected $middlewares = [];
 
     /**
      * @var array
      */
-    protected $_params = [];
+    protected $params = [];
 
     /**
      * Route constructor.
-     *
      * @param array $methods
      * @param string $path
      * @param callable $callback
      */
     public function __construct($methods, string $path, $callback)
     {
-        $this->_methods = (array)$methods;
-        $this->_path = $path;
-        $this->_callback = $callback;
+        $this->methods = (array)$methods;
+        $this->path = $path;
+        $this->callback = $callback;
     }
 
     /**
-     * @return mixed|null
+     * Get name.
+     * @return string|null
      */
-    public function getName()
+    public function getName(): ?string
     {
-        return $this->_name ?? null;
+        return $this->name ?? null;
     }
 
     /**
+     * Name.
      * @param string $name
      * @return $this
      */
-    public function name(string $name)
+    public function name(string $name): Route
     {
-        $this->_name = $name;
+        $this->name = $name;
         Router::setByName($name, $this);
         return $this;
     }
 
     /**
+     * Middleware.
      * @param mixed $middleware
      * @return $this|array
      */
     public function middleware($middleware = null)
     {
         if ($middleware === null) {
-            return $this->_middlewares;
+            return $this->middlewares;
         }
-        $this->_middlewares = \array_merge($this->_middlewares, (array)$middleware);
+        $this->middlewares = array_merge($this->middlewares, is_array($middleware) ? $middleware : [$middleware]);
         return $this;
     }
 
     /**
+     * GetPath.
      * @return string
      */
-    public function getPath()
+    public function getPath(): string
     {
-        return $this->_path;
+        return $this->path;
     }
 
     /**
+     * GetMethods.
      * @return array
      */
-    public function getMethods()
+    public function getMethods(): array
     {
-        return $this->_methods;
+        return $this->methods;
     }
 
     /**
-     * @return callable
+     * GetCallback.
+     * @return callable|null
      */
     public function getCallback()
     {
-        return $this->_callback;
+        return $this->callback;
     }
 
     /**
+     * GetMiddleware.
      * @return array
      */
-    public function getMiddleware()
+    public function getMiddleware(): array
     {
-        return $this->_middlewares;
+        return $this->middlewares;
     }
 
     /**
+     * Param.
      * @param string|null $name
      * @param $default
      * @return array|mixed|null
@@ -140,32 +149,34 @@ class Route
     public function param(string $name = null, $default = null)
     {
         if ($name === null) {
-            return $this->_params;
+            return $this->params;
         }
-        return $this->_params[$name] ?? $default;
+        return $this->params[$name] ?? $default;
     }
 
     /**
+     * SetParams.
      * @param array $params
      * @return $this
      */
-    public function setParams(array $params)
+    public function setParams(array $params): Route
     {
-        $this->_params = \array_merge($this->_params, $params);
+        $this->params = array_merge($this->params, $params);
         return $this;
     }
 
     /**
-     * @param $parameters
+     * Url.
+     * @param array $parameters
      * @return string
      */
-    public function url($parameters = [])
+    public function url(array $parameters = []): string
     {
         if (empty($parameters)) {
-            return $this->_path;
+            return $this->path;
         }
-        $path = \str_replace(['[', ']'], '', $this->_path);
-        $path = \preg_replace_callback('/\{(.*?)(?:\:[^\}]*?)*?\}/', function ($matches) use (&$parameters) {
+        $path = str_replace(['[', ']'], '', $this->path);
+        $path = preg_replace_callback('/\{(.*?)(?:\:[^\}]*?)*?\}/', function ($matches) use (&$parameters) {
             if (!$parameters) {
                 return $matches[0];
             }
@@ -182,7 +193,7 @@ class Route
             }
             return $matches[0];
         }, $path);
-        return \count($parameters) > 0 ? $path . '?' . http_build_query($parameters) : $path;
+        return count($parameters) > 0 ? $path . '?' . http_build_query($parameters) : $path;
     }
 
 }

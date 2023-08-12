@@ -14,8 +14,16 @@
 
 namespace Webman\Http;
 
-use Webman\App;
 use Webman\Route\Route;
+use function current;
+use function filter_var;
+use function ip2long;
+use function is_array;
+use function strpos;
+use const FILTER_FLAG_IPV4;
+use const FILTER_FLAG_NO_PRIV_RANGE;
+use const FILTER_FLAG_NO_RES_RANGE;
+use const FILTER_VALIDATE_IP;
 
 /**
  * Class Request
@@ -57,25 +65,27 @@ class Request extends \Workerman\Protocols\Http\Request
     }
 
     /**
+     * Input
      * @param string $name
-     * @param string|null $default
+     * @param mixed $default
      * @return mixed|null
      */
-    public function input($name, $default = null)
+    public function input(string $name, $default = null)
     {
         $post = $this->post();
         if (isset($post[$name])) {
             return $post[$name];
         }
         $get = $this->get();
-        return isset($get[$name]) ? $get[$name] : $default;
+        return $get[$name] ?? $default;
     }
 
     /**
+     * Only
      * @param array $keys
      * @return array
      */
-    public function only(array $keys)
+    public function only(array $keys): array
     {
         $all = $this->all();
         $result = [];
@@ -88,6 +98,7 @@ class Request extends \Workerman\Protocols\Http\Request
     }
 
     /**
+     * Except
      * @param array $keys
      * @return mixed|null
      */
@@ -101,6 +112,7 @@ class Request extends \Workerman\Protocols\Http\Request
     }
 
     /**
+     * File
      * @param string|null $name
      * @return null|UploadFile[]|UploadFile
      */
@@ -112,164 +124,179 @@ class Request extends \Workerman\Protocols\Http\Request
         }
         if ($name !== null) {
             // Multi files
-            if (\is_array(\current($files))) {
+            if (is_array(current($files))) {
                 return $this->parseFiles($files);
             }
             return $this->parseFile($files);
         }
-        $upload_files = [];
+        $uploadFiles = [];
         foreach ($files as $name => $file) {
             // Multi files
-            if (\is_array(\current($file))) {
-                $upload_files[$name] = $this->parseFiles($file);
+            if (is_array(current($file))) {
+                $uploadFiles[$name] = $this->parseFiles($file);
             } else {
-                $upload_files[$name] = $this->parseFile($file);
+                $uploadFiles[$name] = $this->parseFile($file);
             }
         }
-        return $upload_files;
+        return $uploadFiles;
     }
 
     /**
+     * ParseFile
      * @param array $file
      * @return UploadFile
      */
-    protected function parseFile(array $file)
+    protected function parseFile(array $file): UploadFile
     {
         return new UploadFile($file['tmp_name'], $file['name'], $file['type'], $file['error']);
     }
 
     /**
+     * ParseFiles
      * @param array $files
      * @return array
      */
-    protected function parseFiles(array $files)
+    protected function parseFiles(array $files): array
     {
-        $upload_files = [];
+        $uploadFiles = [];
         foreach ($files as $key => $file) {
-            if (\is_array(\current($file))) {
-                $upload_files[$key] = $this->parseFiles($file);
+            if (is_array(current($file))) {
+                $uploadFiles[$key] = $this->parseFiles($file);
             } else {
-                $upload_files[$key] = $this->parseFile($file);
+                $uploadFiles[$key] = $this->parseFile($file);
             }
         }
-        return $upload_files;
+        return $uploadFiles;
     }
 
     /**
+     * GetRemoteIp
      * @return string
      */
-    public function getRemoteIp()
+    public function getRemoteIp(): string
     {
-        return App::connection()->getRemoteIp();
+        return $this->connection->getRemoteIp();
     }
 
     /**
+     * GetRemotePort
      * @return int
      */
-    public function getRemotePort()
+    public function getRemotePort(): int
     {
-        return App::connection()->getRemotePort();
+        return $this->connection->getRemotePort();
     }
 
     /**
+     * GetLocalIp
      * @return string
      */
-    public function getLocalIp()
+    public function getLocalIp(): string
     {
-        return App::connection()->getLocalIp();
+        return $this->connection->getLocalIp();
     }
 
     /**
+     * GetLocalPort
      * @return int
      */
-    public function getLocalPort()
+    public function getLocalPort(): int
     {
-        return App::connection()->getLocalPort();
+        return $this->connection->getLocalPort();
     }
 
     /**
-     * @param bool $safe_mode
+     * GetRealIp
+     * @param bool $safeMode
      * @return string
      */
-    public function getRealIp(bool $safe_mode = true)
+    public function getRealIp(bool $safeMode = true): string
     {
-        $remote_ip = $this->getRemoteIp();
-        if ($safe_mode && !static::isIntranetIp($remote_ip)) {
-            return $remote_ip;
+        $remoteIp = $this->getRemoteIp();
+        if ($safeMode && !static::isIntranetIp($remoteIp)) {
+            return $remoteIp;
         }
-        return $this->header('client-ip', $this->header('x-forwarded-for',
-            $this->header('x-real-ip', $this->header('x-client-ip',
-                $this->header('via', $remote_ip)))));
+        $ip = $this->header('x-real-ip', $this->header('x-forwarded-for',
+            $this->header('client-ip', $this->header('x-client-ip',
+                $this->header('via', $remoteIp)))));
+        return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : $remoteIp;
     }
 
     /**
+     * Url
      * @return string
      */
-    public function url()
+    public function url(): string
     {
         return '//' . $this->host() . $this->path();
     }
 
     /**
+     * FullUrl
      * @return string
      */
-    public function fullUrl()
+    public function fullUrl(): string
     {
         return '//' . $this->host() . $this->uri();
     }
 
     /**
+     * IsAjax
      * @return bool
      */
-    public function isAjax()
+    public function isAjax(): bool
     {
         return $this->header('X-Requested-With') === 'XMLHttpRequest';
     }
 
     /**
+     * IsPjax
      * @return bool
      */
-    public function isPjax()
+    public function isPjax(): bool
     {
         return (bool)$this->header('X-PJAX');
     }
 
     /**
+     * ExpectsJson
      * @return bool
      */
-    public function expectsJson()
+    public function expectsJson(): bool
     {
         return ($this->isAjax() && !$this->isPjax()) || $this->acceptJson();
     }
 
     /**
+     * AcceptJson
      * @return bool
      */
-    public function acceptJson()
+    public function acceptJson(): bool
     {
-        return false !== \strpos($this->header('accept', ''), 'json');
+        return false !== strpos($this->header('accept', ''), 'json');
     }
 
     /**
+     * IsIntranetIp
      * @param string $ip
      * @return bool
      */
-    public static function isIntranetIp(string $ip)
+    public static function isIntranetIp(string $ip): bool
     {
         // Not validate ip .
-        if (!\filter_var($ip, \FILTER_VALIDATE_IP)) {
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
             return false;
         }
         // Is intranet ip ? For IPv4, the result of false may not be accurate, so we need to check it manually later .
-        if (!\filter_var($ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_NO_PRIV_RANGE | \FILTER_FLAG_NO_RES_RANGE)) {
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
             return true;
         }
         // Manual check only for IPv4 .
-        if (!\filter_var($ip, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV4)) {
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
             return false;
         }
         // Manual check .
-        $reserved_ips = [
+        $reservedIps = [
             1681915904 => 1686110207, // 100.64.0.0 -  100.127.255.255
             3221225472 => 3221225727, // 192.0.0.0 - 192.0.0.255
             3221225984 => 3221226239, // 192.0.2.0 - 192.0.2.255
@@ -279,9 +306,9 @@ class Request extends \Workerman\Protocols\Http\Request
             3405803776 => 3405804031, // 203.0.113.0 - 203.0.113.255
             3758096384 => 4026531839, // 224.0.0.0 - 239.255.255.255
         ];
-        $ip_long = \ip2long($ip);
-        foreach ($reserved_ips as $ip_start => $ip_end) {
-            if (($ip_long >= $ip_start) && ($ip_long <= $ip_end)) {
+        $ipLong = ip2long($ip);
+        foreach ($reservedIps as $ipStart => $ipEnd) {
+            if (($ipLong >= $ipStart) && ($ipLong <= $ipEnd)) {
                 return true;
             }
         }

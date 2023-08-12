@@ -14,79 +14,95 @@
 
 namespace Webman;
 
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use function array_replace_recursive;
+use function array_reverse;
+use function count;
+use function explode;
+use function in_array;
+use function is_array;
+use function is_dir;
+use function is_file;
+use function key;
+use function str_replace;
+
 class Config
 {
 
     /**
      * @var array
      */
-    protected static $_config = [];
+    protected static $config = [];
 
     /**
      * @var string
      */
-    protected static $_configPath = '';
+    protected static $configPath = '';
 
     /**
      * @var bool
      */
-    protected static $_loaded = false;
+    protected static $loaded = false;
 
     /**
-     * @param string $config_path
-     * @param array $exclude_file
+     * Load.
+     * @param string $configPath
+     * @param array $excludeFile
      * @param string|null $key
      * @return void
      */
-    public static function load(string $config_path, array $exclude_file = [], string $key = null)
+    public static function load(string $configPath, array $excludeFile = [], string $key = null)
     {
-        static::$_configPath = $config_path;
-        if (!$config_path) {
+        static::$configPath = $configPath;
+        if (!$configPath) {
             return;
         }
-        static::$_loaded = false;
-        $config = static::loadFromDir($config_path, $exclude_file);
+        static::$loaded = false;
+        $config = static::loadFromDir($configPath, $excludeFile);
         if (!$config) {
-            static::$_loaded = true;
+            static::$loaded = true;
             return;
         }
         if ($key !== null) {
-            foreach (\array_reverse(\explode('.', $key)) as $k) {
+            foreach (array_reverse(explode('.', $key)) as $k) {
                 $config = [$k => $config];
             }
         }
-        static::$_config = \array_replace_recursive(static::$_config, $config);
+        static::$config = array_replace_recursive(static::$config, $config);
         static::formatConfig();
-        static::$_loaded = true;
+        static::$loaded = true;
     }
 
     /**
-     * This deprecated method will certainly be removed in the future
-     * 
-     * @deprecated
-     * @param string $config_path
-     * @param array $exclude_file
+     * This deprecated method will certainly be removed in the future.
+     * @param string $configPath
+     * @param array $excludeFile
      * @return void
+     * @deprecated
      */
-    public static function reload(string $config_path, array $exclude_file = [])
+    public static function reload(string $configPath, array $excludeFile = [])
     {
-        static::load($config_path, $exclude_file);
+        static::load($configPath, $excludeFile);
     }
 
     /**
+     * Clear.
      * @return void
      */
     public static function clear()
     {
-        static::$_config = [];
+        static::$config = [];
     }
 
     /**
+     * FormatConfig.
      * @return void
      */
     protected static function formatConfig()
     {
-        $config = static::$_config;
+        $config = static::$config;
         // Merge log config
         foreach ($config['plugin'] ?? [] as $firm => $projects) {
             if (isset($projects['app'])) {
@@ -95,7 +111,7 @@ class Config
                 }
             }
             foreach ($projects as $name => $project) {
-                if (!\is_array($project)) {
+                if (!is_array($project)) {
                     continue;
                 }
                 foreach ($project['log'] ?? [] as $key => $item) {
@@ -111,7 +127,7 @@ class Config
                 }
             }
             foreach ($projects as $name => $project) {
-                if (!\is_array($project)) {
+                if (!is_array($project)) {
                     continue;
                 }
                 foreach ($project['database']['connections'] ?? [] as $key => $connection) {
@@ -130,7 +146,7 @@ class Config
                 }
             }
             foreach ($projects as $name => $project) {
-                if (!\is_array($project)) {
+                if (!is_array($project)) {
                     continue;
                 }
                 foreach ($project['thinkorm']['connections'] ?? [] as $key => $connection) {
@@ -139,7 +155,7 @@ class Config
             }
         }
         if (!empty($config['thinkorm']['connections'])) {
-            $config['thinkorm']['default'] = $config['thinkorm']['default'] ?? \key($config['thinkorm']['connections']);
+            $config['thinkorm']['default'] = $config['thinkorm']['default'] ?? key($config['thinkorm']['connections']);
         }
         // Merge redis config
         foreach ($config['plugin'] ?? [] as $firm => $projects) {
@@ -149,7 +165,7 @@ class Config
                 }
             }
             foreach ($projects as $name => $project) {
-                if (!\is_array($project)) {
+                if (!is_array($project)) {
                     continue;
                 }
                 foreach ($project['redis'] ?? [] as $key => $connection) {
@@ -157,33 +173,34 @@ class Config
                 }
             }
         }
-        static::$_config = $config;
+        static::$config = $config;
     }
 
     /**
-     * @param string $config_path
-     * @param array $exclude_file
+     * LoadFromDir.
+     * @param string $configPath
+     * @param array $excludeFile
      * @return array
      */
-    public static function loadFromDir(string $config_path, array $exclude_file = [])
+    public static function loadFromDir(string $configPath, array $excludeFile = []): array
     {
-        $all_config = [];
-        $dir_iterator = new \RecursiveDirectoryIterator($config_path, \FilesystemIterator::FOLLOW_SYMLINKS);
-        $iterator = new \RecursiveIteratorIterator($dir_iterator);
+        $allConfig = [];
+        $dirIterator = new RecursiveDirectoryIterator($configPath, FilesystemIterator::FOLLOW_SYMLINKS);
+        $iterator = new RecursiveIteratorIterator($dirIterator);
         foreach ($iterator as $file) {
             /** var SplFileInfo $file */
-            if (\is_dir($file) || $file->getExtension() != 'php' || \in_array($file->getBaseName('.php'), $exclude_file)) {
+            if (is_dir($file) || $file->getExtension() != 'php' || in_array($file->getBaseName('.php'), $excludeFile)) {
                 continue;
             }
-            $app_config_file = $file->getPath() . '/app.php';
-            if (!\is_file($app_config_file)) {
+            $appConfigFile = $file->getPath() . '/app.php';
+            if (!is_file($appConfigFile)) {
                 continue;
             }
-            $relative_path = \str_replace($config_path . DIRECTORY_SEPARATOR, '', substr($file, 0, -4));
-            $explode = \array_reverse(\explode(DIRECTORY_SEPARATOR, $relative_path));
-            if (\count($explode) >= 2) {
-                $app_config = include $app_config_file;
-                if (empty($app_config['enable'])) {
+            $relativePath = str_replace($configPath . DIRECTORY_SEPARATOR, '', substr($file, 0, -4));
+            $explode = array_reverse(explode(DIRECTORY_SEPARATOR, $relativePath));
+            if (count($explode) >= 2) {
+                $appConfig = include $appConfigFile;
+                if (empty($appConfig['enable'])) {
                     continue;
                 }
             }
@@ -193,12 +210,13 @@ class Config
                 $tmp[$section] = $config;
                 $config = $tmp;
             }
-            $all_config = \array_replace_recursive($all_config, $config);
+            $allConfig = array_replace_recursive($allConfig, $config);
         }
-        return $all_config;
+        return $allConfig;
     }
 
     /**
+     * Get.
      * @param string|null $key
      * @param mixed $default
      * @return array|mixed|void|null
@@ -206,46 +224,47 @@ class Config
     public static function get(string $key = null, $default = null)
     {
         if ($key === null) {
-            return static::$_config;
+            return static::$config;
         }
-        $key_array = \explode('.', $key);
-        $value = static::$_config;
-        $finded = true;
-        foreach ($key_array as $index) {
+        $keyArray = explode('.', $key);
+        $value = static::$config;
+        $found = true;
+        foreach ($keyArray as $index) {
             if (!isset($value[$index])) {
-                if (static::$_loaded) {
+                if (static::$loaded) {
                     return $default;
                 }
-                $finded = false;
+                $found = false;
                 break;
             }
             $value = $value[$index];
         }
-        if ($finded) {
+        if ($found) {
             return $value;
         }
         return static::read($key, $default);
     }
 
     /**
+     * Read.
      * @param string $key
      * @param mixed $default
      * @return array|mixed|null
      */
     protected static function read(string $key, $default = null)
     {
-        $path = static::$_configPath;
+        $path = static::$configPath;
         if ($path === '') {
             return $default;
         }
-        $keys = $key_array = \explode('.', $key);
-        foreach ($key_array as $index => $section) {
+        $keys = $keyArray = explode('.', $key);
+        foreach ($keyArray as $index => $section) {
             unset($keys[$index]);
-            if (\is_file($file = "$path/$section.php")) {
+            if (is_file($file = "$path/$section.php")) {
                 $config = include $file;
                 return static::find($keys, $config, $default);
             }
-            if (!\is_dir($path = "$path/$section")) {
+            if (!is_dir($path = "$path/$section")) {
                 return $default;
             }
         }
@@ -253,18 +272,19 @@ class Config
     }
 
     /**
-     * @param array $key_array
+     * Find.
+     * @param array $keyArray
      * @param mixed $stack
      * @param mixed $default
      * @return array|mixed
      */
-    protected static function find(array $key_array, $stack, $default)
+    protected static function find(array $keyArray, $stack, $default)
     {
-        if (!\is_array($stack)) {
+        if (!is_array($stack)) {
             return $default;
         }
         $value = $stack;
-        foreach ($key_array as $index) {
+        foreach ($keyArray as $index) {
             if (!isset($value[$index])) {
                 return $default;
             }

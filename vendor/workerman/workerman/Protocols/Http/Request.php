@@ -46,7 +46,7 @@ class Request
     public $properties = array();
 
     /**
-     * @var int 
+     * @var int
      */
     public static $maxFileUploads = 1024;
 
@@ -70,6 +70,13 @@ class Request
      * @var bool
      */
     protected static $_enableCache = true;
+
+    /**
+     * Is safe.
+     *
+     * @var bool
+     */
+    protected $_isSafe = true;
 
 
     /**
@@ -208,8 +215,8 @@ class Request
     public function host($without_port = false)
     {
         $host = $this->header('host');
-        if ($host && $without_port && $pos = \strpos($host, ':')) {
-            return \substr($host, 0, $pos);
+        if ($host && $without_port) {
+            return preg_replace('/:\d{1,5}$/', '', $host);
         }
         return $host;
     }
@@ -546,26 +553,27 @@ class Request
                     if (\preg_match('/name="(.*?)"; filename="(.*?)"/i', $value, $match)) {
                         $error = 0;
                         $tmp_file = '';
+                        $file_name = $match[2];
                         $size = \strlen($boundary_value);
                         $tmp_upload_dir = HTTP::uploadTmpDir();
                         if (!$tmp_upload_dir) {
                             $error = UPLOAD_ERR_NO_TMP_DIR;
-                        } else if ($boundary_value === '') {
+                        } else if ($boundary_value === '' && $file_name === '') {
                             $error = UPLOAD_ERR_NO_FILE;
                         } else {
                             $tmp_file = \tempnam($tmp_upload_dir, 'workerman.upload.');
-                            if ($tmp_file === false || false == \file_put_contents($tmp_file, $boundary_value)) {
+                            if ($tmp_file === false || false === \file_put_contents($tmp_file, $boundary_value)) {
                                 $error = UPLOAD_ERR_CANT_WRITE;
                             }
                         }
                         $upload_key = $match[1];
                         // Parse upload files.
                         $file = [
-                            'name' => $match[2],
+                            'name' => $file_name,
                             'tmp_name' => $tmp_file,
                             'size' => $size,
                             'error' => $error,
-                            'type' => null,
+                            'type' => '',
                         ];
                         break;
                     } // Is post field.
@@ -656,13 +664,23 @@ class Request
     }
 
     /**
+     * __wakeup.
+     *
+     * @return void
+     */
+    public function __wakeup()
+    {
+        $this->_isSafe = false;
+    }
+
+    /**
      * __destruct.
      *
      * @return void
      */
     public function __destruct()
     {
-        if (isset($this->_data['files'])) {
+        if (isset($this->_data['files']) && $this->_isSafe) {
             \clearstatcache();
             \array_walk_recursive($this->_data['files'], function($value, $key){
                 if ($key === 'tmp_name') {

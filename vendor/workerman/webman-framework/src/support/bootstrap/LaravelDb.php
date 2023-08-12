@@ -14,17 +14,19 @@
 
 namespace support\bootstrap;
 
-use Illuminate\Container\Container;
+use Illuminate\Container\Container as IlluminateContainer;
 use Illuminate\Database\Capsule\Manager as Capsule;
-use Illuminate\Database\Connection;
+use Illuminate\Database\MySqlConnection;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Pagination\Paginator;
 use Jenssegers\Mongodb\Connection as MongodbConnection;
-use support\Db;
+use support\Container;
 use Throwable;
 use Webman\Bootstrap;
 use Workerman\Timer;
 use Workerman\Worker;
+use function class_exists;
+use function config;
 
 /**
  * Class Laravel
@@ -33,23 +35,23 @@ use Workerman\Worker;
 class LaravelDb implements Bootstrap
 {
     /**
-     * @param Worker $worker
+     * @param Worker|null $worker
      *
      * @return void
      */
-    public static function start($worker)
+    public static function start(?Worker $worker)
     {
         if (!class_exists(Capsule::class)) {
             return;
         }
 
-        $config = \config('database', []);
+        $config = config('database', []);
         $connections = $config['connections'] ?? [];
         if (!$connections) {
             return;
         }
 
-        $capsule = new Capsule;
+        $capsule = new Capsule(IlluminateContainer::getInstance());
 
         $capsule->getDatabaseManager()->extend('mongodb', function ($config, $name) {
             $config['name'] = $name;
@@ -58,16 +60,16 @@ class LaravelDb implements Bootstrap
 
         $default = $config['default'] ?? false;
         if ($default) {
-            $default_config = $connections[$config['default']];
-            $capsule->addConnection($default_config);
+            $defaultConfig = $connections[$config['default']];
+            $capsule->addConnection($defaultConfig);
         }
 
         foreach ($connections as $name => $config) {
             $capsule->addConnection($config, $name);
         }
 
-        if (\class_exists(Dispatcher::class)) {
-            $capsule->setEventDispatcher(new Dispatcher(new Container));
+        if (class_exists(Dispatcher::class) && !$capsule->getEventDispatcher()) {
+            $capsule->setEventDispatcher(Container::make(Dispatcher::class, [IlluminateContainer::getInstance()]));
         }
 
         $capsule->setAsGlobal();
@@ -76,20 +78,13 @@ class LaravelDb implements Bootstrap
 
         // Heartbeat
         if ($worker) {
-            Timer::add(55, function () use ($default, $connections) {
-                if (!class_exists(Connection::class, false)) {
-                    return;
-                }
-                foreach ($connections as $key => $item) {
-                    if ($item['driver'] == 'mysql') {
+            Timer::add(55, function () use ($default, $connections, $capsule) {
+                foreach ($capsule->getDatabaseManager()->getConnections() as $connection) {
+                    /* @var MySqlConnection $connection **/
+                    if ($connection->getConfig('driver') == 'mysql') {
                         try {
-                            if ($key == $default) {
-                                Db::select('select 1');
-                            } else {
-                                Db::connection($key)->select('select 1');
-                            }
-                        } catch (Throwable $e) {
-                        }
+                            $connection->select('select 1');
+                        } catch (Throwable $e) {}
                     }
                 }
             });
@@ -97,14 +92,22 @@ class LaravelDb implements Bootstrap
 
         // Paginator
         if (class_exists(Paginator::class)) {
-            Paginator::queryStringResolver(function () {
-                return request()->queryString();
-            });
+            if (method_exists(Paginator::class, 'queryStringResolver')) {
+                Paginator::queryStringResolver(function () {
+                    $request = request();
+                    return $request ? $request->queryString() : null;
+                });
+            }
             Paginator::currentPathResolver(function () {
-                return request()->path();
+                $request = request();
+                return $request ? $request->path(): '/';
             });
-            Paginator::currentPageResolver(function ($page_name = 'page') {
-                $page = (int)request()->input($page_name, 1);
+            Paginator::currentPageResolver(function ($pageName = 'page') {
+                $request = request();
+                if (!$request) {
+                    return 1;
+                }
+                $page = (int)($request->input($pageName, 1));
                 return $page > 0 ? $page : 1;
             });
         }

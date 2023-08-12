@@ -39,12 +39,6 @@ return [
             ],
         ]
     ],
-    // 其它进程
-    /*'websocket'  => [
-        'handler'  => process\Websocket::class,
-        'listen' => 'websocket://0.0.0.0:8888',
-        'count'  => 1,
-    ],*/
     'IYUUTask' => [
         'handler' => process\Task::class
     ],

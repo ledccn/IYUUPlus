@@ -60,7 +60,7 @@ trait TorrentFileV2Trait
 
     public function testNodePiecesRootNotExistInPieceLayer() {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Pieces not exist in piece layers.');
+        $this->expectExceptionMessage('Pieces not exist in piece layers');
 
         $fileTree = $this->torrent->getInfoField('file tree');
         $fileTree['file1.dat']['']['pieces root'] = hash('sha256', 'adfadsfasd',true);

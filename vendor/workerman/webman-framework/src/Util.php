@@ -14,6 +14,10 @@
 
 namespace Webman;
 
+use function array_diff;
+use function array_map;
+use function scandir;
+
 /**
  * Class Util
  * @package Webman
@@ -21,17 +25,19 @@ namespace Webman;
 class Util
 {
     /**
-     * @param string $path
+     * ScanDir.
+     * @param string $basePath
+     * @param bool $withBasePath
      * @return array
      */
-    public static function scanDir(string $base_path, $with_base_path = true): array
+    public static function scanDir(string $basePath, bool $withBasePath = true): array
     {
-        if (!is_dir($base_path)) {
+        if (!is_dir($basePath)) {
             return [];
         }
-        $paths = \array_diff(\scandir($base_path), array('.', '..')) ?: [];
-        return $with_base_path ? \array_map(function($path) use ($base_path) {
-            return $base_path . DIRECTORY_SEPARATOR . $path;
+        $paths = array_diff(scandir($basePath), array('.', '..')) ?: [];
+        return $withBasePath ? array_map(static function ($path) use ($basePath) {
+            return $basePath . DIRECTORY_SEPARATOR . $path;
         }, $paths) : $paths;
     }
 

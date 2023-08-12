@@ -61,6 +61,6 @@ class Util
             }
         }
         $realname = implode(DIRECTORY_SEPARATOR, $realname);
-        return $return_full_path ? realpath($base_path . DIRECTORY_SEPARATOR . $realname) : $realname;
+        return $return_full_path ? get_realpath($base_path . DIRECTORY_SEPARATOR . $realname) : $realname;
     }
 }

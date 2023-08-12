@@ -24,18 +24,18 @@ class Cache
     /**
      * @var Psr16Cache
      */
-    public static $_instance = null;
+    public static $instance = null;
 
     /**
      * @return Psr16Cache
      */
     public static function instance()
     {
-        if (!static::$_instance) {
+        if (!static::$instance) {
             $adapter = new RedisAdapter(Redis::connection()->client());
-            self::$_instance = new Psr16Cache($adapter);
+            self::$instance = new Psr16Cache($adapter);
         }
-        return static::$_instance;
+        return static::$instance;
     }
 
     /**

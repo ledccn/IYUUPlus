@@ -21,15 +21,15 @@ use Webman\Http\Response;
 interface ExceptionHandlerInterface
 {
     /**
-     * @param Throwable $e
+     * @param Throwable $exception
      * @return mixed
      */
-    public function report(Throwable $e);
+    public function report(Throwable $exception);
 
     /**
      * @param Request $request
-     * @param Throwable $e
+     * @param Throwable $exception
      * @return Response
      */
-    public function render(Request $request, Throwable $e): Response;
+    public function render(Request $request, Throwable $exception): Response;
 }
