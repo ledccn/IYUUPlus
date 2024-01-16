@@ -25,7 +25,7 @@ class Constant
     /**
      * API定义
      */
-    const API_BASE = 'https://api.iyuu.cn';
+    const API_BASE = 'http://hk.iyuu.cn';
     const API = [
         'login' => '/App.Api.Bind',
         'sites' => '/App.Api.Sites',
