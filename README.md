@@ -1,3 +1,6 @@
+# 公告
+本仓库不再新增功能，全面迁移至新仓库：https://github.com/ledccn/iyuuplus-dev
+
 # 介绍
 
 IYUUAutoReseed项目的升级版，常驻内存运行；集成webui界面、辅种、转移、下载、定时访问URL、动态域名ddns等常用功能，提供完善的插件机制。
