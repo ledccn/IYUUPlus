@@ -159,7 +159,6 @@ class MoveTorrent extends AutoReseed
                             die("clients_" . $k . " IYUUPlus内下载器未设置种子目录，无法完成转移！");
                         }
                         $torrentPath = $path . DS . $info_hash . '.torrent';
-                        $fast_resumePath = $path . DS . $info_hash . '.fastresume';
                         $torrentDelete = $info_hash;
 
                         // 再次检查
@@ -175,7 +174,6 @@ class MoveTorrent extends AutoReseed
                             $v1_path = $path . DS . $infohash_v1 . '.torrent';
                             if (is_file($v1_path)) {
                                 $torrentPath = $v1_path;
-                                $fast_resumePath = $path . DS . $infohash_v1 . '.torrent';
                             } else {
                                 echo $help_msg;
                                 die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`不存在，无法完成转移！");
@@ -203,31 +201,26 @@ class MoveTorrent extends AutoReseed
                     if (empty($parsed_torrent)) {
                         die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，种子文件`{$torrentPath}`解析失败，无法完成转移！");
                     }
+
+                    $trackerArray = static::getRpc($k)-> getTorrentTrackers($torrentDelete);
+                    if (empty($trackerArray)) {
+                        die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，获取tracker失败，无法完成转移！");
+                    }
+
                     if (empty($parsed_torrent['announce'])) {
-                        if (!empty($move[$info_hash]['tracker'])) {
-                            $parsed_torrent['announce'] = $move[$info_hash]['tracker'];
+                        if (count($trackerArray) > 0 && !empty($trackerArray[0])) {
+                            if (is_array($trackerArray[0]) && count($trackerArray[0]) > 0 && !empty($trackerArray[0][0])) {
+                                $parsed_torrent['announce'] = $trackerArray[0][0];
+                            }
                         } else {
-                            if (!is_file($fast_resumePath)) {
-                                echo $help_msg;
-                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`不存在，无法完成转移！");
-                            }
-                            $parsed_fast_resume = null;
-                            try {
-                                global $parsed_fast_resume;
-                                $parsed_fast_resume = Bencode::load($fast_resumePath);
-                            } catch (ParseException $e) {
-                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`解析失败`{$e->getMessage()}`，无法完成转移！");
-                            }
-                            $trackers = $parsed_fast_resume['trackers'];
-                            if (count($trackers) > 0 && !empty($trackers[0])) {
-                                if (is_array($trackers[0]) && count($trackers[0]) > 0 && !empty($trackers[0][0])) {
-                                    $parsed_torrent['announce'] = $trackers[0][0];
-                                }
-                            } else {
-                                die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，resume文件`{$fast_resumePath}`不包含tracker地址，无法完成转移！");
-                            }
+                            die("clients_" . $k . " 的`{$move[$info_hash]['name']}`，不包含tracker地址，无法完成转移！");
                         }
                     }
+
+                    if ((count($trackerArray[0]) > 1 || count($trackerArray) > 1) && empty($parsed_torrent['announce-list'])) {
+                        $parsed_torrent['announce-list'] = $trackerArray;
+                    }
+                    
                     $torrent = Bencode::encode($parsed_torrent);
                 }
                 // 正式开始转移

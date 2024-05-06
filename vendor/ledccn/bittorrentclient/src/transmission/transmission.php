@@ -922,14 +922,14 @@ class transmission extends AbstractClient
      * array(
      * 'hash'       => string json,
      * 'sha1'       => string,
-     * 'hashString '=> array
+     * 'hashString' => array
      * )
      * @throws ClientException
      */
     public function all(&$torrentList = array())
     {
         $ids = array();
-        $fields = array( "id", "status", "name", "hashString", "downloadDir", "torrentFile" );
+        $fields = array("id", "status", "name", "hashString", "downloadDir", "torrentFile");
         $res = $this->get($ids, $fields);
         if (isset($res['result']) && $res['result'] === 'success') {
             // 成功
@@ -967,6 +967,43 @@ class transmission extends AbstractClient
         $hashArray['hashString'] = array_column($res, "downloadDir", 'hashString');
         $torrentList = array_column($res, null, 'hashString');
         return $hashArray;
+    }
+
+    /**
+     * 抽象方法，子类实现
+     * 获取种子的tracker
+     * Get torrent's tracker
+     * @param int torrent id
+     * @return array
+     * @throws ClientException
+     */
+    public function getTorrentTrackers($id)
+    {
+        $id = array($id);
+        $fields = array("trackers");
+        $res = $this->get($id, $fields);
+        
+        if (isset($res['result']) && $res['result'] === 'success') {
+            // 成功
+        } else {
+            // 失败
+            echo "从客户端获取种子tracker失败，可能transmission暂时无响应，请稍后重试！".PHP_EOL;
+            return array();
+        }
+        if (empty($res['arguments']['torrents'])) {
+            echo "从客户端未获取到数据，请稍后重试！".PHP_EOL;
+            return array();
+        }
+        
+        $trackers = $res['arguments']['torrents']['trackers'];
+        $trackerArray = array();
+        foreach ($trackers as $tracker) {
+            if (!array_key_exists($tracker['tier'], $trackerArray)) {
+                $trackerArray[$tracker['tier']] = array();
+            }
+            array_push($trackerArray[$tracker['tier']], $tracker['announce']);
+        }
+        return $trackerArray;
     }
 
     /**
